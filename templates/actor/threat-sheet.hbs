@@ -1,0 +1,64 @@
+<div class="reign-sheet-root threat-sheet reign-p15">
+  <header class="sheet-header flexrow reign-mb20">
+    <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" class="profile-img reign-circle"/>
+    <div class="header-details reign-ml15">
+      <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'REIGN.ThreatName'}}" class="reign-threat-header"/>
+      <div class="reign-threat-label">{{localize 'REIGN.UnworthyOpponent'}}</div>
+    </div>
+  </header>
+
+  <div class="stat-grid" style="grid-template-columns: 1fr;">
+    <div class="stat-block bg-white">
+      <div class="stat-header reign-flex-center">
+        <h2 class="rollable reign-text-xl" data-action="rollThreat"><i class="fas fa-dice reign-mr10"></i> {{localize 'REIGN.RollThreatAction'}}</h2>
+      </div>
+      
+      <div class="reign-flex-around reign-mb10">
+        <div class="reign-text-center">
+          <label class="reign-bold reign-mb5 reign-block reign-text-lg">{{localize 'REIGN.ThreatLevel'}}</label>
+          <input type="number" name="system.threatLevel" value="{{system.threatLevel}}" class="reign-threat-input"/>
+        </div>
+        <div class="reign-text-center" style="flex: 0 0 50%;">
+          <label class="reign-bold reign-mb5 reign-block reign-text-lg">{{localize 'REIGN.ParentCompany'}}</label>
+          <select name="system.parentCompany" class="reign-threat-input" style="width: 100%; text-align: center;">
+            <option value="">{{localize 'REIGN.ParentCompanyNone'}}</option>
+            {{selectOptions companies selected=system.parentCompany}}
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+<div class="dialog-grid dialog-grid-2">
+    <div class="reign-grid-2">      
+	<div class="stat-block bg-white reign-text-center reign-pb10">
+        <div class="stat-header bg-crimson reign-flex-center"><h2>{{localize 'REIGN.Magnitude'}}</h2></div>
+        <div class="reign-desc-text">{{localize 'REIGN.MagnitudeDesc'}}</div>
+        <div class="reign-fraction-input">
+          <input type="number" name="system.magnitude.value" value="{{system.magnitude.value}}" class="reign-fraction-val reign-mag-val"/>
+          <span>/</span>
+          <input type="number" name="system.magnitude.max" value="{{system.magnitude.max}}" class="reign-fraction-max"/>
+        </div>
+      </div>
+
+      <div class="stat-block bg-white reign-text-center reign-pb10">
+        <div class="stat-header bg-teal reign-flex-center"><h2 class="rollable" data-action="rollMorale" style="color:white;" title="Custom GM Tool: Rolls Threat Level to check Morale"><i class="fas fa-dice reign-mr10"></i>{{localize 'REIGN.Morale'}}</h2></div>
+        <div class="reign-desc-text">{{localize 'REIGN.MoraleDesc'}}</div>
+        <div class="reign-fraction-input">
+          <input type="number" name="system.morale.value" value="{{system.morale.value}}" class="reign-fraction-val reign-mor-val"/>
+          <span>/</span>
+          <input type="number" name="system.morale.max" value="{{system.morale.max}}" class="reign-fraction-max"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-block bg-white reign-mt20">
+      <div class="stat-header reign-flex-center"><h2>{{localize 'REIGN.DescriptionTactics'}}</h2></div>
+      <div class="reign-p15">
+          <label class="reign-bold reign-mb5 reign-block">{{localize 'REIGN.DamageFormula'}}</label>
+          <input type="text" name="system.damageFormula" value="{{system.damageFormula}}" class="reign-threat-weapon reign-mb10" placeholder="Width Shock"/>
+      </div>
+      <textarea name="system.description" class="reign-textarea-120" style="border: none; padding: 10px;">{{system.description}}</textarea>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="reign-sheet-root company-sheet">
+  <header class="sheet-header">
+    <div class="header-top">
+      <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" class="profile-img" style="border-radius: 5px;"/>
+      <div class="header-fields">
+        <div class="title-row">
+          <input name="name" type="text" value="{{actor.name}}" placeholder="COMPANY NAME" class="reign-company-title"/>
+        </div>
+        <div class="narrative-row reign-company-narrative">
+          <div class="narrative-box"><label>{{localize 'REIGN.Goals'}}</label><input type="text" name="system.biography.goals" value="{{system.biography.goals}}"/></div>
+          <div class="narrative-box"><label>{{localize 'REIGN.Leaders'}}</label><input type="text" name="system.biography.leaders" value="{{system.biography.leaders}}"/></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="sheet-body reign-scroll-y">
+    <div class="company-qualities-grid">
+      {{#each qualities as |q|}}
+      <div class="quality-block">
+        <div class="quality-header flexrow">
+          <h2 class="rollable" data-action="rollCompanyStat" data-key="{{q.key}}" data-label="{{q.label}}"><i class="fas fa-dice reign-mr10"></i>{{q.label}}</h2>
+        </div>
+        <div class="quality-stats flexrow">
+          <div class="q-stat">
+            <label>{{localize 'REIGN.PermanentRating'}}</label>
+            <input type="number" name="system.qualities.{{q.key}}.permanent" value="{{q.permanent}}"/>
+          </div>
+          <div class="q-stat">
+            <label>{{localize 'REIGN.CurrentRating'}}</label>
+            <input type="number" name="system.qualities.{{q.key}}.current" value="{{q.current}}" class="current-rating"/>
+          </div>
+        </div>
+        <div class="quality-notes">
+          <label>{{localize 'REIGN.TemporaryBonuses'}}</label>
+          <textarea name="system.qualities.{{q.key}}.notes" placeholder="...">{{q.notes}}</textarea>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="company-assets reign-mt20">
+      <div class="stat-block">
+        <div class="stat-header"><h2>{{localize 'REIGN.CompanyAssets'}}</h2></div>
+        <textarea name="system.biography.assets" class="reign-company-assets-text">{{system.biography.assets}}</textarea>
+      </div>
+    </div>
+  </section>
+</div>

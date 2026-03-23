@@ -1,0 +1,121 @@
+<div class="reign-item-root">
+  <header class="item-header flexrow">
+    <img src="{{item.img}}" data-edit="img" title="{{item.name}}" class="profile-img" style="flex: 0 0 64px; height: 64px;"/>
+    <div class="header-details">
+      <input name="name" type="text" value="{{item.name}}" placeholder="Item Name"/>
+      <span class="item-type-label">{{item.type}}</span>
+    </div>
+  </header>
+
+  <div class="item-body">
+    
+    {{#if isWeapon}}
+    <div class="form-group-grid">
+      <div class="form-group">
+        <label>{{localize 'REIGN.DamageFormula'}}</label>
+        <input type="text" name="system.damage" value="{{system.damage}}" placeholder="Width Shock"/>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.AttackPool'}}</label>
+        <input type="text" name="system.pool" value="{{system.pool}}"/>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>{{localize 'REIGN.RangeReach'}}</label>
+        <input type="text" name="system.range" value="{{system.range}}"/>
+      </div>
+    </div>
+    
+    <div class="form-group reign-box-weapon">
+      <label class="reign-bold">{{localize 'REIGN.WeaponQualities'}}</label>
+      <div class="checkbox-group">
+        <label><input type="number" name="system.qualities.armorPiercing" value="{{system.qualities.armorPiercing}}"/> {{localize 'REIGN.ArmorPiercing'}}</label>
+        <label><input type="number" name="system.qualities.slow" value="{{system.qualities.slow}}"/> {{localize 'REIGN.Slow'}}</label>
+        <label><input type="checkbox" name="system.qualities.twoHanded" {{checked system.qualities.twoHanded}}/> {{localize 'REIGN.TwoHanded'}}</label>
+        <label><input type="checkbox" name="system.qualities.massive" {{checked system.qualities.massive}}/> {{localize 'REIGN.Massive'}}</label>
+        <label><input type="checkbox" name="system.qualities.area" {{checked system.qualities.area}}/> {{localize 'REIGN.AreaSplash'}}</label>
+      </div>
+    </div>
+    <div class="form-group-stacked">
+      <label>{{localize 'REIGN.NotesEffects'}}</label>
+      <textarea name="system.notes">{{system.notes}}</textarea>
+    </div>
+    {{/if}}
+
+    {{#if isSpell}}
+    <div class="form-group-grid">
+      <div class="form-group">
+        <label>{{localize 'REIGN.Intensity'}}</label>
+        <input type="number" name="system.intensity" value="{{system.intensity}}"/>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.Pool'}}</label>
+        <input type="text" name="system.pool" value="{{system.pool}}"/>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>{{localize 'REIGN.Page'}}</label>
+        <input type="text" name="system.page" value="{{system.page}}"/>
+      </div>
+    </div>
+    <div class="form-group-stacked">
+      <label>{{localize 'REIGN.Effect'}}</label>
+      <textarea name="system.effect">{{system.effect}}</textarea>
+    </div>
+    {{/if}}
+
+    {{#if isTechnique}}
+    <div class="form-group-grid">
+      <div class="form-group">
+        <label>{{localize 'REIGN.Path'}}</label>
+        <input type="text" name="system.path" value="{{system.path}}" placeholder="e.g. Iron Wand"/>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.Rank'}}</label>
+        <input type="number" name="system.rank" value="{{system.rank}}" min="1" max="5"/>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>{{localize 'REIGN.Page'}}</label>
+        <input type="text" name="system.page" value="{{system.page}}"/>
+      </div>
+    </div>
+    <div class="form-group-stacked">
+      <label>{{localize 'REIGN.Effect'}}</label>
+      <textarea name="system.effect">{{system.effect}}</textarea>
+    </div>
+    {{/if}}
+
+    {{#if isDiscipline}}
+    <div class="form-group-grid">
+      <div class="form-group">
+        <label>{{localize 'REIGN.Path'}}</label>
+        <input type="text" name="system.path" value="{{system.path}}" placeholder="e.g. Flame Dancer"/>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.Rank'}}</label>
+        <input type="number" name="system.rank" value="{{system.rank}}" min="1" max="5"/>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>{{localize 'REIGN.Page'}}</label>
+        <input type="text" name="system.page" value="{{system.page}}"/>
+      </div>
+    </div>
+    <div class="form-group-stacked">
+      <label>{{localize 'REIGN.Effect'}}</label>
+      <textarea name="system.effect">{{system.effect}}</textarea>
+    </div>
+    {{/if}}
+
+    {{#if isGear}}
+    <div class="form-group-grid">
+      <div class="form-group">
+        <label>{{localize 'REIGN.Quantity'}}</label>
+        <input type="number" name="system.quantity" value="{{system.quantity}}"/>
+      </div>
+    </div>
+    <div class="form-group-stacked">
+      <label>{{localize 'REIGN.NotesEffects'}}</label>
+      <textarea name="system.notes">{{system.notes}}</textarea>
+    </div>
+    {{/if}}
+
+  </div>
+</div>

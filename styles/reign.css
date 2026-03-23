@@ -1,0 +1,1043 @@
+/* Core Sheet Styling */
+.reign.sheet.actor, .reign.sheet.item {
+  background: #fdfdfc;
+  color: #111;
+  font-family: "Book Antiqua", Palatino, serif;
+}
+
+/* Force border-box for clean padding math */
+.reign * {
+  box-sizing: border-box;
+}
+
+.reign-sheet-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 5px 10px;
+}
+
+/* -----------------------------------------
+   STRUCTURAL UTILITY CLASSES
+----------------------------------------- */
+.reign-p15 { padding: 15px; }
+.reign-pb10 { padding-bottom: 10px; }
+.reign-mb5 { margin-bottom: 5px; }
+.reign-mb10 { margin-bottom: 10px; }
+.reign-mb20 { margin-bottom: 20px; }
+.reign-ml15 { margin-left: 15px; }
+.reign-mr10 { margin-right: 10px; }
+.reign-mt20 { margin-top: 20px; }
+
+.bg-white { background: #fff; }
+.bg-crimson { background: #8b1f1f; color: #fff; }
+.bg-teal { background: #00695c; color: #fff; }
+
+.reign-circle { border-radius: 50%; }
+.reign-bold { font-weight: bold; }
+.reign-block { display: block; }
+.reign-text-center { text-align: center; }
+.reign-text-xl { font-size: 1.5em; }
+.reign-text-lg { font-size: 1.1em; }
+.reign-item-subtext { font-size: 0.85em; color: #555; }
+
+.reign-flex-center { display: flex; align-items: center; justify-content: center; }
+.reign-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.reign-flex-around { display: flex; align-items: center; justify-content: space-around; gap: 20px; padding: 15px; }
+
+.reign-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.reign-col-1 { flex: 1; text-align: center; }
+.reign-col-2 { flex: 2; }
+.reign-col-3 { flex: 3; }
+
+.reign-scroll-y { overflow-y: auto; padding-right: 5px; }
+.reign-textarea { height: 150px; border: none; padding: 10px; resize: vertical; width: 100%; font-family: inherit; }
+.reign-textarea-120 { height: 120px; border: none; padding: 10px; resize: vertical; width: 100%; font-family: inherit; }
+
+/* -----------------------------------------
+   HEADER & NARRATIVE BLOCKS
+----------------------------------------- */
+.reign .sheet-header {
+  flex: 0 0 auto;
+  border-bottom: 3px solid #000;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.reign .header-top {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.reign .profile-img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border: 2px solid #000;
+  background: #eee;
+  flex: 0 0 90px;
+}
+
+.reign .header-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reign .title-row {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+}
+
+.reign .title-row input {
+  flex: 1;
+  font-size: 1.6em;
+  font-weight: bold;
+  font-family: inherit;
+  border: none;
+  border-bottom: 2px solid #000;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 5px;
+}
+
+.reign .narrative-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.reign .narrative-box {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid #666;
+}
+
+.reign .narrative-box label {
+  font-weight: bold;
+  font-size: 0.85em;
+  letter-spacing: 1px;
+  margin-right: 5px;
+  color: #333;
+}
+
+.reign .narrative-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 0.95em;
+  padding: 0;
+}
+
+/* -----------------------------------------
+   TABS & NAVIGATION
+----------------------------------------- */
+.reign .sheet-tabs {
+  flex: 0 0 auto;
+  border-bottom: 1px solid #000;
+  margin-bottom: 15px;
+  display: flex;
+  gap: 20px;
+}
+
+.reign .sheet-tabs .item {
+  font-weight: bold;
+  text-transform: uppercase;
+  padding-bottom: 5px;
+  cursor: pointer;
+}
+
+.reign .sheet-tabs .item.active {
+  color: #8b1f1f;
+  border-bottom: 3px solid #8b1f1f;
+}
+
+/* -----------------------------------------
+   STAT BLOCKS (The Core Layout)
+----------------------------------------- */
+.reign .sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.reign .stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.reign .stat-block {
+  border: 2px solid #000;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reign .stat-header {
+  background: #000;
+  color: #fff;
+  padding: 4px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reign .stat-header h2 {
+  margin: 0;
+  border: none;
+  font-size: 1.2em;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.reign .stat-header input {
+  width: 35px;
+  height: 24px;
+  background: #fff;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+.reign .stat-skills {
+  padding: 5px 8px;
+  background: #fff;
+  flex: 1;
+}
+
+.reign .skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  padding: 4px 0;
+}
+
+.reign .skill-row:last-child {
+  border-bottom: none;
+}
+
+.reign .skill-row > label {
+  flex: 1;
+  font-weight: bold;
+  font-size: 0.95em;
+  text-transform: uppercase;
+}
+
+/* -----------------------------------------
+   COMBAT TAB SPECIFICS
+----------------------------------------- */
+.reign-grid-locations { display: grid; grid-template-columns: 100px auto 40px; gap: 10px; align-items: center; padding: 0 10px; }
+.reign-loc-subtitle { font-size: 0.75em; font-weight: normal; color: #ccc; text-align: center; letter-spacing: 0.5px; }
+.reign-loc-ar { font-size: 0.85em; font-weight: bold; text-align: center; }
+.reign-loc-row { display: grid; grid-template-columns: 100px auto 40px; gap: 10px; align-items: center; padding: 4px 10px; }
+.reign-loc-label { font-size: 0.85em; font-weight: bold; text-transform: uppercase; margin: 0; white-space: nowrap; letter-spacing: 0.5px; }
+.reign-track-wrap { display: flex; flex-wrap: nowrap; gap: 3px; align-items: center; }
+.reign-ar-input { height: 26px; width: 40px !important; border-radius: 3px; text-align: center; font-weight: bold; background: #e9e5db !important; border: 1px solid #ccc; }
+
+.reign-move-list { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
+.reign-move-row { display: flex; width: 100%; align-items: flex-end; gap: 8px; margin-bottom: 5px; }
+.reign-move-total-label { font-size: 0.85em; color: #666; font-weight: bold; }
+.reign-move-total-val { font-size: 1.2em; }
+.reign-add-move-btn { margin-top: auto; background: transparent; border: none; }
+
+.reign .preferred-move-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px dashed #666;
+  padding-bottom: 5px;
+}
+
+.reign .preferred-move-row label {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.reign .move-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+}
+
+.reign .move-total {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #8b1f1f;
+}
+
+.reign .dynamic-move {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px dashed #666;
+  padding-bottom: 5px;
+  gap: 8px;
+}
+
+.reign .move-name-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 1.1em;
+  padding: 0;
+  color: #111;
+}
+
+.reign .delete-custom-move {
+  color: #aaa;
+  cursor: pointer;
+  font-size: 0.9em;
+  padding-bottom: 2px;
+}
+
+.reign .delete-custom-move:hover {
+  color: #ff4444;
+}
+
+.reign .move-builder {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 0.85em;
+  align-items: center;
+  margin-top: 5px;
+  color: #666;
+}
+
+.reign .move-builder select {
+  background: rgba(255,255,255,0.5);
+  border: 1px solid #ccc;
+  font-family: inherit;
+  padding: 2px;
+}
+
+.reign .move-builder input[type="number"] {
+  width: 40px;
+  text-align: center;
+  border: 1px solid #ccc;
+  background: transparent;
+  font-family: inherit;
+  font-weight: bold;
+}
+
+/* -----------------------------------------
+   EXPERT / MASTER CHECKBOXES
+----------------------------------------- */
+.reign .em-toggles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 10px;
+}
+
+.reign .em-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+}
+
+.reign .em-label input[type="checkbox"] {
+  margin: 0;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.reign .skill-row > input[type="number"] {
+  width: 35px;
+  height: 24px;
+  text-align: center;
+  border: 1px solid #ccc;
+  background: transparent;
+  font-family: inherit;
+  font-weight: bold;
+  border-radius: 0;
+}
+
+/* -----------------------------------------
+   INTERACTIVE TEXT & CUSTOM SKILLS
+----------------------------------------- */
+.reign .rollable:hover {
+  color: #ff4444;
+  cursor: pointer;
+  text-shadow: 0 0 5px rgba(255, 68, 68, 0.4);
+}
+
+.reign .custom-skill-label {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  margin-right: 10px;
+}
+
+.reign .custom-skill-label input[type="text"] {
+  flex: 1;
+  border: none;
+  border-bottom: 1px dashed #666;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.9em;
+  padding: 0 0 2px 0;
+  color: #8b1f1f;
+  max-width: none;
+}
+
+.reign .custom-add-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  padding: 6px;
+  margin-top: 5px;
+  background: #f4f1ea;
+  border-top: 1px dashed #ccc;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.reign .add-custom-skill {
+  color: #333;
+  cursor: pointer;
+}
+
+.reign .add-custom-skill:hover {
+  color: #8b1f1f;
+}
+
+.reign .delete-custom-skill {
+  color: #aaa;
+  margin-right: 5px;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.reign .delete-custom-skill:hover {
+  color: #ff4444;
+}
+
+/* -----------------------------------------
+   ITEM LISTS (Weapons, Spells, Gear)
+----------------------------------------- */
+.reign .item-list-container {
+  border: 2px solid #000;
+  background: #fff;
+}
+
+.reign .list-header {
+  background: #000;
+  color: #fff;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.reign .list-header h3 {
+  margin: 0;
+  border: none;
+  color: #fff;
+  font-size: 1.1em;
+}
+
+.reign .item-row {
+  padding: 5px 10px;
+  border-bottom: 1px solid #eaeaea;
+  display: flex;
+  align-items: center;
+}
+
+.reign .item-row:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.reign .item-row:last-child {
+  border-bottom: none;
+}
+
+.reign .item-controls {
+  flex: 0 0 50px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.reign .item-controls a, .reign .control-btn {
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.reign .list-header .control-btn {
+  color: #fff;
+}
+
+.reign .item-controls a:hover {
+  color: #8b1f1f;
+}
+
+.reign textarea {
+  border: none;
+  padding: 8px;
+  width: 100%;
+  font-family: inherit;
+  resize: vertical;
+  background: transparent;
+}
+
+/* -----------------------------------------
+   CHAT CARD STYLING & DAMAGE BUTTONS
+----------------------------------------- */
+.reign-chat-card {
+  background: #fdfdfc;
+  border: 2px solid #000;
+  padding: 10px;
+  font-family: "Book Antiqua", Palatino, serif;
+  color: #111;
+}
+
+.reign-chat-card header h3 {
+  margin: 0 0 5px 0;
+  border-bottom: 2px solid #000;
+  padding-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.reign-chat-card .pool-details {
+  font-size: 0.9em;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.reign-chat-card hr {
+  border: none;
+  border-top: 1px dashed #666;
+  margin: 8px 0;
+}
+
+.reign-chat-card .sets-result {
+  font-size: 1.1em;
+  margin-bottom: 5px;
+}
+
+.reign-chat-card .waste-result {
+  font-size: 0.95em;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.reign-chat-card .ed-result, .reign-chat-card .md-result {
+  font-size: 0.9em;
+  color: #2d5a27;
+  margin-top: 5px;
+}
+
+.apply-dmg-btn, .gobble-dmg-btn, .apply-company-dmg-btn {
+  transition: all 0.2s;
+}
+
+.apply-dmg-btn {
+  background: #eee;
+  border: 1px solid #999;
+  border-radius: 4px;
+  color: #333;
+}
+
+.apply-dmg-btn:hover:not(:disabled) {
+  background: #8b1f1f;
+  color: #fff;
+  border-color: #000;
+}
+
+.apply-dmg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------
+   ITEM SHEET STYLING
+----------------------------------------- */
+.reign-item-root {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.reign .item-header {
+  border-bottom: 3px solid #000;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  display: flex;
+  gap: 15px;
+}
+
+.reign .item-header .header-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.reign .item-header input[name="name"] {
+  font-size: 1.6em;
+  font-weight: bold;
+  border: none;
+  border-bottom: 2px solid #000;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  margin-bottom: 5px;
+}
+
+.reign .item-type-label {
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #666;
+  letter-spacing: 2px;
+  font-size: 0.85em;
+}
+
+.reign .item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.reign .form-group-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.reign .form-group label, .reign .form-group-stacked label {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  color: #333;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.reign .form-group input {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 0;
+  padding: 4px;
+  font-family: inherit;
+}
+
+.reign .form-group-stacked textarea {
+  border: 1px solid #ccc;
+  background: #fff;
+  height: 150px;
+  padding: 5px;
+}
+
+.reign-box-weapon { border: 1px solid #ccc; padding: 10px; background: #fdfdfc; margin-bottom: 15px; }
+.reign-box-weapon-title { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; display: block; font-weight: bold; font-size: 0.85em; text-transform: uppercase; }
+.reign-weapon-ap { width: 50px; text-align: center; }
+.reign-weapon-chk { display: flex; align-items: center; gap: 5px; font-size: 0.85em; font-weight: bold; cursor: pointer; }
+
+/* -----------------------------------------
+   COMPANY SHEET STYLING
+----------------------------------------- */
+.reign.sheet.company {
+  background: #fdfdfc;
+}
+
+.reign.sheet.company .reign-company-title {
+  font-size: 2em; color: #8b1f1f; width: 100%; border: none; border-bottom: 2px solid #000; background: transparent; font-weight: bold;
+}
+.reign.sheet.company .reign-company-narrative { grid-template-columns: 1fr 1fr; }
+
+.reign.sheet.company .company-qualities-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.reign.sheet.company .quality-block {
+  border: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.reign.sheet.company .quality-header {
+  background: #000;
+  color: #fff;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.reign.sheet.company .quality-header h2 {
+  margin: 0;
+  border: none;
+  font-size: 1.2em;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.reign.sheet.company .quality-stats {
+  padding: 10px;
+  display: flex;
+  justify-content: space-around;
+  border-bottom: 1px dashed #ccc;
+}
+
+.reign.sheet.company .q-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.reign.sheet.company .q-stat label {
+  font-size: 0.8em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.reign.sheet.company .q-stat input[type="number"] {
+  width: 50px;
+  height: 40px;
+  font-size: 1.5em;
+  text-align: center;
+  border: 1px solid #ccc;
+  background: transparent;
+  font-weight: bold;
+}
+
+.reign.sheet.company .q-stat input.current-rating {
+  color: #8b1f1f;
+  border: 2px solid #8b1f1f;
+  background: #fdfdfc;
+}
+
+.reign.sheet.company .quality-notes {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: #f9f9f9;
+}
+
+.reign.sheet.company .quality-notes label {
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.reign.sheet.company .quality-notes textarea {
+  height: 60px;
+  border: 1px solid #eaeaea;
+  background: #fff;
+  padding: 5px;
+  font-size: 0.9em;
+}
+
+.reign.sheet.company .reign-company-assets-text {
+  height: 180px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  resize: vertical;
+  font-family: inherit;
+  background: transparent;
+}
+
+/* -----------------------------------------
+   THREAT SHEET
+----------------------------------------- */
+.reign-threat-header {
+  width: 100%;
+  font-size: 1.6em;
+  font-weight: bold;
+  border: none;
+  border-bottom: 2px solid #000;
+  background: transparent;
+  font-family: inherit;
+}
+
+.reign-threat-label {
+  font-size: 0.85em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.reign-threat-input {
+  width: 70px;
+  height: 50px;
+  font-size: 2em;
+  text-align: center;
+  font-weight: bold;
+  border: 2px solid #000;
+  background: transparent;
+  font-family: inherit;
+}
+
+.reign-threat-weapon {
+  width: 200px;
+  text-align: center;
+  border: 1px solid #ccc;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1em;
+  padding: 4px;
+}
+
+.reign-desc-text {
+  font-size: 0.8em;
+  color: #666;
+  font-style: italic;
+  padding: 5px 10px;
+  text-align: center;
+}
+
+.reign-fraction-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.reign-fraction-val {
+  width: 55px;
+  height: 45px;
+  font-size: 1em;
+  text-align: center;
+  font-weight: bold;
+  border: 2px solid #000;
+  background: transparent;
+  font-family: inherit;
+}
+
+.reign-mag-val { color: #8b1f1f; border-color: #8b1f1f; }
+.reign-mor-val { color: #00695c; border-color: #00695c; }
+
+.reign-fraction-max {
+  width: 55px;
+  height: 45px;
+  font-size: 1em;
+  text-align: center;
+  font-weight: bold;
+  border: 2px solid #999;
+  background: transparent;
+  font-family: inherit;
+  color: #666;
+}
+
+/* -----------------------------------------
+   ESOTERICA TAB & MAGIC
+----------------------------------------- */
+.reign-esoterica-split { display: grid; grid-template-columns: 250px 1fr; gap: 20px; height: 100%; }
+.reign-magic-stats { display: flex; flex-direction: column; gap: 15px; }
+.reign-sorcery-val { width: 50px; font-size: 1.5em; text-align: center; font-weight: bold; border: 1px solid #ccc; }
+.reign-sorcery-box { padding: 10px; text-align: center; background: #fff; }
+.reign-quick-attrs { padding: 10px; background: #fdfdfc; border-top: 1px dashed #ccc; }
+.reign-quick-attrs-title { text-align: center; font-size: 0.8em; color: #666; margin-bottom: 8px; font-weight: bold; }
+.reign-attunement-box { flex: 1; display: flex; flex-direction: column; }
+.reign-spell-list { display: flex; flex-direction: column; }
+.reign-spell-scroll { flex: 1; overflow-y: auto; }
+.reign-intensity-val { font-weight: bold; color: #8b1f1f; }
+
+.reign .quick-attr-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 10px;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.9em;
+  text-transform: uppercase;
+}
+
+.reign .quick-attr-row:last-child {
+  border-bottom: none;
+}
+
+.reign .quick-attr-row strong {
+  color: #8b1f1f;
+  font-size: 1.1em;
+}
+
+/* -----------------------------------------
+   INTERACTIVE HEALTH BOXES
+----------------------------------------- */
+.reign .health-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3px;
+  align-items: center;
+}
+
+.reign .location-block .stat-skills {
+  padding: 5px 0;
+}
+
+.reign .location-block .skill-row {
+  border-bottom: 1px solid #f0ede6;
+}
+
+.reign .location-block .skill-row:last-child {
+  border-bottom: none;
+}
+
+.reign .health-box {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 1px solid #666;
+  background: #fdfdfc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.reign .health-box:hover {
+  background: #eaeaea;
+}
+
+.reign .health-box[data-state="shock"] {
+  color: #d97706;
+}
+
+.reign .health-box[data-state="killing"] {
+  color: #8b1f1f;
+}
+
+/* -----------------------------------------
+   DIALOGS & POP-UPS
+----------------------------------------- */
+.reign-dialog-window .window-content {
+  background: #fdfdfc;
+  color: #111;
+  font-family: "Book Antiqua", Palatino, serif;
+}
+
+.reign-dialog-form {
+  padding: 10px 5px;
+}
+
+.reign-dialog-form p {
+  margin: 5px 0;
+}
+
+.reign-dialog-form .form-group {
+  margin-bottom: 12px;
+}
+
+.reign-dialog-form label {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  color: #333;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.reign-dialog-form input[type="number"],
+.reign-dialog-form input[type="text"],
+.reign-dialog-form select {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 0;
+  padding: 6px;
+  font-family: inherit;
+}
+
+.reign-dialog-form .dialog-grid {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.reign-dialog-form .dialog-grid-2 { grid-template-columns: 1fr 1fr; }
+.reign-dialog-form .dialog-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.reign-dialog-form .checkbox-group {
+  display: flex;
+  gap: 15px;
+  padding-top: 5px;
+}
+
+.reign-dialog-form .checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85em;
+  cursor: pointer;
+  text-transform: none;
+  font-weight: normal;
+}
+
+.reign-dialog-form .checkbox-group input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.reign-dialog-window footer.window-footer button {
+  font-family: "Book Antiqua", Palatino, serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  background: #eee;
+  border: 1px solid #999;
+  color: #333;
+  border-radius: 4px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.reign-dialog-window footer.window-footer button:hover {
+  background: #8b1f1f;
+  color: #fff;
+  border-color: #000;
+}
+/* ====================================================
+   XP PROGRESSION UI
+==================================================== */
+.reign .xp-tracker { border: 2px solid #000; background: #fff; margin-bottom: 20px; }
+.reign .upgrade-btn { color: #2d5a27; cursor: pointer; transition: all 0.2s; font-weight: bold; }
+.reign .upgrade-btn:hover { color: #1e3d1a; text-shadow: 0 0 5px rgba(45, 90, 39, 0.4); }
+.reign .active-mode { color: #8b1f1f; font-weight: bold; text-shadow: 0 0 5px rgba(139, 31, 31, 0.4); }
