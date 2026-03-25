@@ -1,0 +1,120 @@
+{
+  "professions": {
+    "1": {
+      "name": "Underclass (Outcast)",
+      "levels": {
+        "2": { "description": "You learned to survive on the fringes.", "attributes": { "sense": 1 }, "skills": { "plead": 2, "run": 1, "sight": 1, "dodge": 1 } },
+        "3": { "description": "A clever scavenger who knows the city's heart.", "skills": { "dodge": 1, "run": 1, "fascinate": 1, "jest": 1, "endurance": 1 } },
+        "4": { "description": "Experienced in the dangerous shadows.", "skills": { "stealth": 2, "lie": 2 }, "customSkills": [ {"name": "Weapon (Dagger)", "attribute": "coordination", "value": 1, "isCombat": true} ] },
+        "5": { "description": "A sovereign of the gutters.", "attributes": { "charm": 1 } }
+      }
+    },
+    "2": {
+      "name": "Lawbreaker (Outlaw)",
+      "levels": {
+        "2": { "description": "A life of petty crimes and quick escapes.", "attributes": { "coordination": 1 }, "skills": { "dodge": 1, "stealth": 3, "run": 1 } },
+        "3": { "description": "A seasoned cutpurse and climber.", "skills": { "dodge": 1, "run": 1, "climb": 2 }, "customSkills": [ {"name": "Weapon (Dagger)", "attribute": "coordination", "value": 1, "isCombat": true} ] },
+        "4": { "description": "A professional burglar and liar.", "skills": { "lie": 2 }, "expertDice": ["stealth", "climb"], "advantages": ["Hidden Wealth (1pt)"] },
+        "5": { "description": "A mastermind of the criminal underworld.", "masterDice": ["stealth"] }
+      }
+    },
+    "3": {
+      "name": "Performer (Minstrel)",
+      "levels": {
+        "2": { "description": "Singing and joking for your supper.", "attributes": { "charm": 1 }, "skills": { "graces": 1, "jest": 2, "fascinate": 1 } },
+        "3": { "description": "A wandering artist with a silver tongue.", "attributes": { "coordination": 1 }, "skills": { "run": 1, "lore": 1, "plead": 2 } },
+        "4": { "description": "Master of the social stage.", "skills": { "empathy": 2, "lie": 1 }, "expertDice": ["fascinate", "jest"] },
+        "5": { "description": "A legendary bard of the realm.", "masterDice": ["fascinate"] }
+      }
+    },
+    "4": {
+      "name": "Artisan (Trader)",
+      "levels": {
+        "2": { "description": "An eye for gold and a hand for craft.", "attributes": { "command": 1 }, "skills": { "haggle": 2, "lore": 1, "scrutinize": 1 } },
+        "3": { "description": "A traveled merchant with many connections.", "attributes": { "sense": 1 }, "skills": { "sight": 1, "empathy": 1, "lie": 1, "counterspell": 1 } },
+        "4": { "description": "Wealthy and well-spoken.", "skills": { "languageNative": 2 }, "expertDice": ["haggle"], "advantages": ["Established Wealth (1pt)"] },
+        "5": { "description": "A merchant prince of the guilds.", "masterDice": ["haggle"] }
+      }
+    },
+    "5": {
+      "name": "Voyager (Mariner)",
+      "levels": {
+        "2": { "description": "Salt-stained and rigging-toughened.", "attributes": { "body": 1 }, "skills": { "climb": 2, "vigor": 1, "sight": 1 }, "customSkills": [ {"name": "Swimming", "attribute": "body", "value": 1} ] },
+        "3": { "description": "A battle-hardened veteran of the tides.", "attributes": { "coordination": 1 }, "skills": { "dodge": 1, "fight": 1, "parry": 1, "endurance": 1 } },
+        "4": { "description": "A captain who commands respect.", "skills": { "intimidate": 2 }, "expertDice": ["climb"], "customSkills": [ {"name": "Swimming", "attribute": "body", "value": 1, "expert": true} ], "advantages": ["Sturdy Sea-Legs (1pt)"] },
+        "5": { "description": "A grand admiral of the fleet.", "customSkills": [ {"name": "Swimming", "attribute": "body", "value": 1, "master": true} ] }
+      }
+    },
+    "6": {
+      "name": "Warrior (Mercenary)",
+      "levels": {
+        "2": { "description": "Trained in the bloody arts of the front line.", "attributes": { "body": 1 }, "skills": { "fight": 2, "dodge": 1, "parry": 2 } },
+        "3": { "description": "A veteran survivor of the shield wall.", "attributes": { "sense": 1 }, "skills": { "hearing": 1, "endurance": 2, "run": 1, "vigor": 1 } },
+        "4": { "description": "A tactical leader of men.", "skills": { "tactics": 1, "strategy": 1 }, "expertDice": ["fight", "parry"] },
+        "5": { "description": "A terrifying master of battle.", "masterDice": ["fight"] }
+      }
+    },
+    "7": {
+      "name": "Scholar (Academic)",
+      "levels": {
+        "2": { "description": "Educated in the great halls of learning.", "attributes": { "knowledge": 1 }, "skills": { "lore": 2, "healing": 1 }, "customSkills": [ {"name": "Language (Ancient)", "attribute": "knowledge", "value": 1} ] },
+        "3": { "description": "A wise researcher and listener.", "attributes": { "sense": 1 }, "skills": { "scrutinize": 1, "empathy": 1 }, "customSkills": [ {"name": "Student of History", "attribute": "knowledge", "value": 2} ] },
+        "4": { "description": "Master of theory and counter-magic.", "skills": { "counterspell": 2 }, "expertDice": ["lore"], "advantages": ["Academic Title (1pt)"] },
+        "5": { "description": "The preeminent mind of the age.", "masterDice": ["lore"] }
+      }
+    },
+    "8": {
+      "name": "Commander (Leader)",
+      "levels": {
+        "2": { "description": "Born to lead and trained to command.", "attributes": { "command": 1 }, "skills": { "tactics": 1, "strategy": 1, "intimidate": 1, "inspire": 1 } },
+        "3": { "description": "A martial leader who fights at the front.", "attributes": { "body": 1 }, "skills": { "fight": 1, "parry": 1, "ride": 1, "endurance": 1 } },
+        "4": { "description": "A refined and noble captain.", "skills": { "graces": 2 }, "expertDice": ["tactics", "inspire"], "advantages": ["Commanding Status (1pt)"] },
+        "5": { "description": "A paragon of military virtue.", "masterDice": ["inspire"] }
+      }
+    },
+    "9": {
+      "name": "Mystic (Magus)",
+      "levels": {
+        "2": { "description": "Initiated into the secrets of the arcane.", "attributes": { "knowledge": 1 }, "skills": { "lore": 1, "eerie": 1, "esoterica_sorcery": 3 } },
+        "3": { "description": "An observer of the unseen world.", "attributes": { "sense": 1 }, "skills": { "scrutinize": 1, "empathy": 1, "counterspell": 2 } },
+        "4": { "description": "An adept with deep spell knowledge.", "expertDice": ["esoterica_sorcery"], "advantages": ["Arcane Relic (1pt)"], "customSkills": [ {"name": "Ancient Spells", "attribute": "knowledge", "value": 2} ] },
+        "5": { "description": "A supreme sorcerer.", "masterDice": ["esoterica_sorcery"] }
+      }
+    },
+    "10": {
+      "name": "High-Born (Aristocrat)",
+      "levels": {
+        "2": { "description": "Raised in luxury and political intrigue.", "attributes": { "charm": 1 }, "skills": { "graces": 2 }, "advantages": ["Noble Status (2pt)"] },
+        "3": { "description": "A master of horses and strategy.", "attributes": { "command": 1 }, "skills": { "inspire": 2, "strategy": 1, "ride": 1 } },
+        "4": { "description": "A pillar of the high nobility.", "expertDice": ["graces"], "advantages": ["Established Wealth (1pt)"], "customSkills": [ {"name": "Heraldry", "attribute": "knowledge", "value": 1} ] },
+        "5": { "description": "A sovereign in all but name.", "advantages": ["High Status (MD Equivalent)"] }
+      }
+    }
+  },
+  "wasteCharts": {
+    "Chart A: Hard Knocks (Physical)": {
+      "1": { "event": "Survived a plague.", "attributes": { "body": 1 } },
+      "2": { "event": "Lived as a runaway.", "skills": { "stealth": 2 } },
+      "3": { "event": "Fought in a street brawl.", "skills": { "fight": 2 } },
+      "4": { "event": "Cheated death in a cave-in.", "attributes": { "sense": 1 } },
+      "5": { "event": "Worked as a manual laborer.", "skills": { "vigor": 2 } },
+      "6": { "event": "Traveled with a caravan.", "skills": { "athletics": 2 } },
+      "7": { "event": "Hunted by a bounty hunter.", "skills": { "dodge": 2 } },
+      "8": { "event": "Survived a shipwreck.", "skills": { "climb": 2 } },
+      "9": { "event": "Lived in the deep wilderness.", "skills": { "direction": 2 } },
+      "10": { "event": "Held captive in a dark dungeon.", "attributes": { "command": 1 } }
+    },
+    "Chart B: High Society (Social)": {
+      "1": { "event": "Studied at a prestigious academy.", "attributes": { "knowledge": 1 } },
+      "2": { "event": "Inherited rare family artifacts.", "skills": { "lore": 2 } },
+      "3": { "event": "Attended grand balls and galas.", "skills": { "graces": 2 } },
+      "4": { "event": "Managed a small estate.", "attributes": { "command": 1 } },
+      "5": { "event": "Learned the art of the duel.", "skills": { "parry": 2 } },
+      "6": { "event": "Served as a personal page.", "skills": { "empathy": 2 } },
+      "7": { "event": "Invested in a trade guild.", "skills": { "haggle": 2 } },
+      "8": { "event": "Wrote a book of celebrated poetry.", "skills": { "jest": 2 } },
+      "9": { "event": "Traveled the world as an observer.", "skills": { "sight": 2 } },
+      "10": { "event": "Blessed by a high cleric.", "attributes": { "charm": 1 } }
+    }
+  }
+}

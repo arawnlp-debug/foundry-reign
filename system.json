@@ -1,0 +1,78 @@
+{
+  "id": "reign",
+  "title": "Reign: A Game of Lords and Leaders",
+  "description": "A Foundry VTT system for the Reign RPG, powered by the One Roll Engine (ORE).",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Llew ap Hywel"
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/reign.mjs"
+  ],
+  "styles": [
+    "styles/reign.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": {},
+      "company": {},
+      "threat": {}
+    },
+    "Item": {
+      "weapon": {},
+      "armor": {},
+      "shield": {},
+      "technique": {},
+      "spell": {},
+      "discipline": {},
+      "gear": {},
+      "advantage": {},
+      "problem": {}
+    }
+  },
+  "packs": [
+    {
+      "name": "weapons",
+      "label": "Weapons & Armor",
+      "path": "packs/weapons.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "martial-paths",
+      "label": "Martial Paths",
+      "path": "packs/martial-paths.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "esoterica",
+      "label": "Esoteric Disciplines & Spells",
+      "path": "packs/esoterica.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "gear",
+      "label": "General Gear",
+      "path": "packs/gear.db",
+      "type": "Item",
+      "system": "reign"
+    }
+  ],
+  "manifest": "https://github.com/arawnlp-debug/foundry-reign/releases/latest/download/system.json",
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v1.0.0/reign.zip"
+}
