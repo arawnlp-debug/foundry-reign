@@ -88,7 +88,7 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
                 if (newMorale === 0) {
                     publicContent += `<div style="background: #4a0000; color: #fff; padding: 5px; text-align: center; font-weight: bold; font-size: 1.1em; margin-top: 8px; border-radius: 3px;">THE HORDE ROUTS (Zero Morale)</div>`;
                     newMag = 0; 
-                    await targetActor.update({ "system.magnitude.value": 0 });
+                    // FIXED: Removed redundant targetActor.update call for magnitude.value to prevent UI flickering
                 }
             }
         }

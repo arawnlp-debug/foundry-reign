@@ -10,6 +10,12 @@ import { ReignItemSheet } from "./sheets/item-sheet.js";
 import { generateOREChatHTML } from "./helpers/chat.js";
 import { applyDamageToTarget, applyCompanyDamageToTarget } from "./combat/damage.js";
 
+// NEW: Import the migration engine
+import { migrateWorld } from "./system/migration.js";
+
+// NEW: Import the DataModels
+import * as models from "./system/models.js";
+
 // ----------------------------------------------------
 // INITIALIZATION
 // ----------------------------------------------------
@@ -23,6 +29,26 @@ Hooks.once("init", () => {
     type: String, default: "0"
   });
 
+  // NEW: Register DataModels
+  CONFIG.Actor.dataModels = {
+    character: models.ReignCharacterData,
+    company: models.ReignCompanyData,
+    threat: models.ReignThreatData
+  };
+
+  CONFIG.Item.dataModels = {
+    weapon: models.ReignWeaponData,
+    armor: models.ReignArmorData,
+    shield: models.ReignShieldData,
+    technique: models.ReignMagicData,
+    discipline: models.ReignMagicData,
+    spell: models.ReignSpellData,
+    gear: models.ReignGearData,
+    // FIXED: Pointing to the newly separated data models
+    advantage: models.ReignAdvantageData,
+    problem: models.ReignProblemData
+  };
+
   foundry.applications.apps.DocumentSheetConfig.registerSheet(Actor, "reign", ReignActorSheet, { types: ["character"], makeDefault: true });
   foundry.applications.apps.DocumentSheetConfig.registerSheet(Actor, "reign", ReignCompanySheet, { types: ["company"], makeDefault: true });
   foundry.applications.apps.DocumentSheetConfig.registerSheet(Actor, "reign", ReignThreatSheet, { types: ["threat"], makeDefault: true });
@@ -34,9 +60,14 @@ Hooks.once("ready", async () => {
   const currentVersion = game.system.version;
   const lastMigration = game.settings.get("reign", "lastMigrationVersion") || "0";
   
+  // If the system version is strictly newer than the last migrated version...
   if (foundry.utils.isNewerVersion(currentVersion, lastMigration)) {
     console.log(`Reign | World migrating from version ${lastMigration} to ${currentVersion}`);
-    // Future data migration logic will execute here
+    
+    // NEW: Execute the migration engine!
+    await migrateWorld();
+    
+    // Once successful, update the setting so it doesn't run again until the next patch
     await game.settings.set("reign", "lastMigrationVersion", currentVersion);
   }
 });

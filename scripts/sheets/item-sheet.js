@@ -6,7 +6,18 @@ export class ReignItemSheet extends HandlebarsApplicationMixin(foundry.applicati
     tag: "form", 
     classes: ["reign", "sheet", "item"], 
     position: { width: 450, height: "auto" }, 
-    form: { submitOnChange: true, closeOnSubmit: false } 
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      // NEW: Image editing action for ApplicationV2
+      editImage: async function(event, target) {
+        const fp = new FilePicker({
+          type: "image",
+          current: this.document.img,
+          callback: path => this.document.update({ img: path })
+        });
+        return fp.browse();
+      }
+    }
   };
 
   static PARTS = { sheet: { template: "systems/reign/templates/item/item-sheet.hbs" } };

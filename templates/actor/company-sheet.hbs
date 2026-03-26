@@ -1,7 +1,8 @@
 <div class="reign-sheet-root company-sheet">
   <header class="sheet-header">
     <div class="header-top">
-      <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" class="profile-img" style="border-radius: 5px;"/>
+      {{!-- FIXED: Changed data-edit to data-action for ApplicationV2 compatibility --}}
+      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img" style="border-radius: 5px;"/>
       <div class="header-fields">
         <div class="title-row">
           <input name="name" type="text" value="{{actor.name}}" placeholder="COMPANY NAME" class="reign-company-title"/>

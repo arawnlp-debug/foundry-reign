@@ -2,7 +2,7 @@
   "id": "reign",
   "title": "Reign: A Game of Lords and Leaders",
   "description": "A Foundry VTT system for the Reign RPG, powered by the One Roll Engine (ORE).",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "authors": [
     {
       "name": "Llew ap Hywel"
@@ -74,5 +74,5 @@
     }
   ],
   "manifest": "https://github.com/arawnlp-debug/foundry-reign/releases/latest/download/system.json",
-  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v1.0.0/reign.zip"
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v1.1.0/reign.zip"
 }

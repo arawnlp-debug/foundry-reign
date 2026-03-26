@@ -2,55 +2,26 @@
 const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 import { parseORE } from "../helpers/ore-engine.js";
 import { postOREChat } from "../helpers/chat.js";
+import { ReignRoller } from "../helpers/reign-roller.js";
 
 export class ReignThreatSheet extends HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
   static DEFAULT_OPTIONS = {
     tag: "form", classes: ["reign", "sheet", "actor", "threat"], position: { width: 500, height: "auto" }, form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
-      rollThreat: async function(event, target) {
-        const system = this.document.system;
-        const basePool = system.threatLevel || 0;
-        
-        let content = `<form class="reign-dialog-form">
-          <div class="form-group"><label>Base Threat Level:</label><input type="number" disabled value="${basePool}"/></div>
-          <div class="dialog-grid dialog-grid-2">
-            <div class="form-group"><label>Ganging Up / Bonus Dice (+d):</label><input type="number" name="bonus" value="0"/></div>
-            <div class="form-group"><label>Penalty Dice (-d):</label><input type="number" name="penalty" value="0"/></div>
-          </div>
-        </form>`;
-        
-        const rollData = await DialogV2.wait({
-          classes: ["reign-dialog-window"],
-          window: { title: `Roll Threat Action` },
-          content: content,
-          buttons: [{
-            action: "roll", label: "Roll Horde", default: true,
-            callback: (e, b, d) => {
-              const f = d.element.querySelector("form");
-              return {
-                bonus: parseInt(f.querySelector('[name="bonus"]').value) || 0,
-                penalty: parseInt(f.querySelector('[name="penalty"]').value) || 0
-              };
-            }
-          }]
+      // NEW: Image editing action for ApplicationV2
+      editImage: async function(event, target) {
+        const fp = new FilePicker({
+          type: "image",
+          current: this.document.img,
+          callback: path => this.document.update({ img: path })
         });
-        
-        if (!rollData) return;
-        
-        let intendedPool = basePool + rollData.bonus - rollData.penalty;
-        let diceToRoll = Math.min(intendedPool, 15);
-        let wasCapped = intendedPool > 15;
-        
-        if (diceToRoll < 1) return ui.notifications.warn("Penalties reduced the horde's dice pool below 1. They hesitate or miss entirely!");
-        
-        const roll = new Roll(`${diceToRoll}d10`);
-        await roll.evaluate();
-        const results = roll.dice[0]?.results.map(r => r.result) || [];
-        
-        // FIXED: Changed system.damageFormula to system.damage so the chat card can read it!
-        const pseudoWeapon = { type: "weapon", system: { damage: system.damageFormula || "Width Shock" } };
-        await postOREChat(this.document, "Horde Attack", diceToRoll, results, 0, 0, pseudoWeapon, { wasCapped, isAttack: true, isMinion: true });
+        return fp.browse();
       },
+      rollThreat: async function(event, target) {
+        // Redirecting to the central engine
+        await ReignRoller.rollThreat(this.document, target.dataset);
+      },
+      // PRESERVED: Manual Morale Check
       rollMorale: async function(event, target) {
         const system = this.document.system;
         const pool = system.threatLevel || 0;
@@ -91,6 +62,7 @@ export class ReignThreatSheet extends HandlebarsApplicationMixin(foundry.applica
     context.actor = this.document;
     context.system = this.document.system;
     
+    // PRESERVED: Populating the Company dropdown list
     const companyList = {};
     game.actors.filter(a => a.type === "company").forEach(c => {
       companyList[c.id] = c.name;
