@@ -1,0 +1,99 @@
+<div class="reign-chat-card">
+    <header>
+        <h3 style="display: flex; align-items: center; gap: 5px;">
+            <i class="fas fa-dice-d10"></i> Rolling {{label}}
+        </h3>
+    </header>
+
+    {{#if (gt multiActions 1)}}
+        <div class="multi-action-flag" style="background: #fff3e0; color: #e65100; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 8px; border: 1px solid #ffb74d; border-radius: 4px; font-size: 0.9em;">
+            ATTEMPTING {{multiActions}} ACTIONS<br>
+            <span style="font-size: 0.85em; font-weight: normal;">(Requires {{multiActions}} matched sets)</span>
+        </div>
+    {{/if}}
+
+    {{#if (gt calledShot 0)}}
+        <div class="called-shot-flag" style="background: #e0f2f1; color: #00695c; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 8px; border: 1px solid #4db6ac; border-radius: 4px; font-size: 0.9em;">
+            <i class="fas fa-crosshairs"></i> CALLED SHOT: Height {{calledShot}}
+        </div>
+    {{/if}}
+
+    <div class="pool-details" style="font-style: italic; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+        Pool: {{totalPool}}d10 {{#if wasCapped}}<span style='color: #8b1f1f;'>(Capped)</span>{{/if}}
+    </div>
+
+    <div class="sets-result">
+        {{#if sets.length}}
+            <ul style="list-style: none; padding: 0; margin: 10px 0;">
+                {{#each sets as |set|}}
+                    <li class="ore-set-row" style="margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.03); border: 1px solid #ddd; border-left: 4px solid {{#if set.isSuccess}}#2d5a27{{else}}#8b1f1f{{/if}}; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
+                            <div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                    {{#each set.dice as |die|}}
+                                        <span class="ore-die {{die.cssClass}}" style="display: flex; justify-content: center; align-items: center; width: 24px; height: 24px; background: {{#if (eq die.cssClass 'matched')}}#2d5a27{{else}}#ffebee{{/if}}; border: 1px solid #000; color: {{#if (eq die.cssClass 'matched')}}#fff{{else}}#8b1f1f{{/if}}; font-weight: bold; border-radius: 4px; font-family: monospace;">{{die.value}}</span>
+                                    {{/each}}
+                                </div>
+                                <div style="font-size: 0.85em; color: #555; margin-top: 4px;">({{set.text}}){{#if set.location}} &rarr; <strong>{{set.location}}</strong>{{/if}}</div>
+                                {{#unless set.isSuccess}}
+                                    <div style="color: #8b1f1f; font-size: 0.8em; margin-top: 2px;">(Failed: {{set.failReason}})</div>
+                                {{/unless}}
+                            </div>
+
+                            <div style="display: flex; gap: 5px;">
+                                <button class="gobble-dmg-btn" data-height="{{set.height}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e0f2f1; border: 1px solid #00897b; border-radius: 3px; color: #00695c;" title="Gobble 1 Die">
+                                    <i class="fas fa-shield-alt"></i>
+                                </button>
+                                {{#if set.dmg}}
+                                    <button class="apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Apply Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-fist"></i>
+                                    </button>
+                                {{/if}}
+                                {{#if set.companyDmg}}
+                                    <button class="apply-company-dmg-btn" data-width="{{set.companyDmg.width}}" data-quality="{{set.companyDmg.quality}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff3e0; border: 1px solid #ff9800; color: #e65100;" title="Apply Company Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-chess-rook"></i>
+                                    </button>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                        {{#if set.dmg}}
+                            <div style="font-size: 0.85em; color: #333; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px dashed #ccc;">
+                                <span><strong>Damage:</strong> {{set.dmg.formula}}</span>
+                                <div class="tags">
+                                    {{#if set.dmg.ap}}<span style="background:#333; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">AP {{set.dmg.ap}}</span>{{/if}}
+                                    {{#if set.dmg.slow}}<span style="background:#555; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">SLOW {{set.dmg.slow}}</span>{{/if}}
+                                    {{#if set.dmg.twoHanded}}<span style="background:#4a4a8a; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">2H</span>{{/if}}
+                                    {{#if set.dmg.massive}}<span style="background:#6b3a1f; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">MASSIVE</span>{{/if}}
+                                    {{#if set.dmg.area}}<span style="background:#d97706; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">AREA {{set.dmg.area}}d</span>{{/if}}
+                                </div>
+                            </div>
+                        {{/if}}
+                    </li>
+                {{/each}}
+            </ul>
+        {{else}}
+            <div style="text-align: center; padding: 15px; color: #8b1f1f; font-weight: bold; font-size: 1.1em; background: #ffebee; border: 1px dashed #8b1f1f; margin: 10px 0;">No Sets Found</div>
+        {{/if}}
+    </div>
+
+    <div class="waste-result" style="background: #f5f5f5; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        <strong style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #555; text-transform: uppercase;">Unmatched Dice (Waste)</strong>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+            {{#if waste.length}}
+                {{#each waste as |die|}}
+                    <span class="ore-die waste" style="display: flex; justify-content: center; align-items: center; width: 18px; height: 18px; background: #eaeaea; border: 1px solid #999; color: #666; font-weight: bold; font-size: 0.75em; border-radius: 4px; opacity: 0.7; font-family: monospace;">{{die.value}}</span>
+                {{/each}}
+            {{else}}
+                <span style='font-size: 0.85em; color: #999;'>None</span>
+            {{/if}}
+        </div>
+    </div>
+
+    {{#if (gt expertDie 0)}}
+        <div class="ed-result" style="margin-top: 5px;"><strong>Expert Die Face:</strong> <span style="background: #2d5a27; color: white; padding: 1px 6px; border-radius: 3px;">{{expertDie}}</span></div>
+    {{/if}}
+    {{#if (gt masterDiceCount 0)}}
+        <div class="md-result" style="margin-top: 5px;"><strong>Master Dice Used:</strong> {{masterDiceCount}}</div>
+    {{/if}}
+</div>
