@@ -314,6 +314,11 @@ function migrateSpell(item) {
   const system = item.system || {};
 
   if (!Number.isInteger(system.intensity)) updateData["system.intensity"] = Number(system.intensity) || 1;
+  if (!Number.isInteger(system.castingTime)) updateData["system.castingTime"] = Number(system.castingTime) || 0;
+  
+  // NEW: Backfill castingStat for Sorcery flexibility
+  if (!system.castingStat) updateData["system.castingStat"] = "knowledge"; 
+  
   if (system.pool === null || system.pool === undefined) updateData["system.pool"] = "";
   if (system.page === null || system.page === undefined) updateData["system.page"] = "";
   if (system.effect === null || system.effect === undefined) updateData["system.effect"] = "";

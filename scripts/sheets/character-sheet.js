@@ -4,7 +4,11 @@ const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 import { parseORE, getEffectiveMax } from "../helpers/ore-engine.js";
 import { postOREChat } from "../helpers/chat.js";
 import { OneRollGenerator } from "../generators/one-roll.js";
-import { ReignRoller } from "../helpers/reign-roller.js";
+
+// PHASE 3 REFACTOR: Import modular rollers instead of ReignRoller
+import { CharacterRoller } from "../helpers/character-roller.js";
+import { WealthRoller } from "../helpers/wealth-roller.js";
+
 import { syncCharacterStatusEffects } from "../combat/damage.js";
 
 // SPRINT 1: Import the single sources of truth
@@ -68,9 +72,75 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
           }
         } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
       },
+      // HEALING ENGINE: Long Term Rest
+      restAndRecover: async function(event, target) {
+        try {
+          const content = `
+            <div class="reign-dialog-form">
+              <p style="text-align: center; font-size: 1.1em; margin-bottom: 10px;">Select the duration of your rest.</p>
+              <div class="form-group">
+                <label>Rest Duration:</label>
+                <select name="restType">
+                  <option value="day">Rest for 1 Day (Heals 1 Shock per location)</option>
+                  <option value="week">Rest for 1 Week (Heals 1 Killing per location)</option>
+                </select>
+              </div>
+            </div>
+          `;
+
+          const restType = await DialogV2.wait({
+            classes: ["reign-dialog-window"],
+            window: { title: "Rest & Recover" },
+            content: content,
+            buttons: [{
+              action: "confirm", label: "Rest", default: true,
+              callback: (e, b, d) => {
+                const val = d.element.querySelector('[name="restType"]').value;
+                if (d && typeof d.close === 'function') d.close({ animate: false });
+                return val;
+              }
+            }]
+          });
+
+          if (!restType) return;
+
+          const system = this.document.system;
+          const updates = {};
+          let totalHealed = 0;
+
+          ["head", "torso", "armR", "armL", "legR", "legL"].forEach(loc => {
+            let currentShock = system.health[loc].shock || 0;
+            let currentKilling = system.health[loc].killing || 0;
+
+            if (restType === "day" && currentShock > 0) {
+              updates[`system.health.${loc}.shock`] = currentShock - 1;
+              totalHealed++;
+            } else if (restType === "week" && currentKilling > 0) {
+              updates[`system.health.${loc}.killing`] = currentKilling - 1;
+              totalHealed++;
+            }
+          });
+
+          if (totalHealed > 0) {
+            await this.document.update(updates);
+            await syncCharacterStatusEffects(this.document);
+            
+            const safeName = foundry.utils.escapeHTML(this.document.name);
+            const timeStr = restType === "day" ? "a full day" : "a full week";
+            const healStr = restType === "day" ? "Shock" : "Killing";
+            
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: this.document }),
+              content: `<div class="reign-chat-card"><h3 style="color: #01579b;"><i class="fas fa-campground"></i> Natural Healing</h3><p>${safeName} rests for <strong>${timeStr}</strong>, naturally recovering <strong>1 ${healStr}</strong> damage across ${totalHealed} affected locations.</p></div>`
+            });
+          } else {
+            ui.notifications.info(`${this.document.name} has no ${restType === "day" ? "Shock" : "Killing"} damage to heal.`);
+          }
+        } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
+      },
       purchaseHelper: async function(event, target) {
         try {
-          await ReignRoller.rollWealthPurchase(this.document);
+          await WealthRoller.rollWealthPurchase(this.document);
         } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
       },
       acquireLoot: async function(event, target) {
@@ -95,9 +165,13 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
             classes: ["reign-dialog-window"],
             window: { title: "Acquire Loot", resizable: true },
             content: content,
+            rejectClose: false,
             render: (event, html) => {
               let element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event[0] || null));
               if (element) {
+                  const closeBtn = element.querySelector('.header-control[data-action="close"]');
+                  if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
+
                   const f = element.querySelector("form");
                   if (f) f.addEventListener("submit", e => e.preventDefault());
               }
@@ -106,6 +180,7 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
               action: "confirm", label: "Evaluate Loot", default: true,
               callback: (e, b, d) => {
                 const val = parseInt(d.element.querySelector('[name="lootValue"]').value) || 0;
+                if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; }
                 d.close({ animate: false });
                 return val;
               }
@@ -180,7 +255,7 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
             const hasEd = target.dataset.hased === "true";
             if (!hasEd) return ui.notifications.warn("You must acquire an Expert Die before upgrading to Master Die (RAW).");
             cost = 5; 
-            newPath = isCustom ? `system.customSkills.${key}.master` : (isEsoterica ? `system.esoterica.master` : `system.skills.${key}.master`);
+            newPath = isCustom ? `system.customSkills.${key}.master` : (isEsoterica ? `system.esoterica.master` : `system.skills.${key}.expert`);
             newVal = true;
             upgradeText = `Master Die for ${label}`;
             if (hasEd) removeEdPath = isCustom ? `system.customSkills.${key}.expert` : (isEsoterica ? `system.esoterica.expert` : `system.skills.${key}.expert`);
@@ -195,11 +270,18 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
             classes: ["reign-dialog-window"],
             window: { title: "Confirm Advancement" },
             content: `<div class="reign-dialog-form"><p style="font-size: 1.1em; text-align: center;">Spend <strong>${cost} XP</strong> to acquire <strong>${upgradeText}</strong>?</p></div>`,
+            rejectClose: false,
+            render: (event, html) => {
+              let element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event[0] || null));
+              if (element) {
+                  const closeBtn = element.querySelector('.header-control[data-action="close"]');
+                  if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
+              }
+            },
             buttons: [
-              { action: "yes", label: "Yes", default: true, callback: (e, b, d) => { if (d.element) d.element.style.display = "none"; return true; } },
-              { action: "no", label: "No", callback: (e, b, d) => { if (d.element) d.element.style.display = "none"; return false; } }
-            ],
-            rejectClose: false
+              { action: "yes", label: "Yes", default: true, callback: (e, b, d) => { if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; } return true; } },
+              { action: "no", label: "No", callback: (e, b, d) => { if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; } return false; } }
+            ]
           });
           
           if (!confirm) return;
@@ -220,7 +302,6 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
         try {
           const dataset = target.dataset;
           
-          // SPRINT 5 (C2.2): Block Stealth and Climb if carrying a Tower Shield
           if (this.document.system.hasTowerShieldPenalty) {
               const key = dataset.key?.toLowerCase();
               if (key === "stealth" || key === "climb") {
@@ -228,7 +309,7 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
               }
           }
 
-          await ReignRoller.rollCharacter(this.document, dataset);
+          await CharacterRoller.rollCharacter(this.document, dataset);
         } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
       },
       changeTab: async function(event, target) { 
@@ -251,10 +332,24 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
         try {
           const item = this.document.items.get(target.dataset.itemId);
           if (!item) return;
-          const confirm = await DialogV2.confirm({
+
+          // Replaced standard confirm with properly styled anti-ghost DialogV2.wait
+          const confirm = await DialogV2.wait({
+              classes: ["reign-dialog-window"],
               window: { title: `Delete ${item.name}?` },
-              content: `<p>Are you sure you want to permanently delete <strong>${item.name}</strong>? This action cannot be undone.</p>`,
-              rejectClose: false
+              content: `<div class="reign-dialog-form"><p style="text-align: center; font-size: 1.1em;">Are you sure you want to permanently delete <strong>${item.name}</strong>?<br>This action cannot be undone.</p></div>`,
+              rejectClose: false,
+              render: (event, html) => {
+                let element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event[0] || null));
+                if (element) {
+                    const closeBtn = element.querySelector('.header-control[data-action="close"]');
+                    if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
+                }
+              },
+              buttons: [
+                { action: "yes", label: "Yes", default: true, callback: (e, b, d) => { if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; } return true; } },
+                { action: "no", label: "No", callback: (e, b, d) => { if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; } return false; } }
+              ]
           });
           if (confirm) await item.delete(); 
         } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
@@ -326,7 +421,6 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
           const sys = shield.system;
           const currentLocs = foundry.utils.deepClone(sys.protectedLocations);
           
-          // SPRINT 5 (C2.2): Tower Shield Custom Coverage Restrictions
           if (sys.shieldSize === "tower") {
               if (!sys.isStationary) {
                   return ui.notifications.warn("Cannot adjust protection while moving. The shield only covers your arm.");
@@ -341,7 +435,6 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
               if (currentLocs[locKey]) {
                   currentLocs[locKey] = false;
               } else {
-                  // Enforce maximum of 2 choices (excluding the auto-locked arm/leg)
                   const activeManual = Object.keys(currentLocs).filter(k => 
                       currentLocs[k] && k !== carryingArm && k !== carryingLeg
                   );
@@ -350,9 +443,7 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
                   }
                   currentLocs[locKey] = true;
               }
-          } 
-          // Standard Shield Coverage Logic
-          else {
+          } else {
               const limits = { small: 1, large: 2 }; 
               const max = limits[sys.shieldSize] || 1;
 
@@ -372,13 +463,13 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
       },
       createEffect: async function(event, target) {
         const actor = this.document;
-        await ActiveEffect.create({
+        // V13 STRICT: Use createEmbeddedDocuments
+        await actor.createEmbeddedDocuments("ActiveEffect", [{
           name: `New Effect`,
           img: "icons/svg/aura.svg",
           origin: actor.uuid,
           disabled: false
-        }, { parent: actor });
-        this.render(true);
+        }]);
       },
       editEffect: async function(event, target) {
         const effectId = target.closest(".effect-item").dataset.effectId;
@@ -520,7 +611,6 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
     let shieldBonus = 0;
     const equippedShields = this.document.items.filter(i => i.type === "shield" && i.system.equipped);
     
-    // SPRINT 5 (C2.2): Tower shields are portable cover and DO NOT generate Parry dice
     const parryShields = equippedShields.filter(s => s.system.shieldSize !== "tower");
     if (parryShields.length > 0) shieldBonus = Math.max(...parryShields.map(s => s.system.parryBonus || 0));
 
@@ -599,6 +689,9 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
         context.manualEffects.push(e);
       }
     }
+
+    // V13 FIX: Ensure the master 'effects' array is also available for the template
+    context.effects = Array.from(this.document.effects);
 
     return context;
   }

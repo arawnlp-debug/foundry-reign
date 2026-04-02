@@ -130,11 +130,25 @@
     <div class="form-group-grid">
       <div class="form-group">
         <label>{{localize 'REIGN.Intensity'}}</label>
-        <input type="number" name="system.intensity" value="{{system.intensity}}"/>
+        <input type="number" name="system.intensity" value="{{system.intensity}}" min="1" max="10"/>
       </div>
       <div class="form-group">
-        <label>{{localize 'REIGN.Pool'}}</label>
-        <input type="text" name="system.pool" value="{{system.pool}}"/>
+        <label>{{localize 'REIGN.CastingTime'}}</label>
+        <input type="number" name="system.castingTime" value="{{system.castingTime}}" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.CastingStat'}}</label>
+        <select name="system.castingStat">
+          {{selectOptions attributeOptions selected=system.castingStat localize=true}}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>{{localize 'REIGN.SpellPool'}}</label>
+        <input type="text" name="system.pool" value="{{system.pool}}" placeholder="e.g. Counterspell"/>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Damage Formula (Leave blank if non-damaging)</label>
+        <input type="text" name="system.damage" value="{{system.damage}}" placeholder="e.g. Width Shock, or Waste Killing"/>
       </div>
       <div class="form-group" style="grid-column: span 2;">
         <label>{{localize 'REIGN.Page'}}</label>

@@ -295,6 +295,8 @@ export class ReignSpellData extends foundry.abstract.TypeDataModel {
             intensity: new NumberField({ initial: 1, min: 1, max: 10, integer: true }),
             // AUDIT FIX 5.4b: Spells have casting times measured in rounds
             castingTime: new NumberField({ initial: 0, min: 0, integer: true }),
+            castingStat: new StringField({ initial: "knowledge" }), // NEW: Flexible casting stat
+            damage: new StringField({ initial: "" }), // NEW: Enables conditional hit-location targeting for Attack Spells
             pool: new StringField({ initial: "" }),
             page: new StringField({ initial: "" }),
             effect: new HTMLField({ initial: "" })

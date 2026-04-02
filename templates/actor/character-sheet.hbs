@@ -25,6 +25,7 @@
   </nav>
 
   <section class="sheet-body">
+    
     {{!-- PAGE 1: STATS & SKILLS --}}
     <div class="tab stats {{tabs.stats}}" data-tab="stats">
       
@@ -128,9 +129,12 @@
         <div class="health-actions-sub-header">
             <span class="health-hint">(L-Click: Add, R-Click: Remove)</span>
             
-            <div class="label-center">
-                <button type="button" data-action="recoverShock" class="recovery-btn" title="Halve current Shock damage">
-                  <i class="fas fa-heartbeat"></i> Recovery
+            <div class="label-center" style="display: flex; gap: 5px; justify-content: center;">
+                <button type="button" data-action="recoverShock" class="recovery-btn" title="Halve current Shock damage (Post-Combat)">
+                  <i class="fas fa-heartbeat"></i> Short Rest
+                </button>
+                <button type="button" data-action="restAndRecover" class="recovery-btn" title="Natural Healing (1 Day / 1 Week)">
+                  <i class="fas fa-campground"></i> Long Rest
                 </button>
             </div>
 
@@ -162,7 +166,7 @@
 
             <div class="health-track" data-loc="{{loc.key}}">
               {{#each loc.boxes as |box|}}
-                <div class="health-box" data-state="{{box.state}}">{{box.icon}}</div>
+                  <div class="health-box" data-state="{{box.state}}">{{box.icon}}</div>
               {{/each}}
             </div>
 

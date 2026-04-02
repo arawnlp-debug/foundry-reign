@@ -40,18 +40,40 @@
                                 {{/unless}}
                             </div>
 
-                            <div style="display: flex; gap: 5px;">
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end;">
                                 <button class="gobble-dmg-btn" data-height="{{set.height}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e0f2f1; border: 1px solid #00897b; border-radius: 3px; color: #00695c;" title="Gobble 1 Die">
                                     <i class="fas fa-shield-alt"></i>
                                 </button>
+                                
+                                {{!-- COMBAT: Apply Primary Damage --}}
                                 {{#if set.dmg}}
-                                    <button class="apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Apply Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                    <button class="apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Apply Primary Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
                                         <i class="fas fa-hand-fist"></i>
                                     </button>
                                 {{/if}}
+
+                                {{!-- HEALING ENGINE: Apply Magical Healing --}}
+                                {{#if set.heal}}
+                                    <button class="apply-heal-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-heal-string="{{set.heal.formula}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e8f5e9; border: 1px solid #2e7d32; color: #1b5e20; border-radius: 3px;" title="Apply Magical Healing" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-holding-medical"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{!-- HEALING ENGINE: Apply First Aid (Skill) --}}
+                                {{#if ../isFirstAid}}
+                                    <button class="apply-first-aid-btn" data-width="{{set.width}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #0277bd; color: #01579b; border-radius: 3px;" title="Apply First Aid (Convert Killing to Shock)" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-notes-medical"></i>
+                                    </button>
+                                {{/if}}
+
                                 {{#if set.companyDmg}}
                                     <button class="apply-company-dmg-btn" data-width="{{set.companyDmg.width}}" data-quality="{{set.companyDmg.quality}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff3e0; border: 1px solid #ff9800; color: #e65100;" title="Apply Company Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
                                         <i class="fas fa-chess-rook"></i>
+                                    </button>
+                                {{/if}}
+                                {{#if ../hasEffects}}
+                                    <button class="apply-condition-btn" data-item-uuid="{{../itemUuid}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #f3e5f5; border: 1px solid #7b1fa2; color: #4a148c;" title="Apply Condition to Targets" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-bolt"></i>
                                     </button>
                                 {{/if}}
                             </div>
@@ -67,6 +89,11 @@
                                     {{#if set.dmg.massive}}<span style="background:#6b3a1f; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">MASSIVE</span>{{/if}}
                                     {{#if set.dmg.area}}<span style="background:#d97706; color:#fff; padding: 1px 4px; font-size: 0.7em; border-radius: 3px;">AREA {{set.dmg.area}}d</span>{{/if}}
                                 </div>
+                            </div>
+                        {{/if}}
+                        {{#if set.heal}}
+                            <div style="font-size: 0.85em; color: #1b5e20; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px dashed #ccc;">
+                                <span><strong>Healing:</strong> {{set.heal.formula}}</span>
                             </div>
                         {{/if}}
                     </li>
@@ -88,6 +115,19 @@
                 <span style='font-size: 0.85em; color: #999;'>None</span>
             {{/if}}
         </div>
+        
+        {{!-- SECONDARY DAMAGE ENGINE: Waste Hit/Heal UI Block --}}
+        {{#if wasteDmg}}
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.85em; color: {{#if wasteDmg.isHealing}}#2e7d32{{else}}#8b1f1f{{/if}}; line-height: 1.3;">
+                    <strong>Waste Effect:</strong><br>
+                    1 {{wasteDmg.type}} to {{wasteDmg.locations}}
+                </div>
+                <button class="apply-waste-dmg-btn" data-faces="{{wasteDmg.faces}}" data-type="{{wasteDmg.type}}" data-ap="{{wasteDmg.ap}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: {{#if wasteDmg.isHealing}}#e8f5e9{{else}}#ffebee{{/if}}; border: 1px solid {{#if wasteDmg.isHealing}}#2e7d32{{else}}#ef5350{{/if}}; color: {{#if wasteDmg.isHealing}}#1b5e20{{else}}#c62828{{/if}}; border-radius: 3px;" title="Apply Waste {{#if wasteDmg.isHealing}}Healing{{else}}Hits{{/if}}">
+                    <i class="fas {{#if wasteDmg.isHealing}}fa-heartbeat{{else}}fa-meteor{{/if}}"></i>
+                </button>
+            </div>
+        {{/if}}
     </div>
 
     {{#if (gt expertDie 0)}}

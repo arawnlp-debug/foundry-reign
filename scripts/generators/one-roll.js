@@ -4,12 +4,10 @@ const { DialogV2 } = foundry.applications.api;
 export class OneRollGenerator {
   
   static async start(actor) {
-    // 1. Fetch the JSON tables dynamically
     let tables;
     
-    // AUDIT FIX 1.5: Use world setting for custom path, fallback to corrected root path
     const customPath = game.settings.get("reign", "oneRollTablePath");
-    const defaultPath = `systems/${game.system.id}/one-roll-tables.json`;
+    const defaultPath = `systems/${game.system.id}/data/one-roll-tables.json`; // FIXED FILE PATH
     const path = customPath || defaultPath;
     
     try {
@@ -26,17 +24,21 @@ export class OneRollGenerator {
       return ui.notifications.error(`Failed to parse character tables at ${path}. Ensure the file is valid JSON.`);
     }
 
-    // 2. Prompt for Waste Chart Selection
     const chartOptions = Object.keys(tables.wasteCharts || {}).map(c => `<option value="${c}">${c}</option>`).join("");
     const selectedChart = await DialogV2.wait({
         classes: ["reign-dialog-window"],
         window: { title: "One-Roll Generator", resizable: true },
         content: `<form class="reign-dialog-form"><div class="form-group"><label>Select Waste Dice Chart:</label><select name="chart">${chartOptions}</select></div></form>`,
+        rejectClose: false,
         render: (event, html) => {
             const element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event?.[0] || null));
             if (!element) return;
+            
+            // Anti-ghosting patch for "X" button
+            const closeBtn = element.querySelector('.header-control[data-action="close"]');
+            if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
+
             const f = element.querySelector("form");
-            // FIX: Prevent Ghosting on 'Enter'
             if (f) f.addEventListener("submit", e => e.preventDefault());
         },
         buttons: [{ 
@@ -45,7 +47,7 @@ export class OneRollGenerator {
             default: true, 
             callback: (e, b, d) => {
                 const val = d.element.querySelector('[name="chart"]').value;
-                // THE FIX: Safe kill ApplicationV2 Dialog without Ghosting
+                if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; }
                 d.close({ animate: false });
                 return val;
             }
@@ -54,12 +56,10 @@ export class OneRollGenerator {
 
     if (!selectedChart) return;
 
-    // 3. Roll 11d10 (With RAW 6+ Reroll Logic)
     let results = [];
     let diceToRoll = 11;
-    let maxIterations = 100; // Circuit breaker to prevent infinite loops
+    let maxIterations = 100;
 
-    // Loop the roll to catch any dice that need to be rerolled due to >5 matches
     while (diceToRoll > 0) {
         if (--maxIterations <= 0) {
             ui.notifications.error("One-Roll generator hit maximum reroll limit. Please try again.");
@@ -70,18 +70,16 @@ export class OneRollGenerator {
         await roll.evaluate();
         const newRolls = roll.dice[0]?.results.map(r => r.result) || [];
         
-        // Count current totals to see if adding these new rolls pushes anything over 5
         const tempCounts = {};
         results.forEach(r => tempCounts[r] = (tempCounts[r] || 0) + 1);
         
-        diceToRoll = 0; // Reset for the next loop
+        diceToRoll = 0;
         
         for (const r of newRolls) {
             if ((tempCounts[r] || 0) < 5) {
                 results.push(r);
                 tempCounts[r] = (tempCounts[r] || 0) + 1;
             } else {
-                // If this die pushes the set to 6+, it must be rerolled
                 diceToRoll++;
             }
         }
@@ -89,7 +87,6 @@ export class OneRollGenerator {
 
     results.sort((a, b) => b - a);
 
-    // 4. Parse Sets and Waste Dice
     const counts = {};
     results.forEach(r => counts[r] = (counts[r] || 0) + 1);
 
@@ -109,7 +106,6 @@ export class OneRollGenerator {
     sets.sort((a, b) => b.width - a.width || b.height - a.height);
     waste.sort((a, b) => b - a);
 
-    // 5. Evaluate Results against JSON
     let summaryHTML = `<div class="reign-generator-results">
         <h2 style="text-align: center; border-bottom: 2px solid #8b1f1f; color: #8b1f1f; margin-top: 0;">11d10 Roll Results</h2>
         <div style="text-align: center; font-size: 1.4em; letter-spacing: 3px; margin-bottom: 15px; font-weight: bold; background: #f5f5f5; padding: 10px; border-radius: 5px;">
@@ -125,7 +121,6 @@ export class OneRollGenerator {
         masterDice: []
     };
 
-    // Process Professions (Sets)
     if (sets.length > 0) {
         summaryHTML += `<h3 style="background: #e0e0e0; padding: 5px 10px; border-left: 4px solid #8b1f1f;">Professions (Sets)</h3>`;
         for (const set of sets) {
@@ -148,7 +143,6 @@ export class OneRollGenerator {
         summaryHTML += `<h3 style="background: #e0e0e0; padding: 5px 10px; border-left: 4px solid #8b1f1f;">Professions (Sets)</h3><p>No sets rolled! A true peasant.</p>`;
     }
 
-    // Process Life Events (Waste Dice)
     if (waste.length > 0) {
         summaryHTML += `<h3 style="background: #e0e0e0; padding: 5px 10px; border-left: 4px solid #2d5a27;">Life Events (${selectedChart})</h3><ul style="margin-top: 5px;">`;
         for (const face of waste) {
@@ -165,18 +159,26 @@ export class OneRollGenerator {
 
     summaryHTML += `</div>`;
 
-    // 6. Display the Window
     const action = await DialogV2.wait({
         classes: ["reign-dialog-window"],
         position: { width: 500 },
         window: { title: "Character Blueprint", resizable: true },
         content: summaryHTML,
+        rejectClose: false,
+        render: (event, html) => {
+            const element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event?.[0] || null));
+            if (!element) return;
+            
+            const closeBtn = element.querySelector('.header-control[data-action="close"]');
+            if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
+        },
         buttons: [
             { 
               action: "apply", 
               label: "Apply to Sheet (Overwrites Stats)", 
               default: true,
               callback: (e, b, d) => {
+                  if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; }
                   d.close({ animate: false });
                   return "apply";
               }
@@ -185,6 +187,7 @@ export class OneRollGenerator {
               action: "reroll", 
               label: "Re-Roll 11d10",
               callback: (e, b, d) => {
+                  if (d.element) { d.element.classList.remove("reign-dialog-window"); d.element.style.display = "none"; }
                   d.close({ animate: false });
                   return "reroll";
               }
@@ -203,7 +206,6 @@ export class OneRollGenerator {
       return String(name || "").trim().toLowerCase();
   }
 
-  // Safely merge JSON bonuses
   static _mergeData(target, source) {
       if (source.attributes) {
           for (const [k, v] of Object.entries(source.attributes)) {
@@ -264,30 +266,25 @@ export class OneRollGenerator {
       }
   }
 
-  // 7. Write Data to the Character Sheet
   static async _applyToActor(actor, data) {
       const updates = {};
       const system = actor.system;
 
-      // Base Stats: RAW says One-Roll characters start with 2 in all attributes
       const attrs = ["body", "coordination", "sense", "knowledge", "command", "charm"];
       for (const a of attrs) {
           updates[`system.attributes.${a}.value`] = 2 + (data.attributes[a] || 0);
       }
 
-      // Base Skills: Zero them out, then apply generated points
       for (const s of Object.keys(system.skills || {})) {
           updates[`system.skills.${s}.value`] = data.skills[s] || 0;
           updates[`system.skills.${s}.expert`] = false;
           updates[`system.skills.${s}.master`] = false;
       }
 
-      // Handle Sorcery explicitly so it maps to the correct Esoterica data path
       updates[`system.esoterica.sorcery`] = data.skills["esoterica_sorcery"] || 0;
       updates[`system.esoterica.expert`] = false;
       updates[`system.esoterica.master`] = false;
 
-      // Apply ED/MD to base skills and Sorcery
       if (data.expertDice) {
           data.expertDice.forEach(s => {
               if (s === "esoterica_sorcery") updates[`system.esoterica.expert`] = true;
@@ -307,15 +304,13 @@ export class OneRollGenerator {
           });
       }
 
-      // RAW: Auto-grant a Master Die in Native Language
       updates[`system.skills.languageNative.master`] = true;
       updates[`system.skills.languageNative.expert`] = false;
 
-      // Custom Skills: Wipe existing ones, then create new randomized IDs for generated ones
       const customSkillUpdates = {};
       if (system.customSkills) {
           for (const key of Object.keys(system.customSkills)) {
-              customSkillUpdates[`-=${key}`] = null; // Foundry's way of deleting object keys
+              customSkillUpdates[`-=${key}`] = null; 
           }
       }
       
@@ -334,13 +329,10 @@ export class OneRollGenerator {
       }
       updates["system.customSkills"] = customSkillUpdates;
 
-      // Clear custom moves so stale links from previous builds do not survive regeneration
       updates["system.customMoves"] = {};
 
-      // Apply all sheet data first
       await actor.update(updates);
 
-      // Remove existing generated advantage items before recreating them
       const existingGeneratedAdvantages = actor.items.filter(i =>
           i.type === "advantage" && i.getFlag("reign", "generatedByOneRoll")
       );
@@ -349,7 +341,6 @@ export class OneRollGenerator {
           await actor.deleteEmbeddedDocuments("Item", existingGeneratedAdvantages.map(i => i.id));
       }
 
-      // Create generated advantages as embedded Items so they appear in the sheet list
       if (data.advantages && data.advantages.length > 0) {
           const advantageDocs = data.advantages.map(name => ({
               name: String(name || "Generated Advantage").trim(),

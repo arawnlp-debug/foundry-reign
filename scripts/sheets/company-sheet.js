@@ -1,6 +1,6 @@
 // scripts/sheets/company-sheet.js
 const { HandlebarsApplicationMixin } = foundry.applications.api;
-import { ReignRoller } from "../helpers/reign-roller.js";
+import { CompanyRoller } from "../helpers/company-roller.js";
 
 export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -29,7 +29,7 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
       },
       rollCompanyStat: async function(event, target) {
         try {
-          await ReignRoller.rollCompany(this.document, target.dataset);
+          await CompanyRoller.rollCompany(this.document, target.dataset);
         } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
       },
       itemCreate: async function(event, target) { 

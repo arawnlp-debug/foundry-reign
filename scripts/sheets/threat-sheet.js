@@ -1,6 +1,7 @@
 // scripts/sheets/threat-sheet.js
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 import { parseORE } from "../helpers/ore-engine.js";
+import { ThreatRoller } from "../helpers/threat-roller.js";
 
 export class ReignThreatSheet extends HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -31,8 +32,7 @@ export class ReignThreatSheet extends HandlebarsApplicationMixin(foundry.applica
 
       rollThreat: async function(event, target) {
         try {
-          const { ReignRoller } = await import("../helpers/reign-roller.js");
-          await ReignRoller.rollThreat(this.document, target.dataset);
+          await ThreatRoller.rollThreat(this.document, target.dataset);
         } catch (err) {
           ui.notifications.error(`Action failed: ${err.message}`);
           console.error(err);

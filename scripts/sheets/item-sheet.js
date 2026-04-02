@@ -35,12 +35,13 @@ export class ReignItemSheet extends HandlebarsApplicationMixin(foundry.applicati
           // If this item can be equipped, default the effect to match the equipped state!
           const startDisabled = item.system.equipped !== undefined ? !item.system.equipped : false;
           
-          await ActiveEffect.create({
+          // V13 STRICT: Use createEmbeddedDocuments instead of ActiveEffect.create
+          await item.createEmbeddedDocuments("ActiveEffect", [{
             name: `New ${item.name} Effect`,
             img: item.img || "icons/svg/aura.svg",
             origin: item.uuid,
             disabled: startDisabled
-          }, { parent: item });
+          }]);
 
           this.render(true); // Force UI refresh
         },
@@ -115,6 +116,16 @@ export class ReignItemSheet extends HandlebarsApplicationMixin(foundry.applicati
     context.shieldArmOptions = {
       armL: "REIGN.ArmL",
       armR: "REIGN.ArmR"
+    };
+
+    // NEW: Casting Stat Options for Sorcery Flexibility
+    context.attributeOptions = {
+      body: "REIGN.AttrBody",
+      coordination: "REIGN.AttrCoordination",
+      sense: "REIGN.AttrSense",
+      knowledge: "REIGN.AttrKnowledge",
+      command: "REIGN.AttrCommand",
+      charm: "REIGN.AttrCharm"
     };
 
     return context;
