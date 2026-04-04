@@ -41,9 +41,18 @@
                             </div>
 
                             <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end;">
-                                <button class="gobble-dmg-btn" data-height="{{set.height}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e0f2f1; border: 1px solid #00897b; border-radius: 3px; color: #00695c;" title="Gobble 1 Die">
-                                    <i class="fas fa-shield-alt"></i>
-                                </button>
+                                {{!-- PHASE B: Initiative Override Button --}}
+                                {{#if set.initBtn}}
+                                    <button class="set-init-btn" data-width="{{set.width}}" data-height="{{set.height}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff8e1; border: 1px solid #f57f17; color: #f57f17; border-radius: 3px;" title="Use this set's speed for Combat Initiative">
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{#unless ../isDefense}}
+                                    <button class="gobble-dmg-btn" data-height="{{set.height}}" style="flex: 0 0 30px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e0f2f1; border: 1px solid #00897b; border-radius: 3px; color: #00695c;" title="Gobble 1 Die">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </button>
+                                {{/unless}}
                                 
                                 {{!-- COMBAT: Apply Primary Damage --}}
                                 {{#if set.dmg}}
@@ -78,6 +87,13 @@
                                 {{/if}}
                             </div>
                         </div>
+
+                        {{!-- NEW PHASE A: Gobble UI Block --}}
+                        {{#if ../isDefense}}
+                            <div style="font-size: 0.9em; color: #0d47a1; margin-top: 6px; text-align: center; padding: 6px; border-top: 1px dashed #90caf9; background: #e3f2fd; border-radius: 3px;">
+                                <strong><i class="fas fa-shield-alt"></i> Generates {{set.width}} Gobble Dice of Height {{set.height}}</strong>
+                            </div>
+                        {{/if}}
 
                         {{#if set.dmg}}
                             <div style="font-size: 0.85em; color: #333; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px dashed #ccc;">

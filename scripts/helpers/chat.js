@@ -37,6 +37,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       rawDmgStr = "Width Shock";
   }
 
+  // PHASE A: Gobble Generation Detect
+  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(label);
+
   // HEALING ENGINE: Detect if this is a first aid roll or a healing spell
   const isFirstAid = /healing|medicine/i.test(label);
   const isHealingSpell = isSpell && /healing/i.test(rawDmgStr);
@@ -49,12 +52,12 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       wasteType = wasteMatch[1].toLowerCase();
   }
 
-  // Ensure healing magic isn't falsely flagged as a combat attack
-  const isAttack = (!!flags.isAttack || (isSpell && rawDmgStr.trim() !== "")) && !isHealingSpell;
+  // Ensure healing magic and defensive sets aren't falsely flagged as combat attacks
+  const isAttack = (!!flags.isAttack || (isSpell && rawDmgStr.trim() !== "")) && !isHealingSpell && !isDefense;
 
   // Build the secondary waste object if unmatched dice exist
   let wasteData = null;
-  if (wasteType && parsed.waste.length > 0) {
+  if (wasteType && parsed.waste.length > 0 && !isDefense) {
       const wasteFaces = parsed.waste.map(f => parseInt(f, 10));
       const wasteLocs = wasteFaces.map(f => getHitLocationLabel(getHitLocation(f)).split(" (")[0]);
       wasteData = {
@@ -72,6 +75,7 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     totalPool,
     wasCapped: !!flags.wasCapped,
     isAttack: isAttack,
+    isDefense: isDefense,
     isHealingSpell: isHealingSpell,
     isFirstAid: isFirstAid,
     isMinion: !!flags.isMinion,
@@ -87,7 +91,7 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
   };
 
   // Process Primary Sets for Template
-  parsed.sets.forEach(s => {
+  parsed.sets.forEach((s, index) => {
     let locKey = getHitLocation(s.height);
     let isSuccess = true;
     let failReason = "";
@@ -104,12 +108,15 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       width: s.width,
       height: s.height,
       text: s.text,
-      location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid)) ? getHitLocationLabel(locKey) : null,
+      location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid) && !isDefense) ? getHitLocationLabel(locKey) : null,
       isSuccess,
       failReason,
       dice: getDiceData(Array(s.width).fill(s.height), isSuccess, false),
       dmg: null,
-      heal: null
+      heal: null,
+      companyDmg: null,
+      // PHASE B: If there are multiple sets, show the Override Initiative button
+      initBtn: parsed.sets.length > 1
     };
 
     // Calculate Primary Attack / Spell Damage / Healing data
@@ -160,7 +167,7 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
     
     let initValue = (fastestSet.width * 10) + fastestSet.height; 
     
-    const isDefense = /dodge|parry|counterspell/i.test(label);
+    const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(label);
     if (isDefense) {
         initValue += 0.90;
     } 

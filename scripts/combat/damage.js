@@ -1,6 +1,7 @@
 // scripts/combat/damage.js
 const { DialogV2 } = foundry.applications.api;
 import { computeLocationDamage, getHitLocation, getHitLocationLabel, getEffectiveMax, parseORE } from "../helpers/ore-engine.js";
+import { generateOREChatHTML } from "../helpers/chat.js";
 
 function evaluateMathString(exprStr, widthValue) {
   let expr = String(exprStr ?? "").toLowerCase().replace(/width/g, widthValue).replace(/\s/g, "");
@@ -196,6 +197,7 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
 
     let localHealth = foundry.utils.deepClone(targetActor.system.health);
     let damageSummary = [];
+    let tookDamage = false;
 
     if (areaDice > 0) {
       const splashRoll = new Roll(`${areaDice}d10`);
@@ -231,8 +233,13 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
         let loc = localHealth[locKey];
         const totalCoverAr = 0;
         const effectiveAr = 0;
+        
+        // Splash damage has no localized armor reduction modeled in the basic rules, 
+        // but if it did, it would be subtracted here.
         const shockSoaked = 0;
         const killingSoaked = 0;
+
+        if (finalShock > 0 || finalKilling > 0) tookDamage = true;
 
         const effectiveMax = getEffectiveMax(targetActor, locKey);
         const result = computeLocationDamage(loc.shock || 0, loc.killing || 0, finalShock, finalKilling, effectiveMax);
@@ -264,6 +271,8 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
       finalShock = Math.max(0, finalShock - effectiveAr);
       finalKilling = Math.max(0, finalKilling - effectiveAr);
 
+      if (finalShock > 0 || finalKilling > 0) tookDamage = true;
+
       const effectiveMax = getEffectiveMax(targetActor, mainLocKey);
       const result = computeLocationDamage(loc.shock || 0, loc.killing || 0, finalShock, finalKilling, effectiveMax);
 
@@ -289,6 +298,11 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
     const chatContent = `<div class="reign-chat-card"><h3 style="color: #8b1f1f;">Damage Applied</h3><p style="margin-bottom: 5px;"><strong>Target:</strong> ${safeTargetName} ${areaDice > 0 ? "<em>(Area Effect)</em>" : ""}</p><div style="background: rgba(0,0,0,0.05); padding: 5px; border-left: 3px solid #8b1f1f;">${summaryHtml}</div>${statusAlert}</div>`;
 
     await ChatMessage.create({ content: chatContent, speaker: ChatMessage.getSpeaker({ actor: targetActor }) });
+
+    // PHASE B: Hit Spoils a Set
+    if (tookDamage) {
+        await checkAndSpoilSet(targetActor, width, height);
+    }
   }
 }
 
@@ -370,7 +384,6 @@ export async function applyScatteredDamageToTarget(facesArrayStr, damageType, ap
 
     for (let [locKey, hits] of Object.entries(locCounts)) {
       
-      // HEALING ENGINE: Handle Waste Healing logic!
       if (isHealing) {
           let loc = localHealth[locKey];
           let healedKilling = 0;
@@ -584,7 +597,7 @@ export async function applyFirstAidToTarget(width) {
       classes: ["reign-dialog-window"],
       window: { title: "Apply First Aid" },
       content: content,
-      rejectClose: false, // P2-6 FIX: Safe Cancellation
+      rejectClose: false, 
       buttons: [{
           action: "confirm", label: "Treat Wound", default: true,
           callback: (e, b, d) => {
@@ -595,7 +608,6 @@ export async function applyFirstAidToTarget(width) {
       }]
   });
 
-  // P2-6 FIX: Ensure we stop if the dialog was closed without a selection
   if (!locKey) return;
 
   for (let target of targets) {
@@ -663,4 +675,102 @@ export async function syncCharacterStatusEffects(actor) {
   await toggle("dazed", isDazed);
   await toggle("maimed", isMaimed);
   await toggle("bleeding", isMaimed);
+}
+
+/**
+ * PHASE B: The Interruption Engine
+ * Scans for the target's pending roll and breaks their concentration if the incoming attack is faster.
+ */
+async function checkAndSpoilSet(targetActor, incomingWidth, incomingHeight) {
+    if (!game.combat || !game.combat.started) return;
+
+    // Verify the target is in the current combat and has rolled an initiative value
+    const combatant = game.combat.combatants.find(c => c.actorId === targetActor.id);
+    if (!combatant || combatant.initiative === null) return;
+
+    // Find the latest active roll made by this character
+    const latestMsg = game.messages.contents.slice().reverse().find(m => 
+        m.speaker?.actor === targetActor.id && 
+        m.flags?.reign?.results !== undefined
+    );
+    if (!latestMsg) return;
+
+    const reignFlags = latestMsg.flags.reign;
+    const parsed = parseORE(reignFlags.results, reignFlags.rollFlags?.isMinion);
+    if (parsed.sets.length === 0) return; // Action has already failed/been completely ruined
+
+    // Locate the target's intended set
+    const fastestSet = parsed.sets.reduce((max, set) => {
+        if (set.width > max.width) return set;
+        if (set.width === max.width && set.height > max.height) return set;
+        return max;
+    });
+
+    // Check Speed: The incoming attack must strictly resolve BEFORE the target's set to ruin it.
+    // (Simultaneous hits do not spoil each other)
+    const isFaster = (incomingWidth > fastestSet.width) || (incomingWidth === fastestSet.width && incomingHeight > fastestSet.height);
+    
+    if (isFaster) {
+        let newResults = [...reignFlags.results];
+        
+        // Remove exactly ONE die that matches the height of the spoiled set
+        const index = newResults.indexOf(fastestSet.height);
+        if (index > -1) {
+            newResults.splice(index, 1);
+            
+            // Rebuild the visual chat card with the new array
+            const newHtml = await generateOREChatHTML(
+                reignFlags.actorType,
+                reignFlags.label,
+                reignFlags.totalPool,
+                newResults,
+                reignFlags.expertDie,
+                reignFlags.masterDiceCount,
+                reignFlags.itemData,
+                reignFlags.rollFlags
+            );
+            
+            const spoilBanner = `<div style="background: #ffebee; border: 2px solid #ef5350; color: #c62828; padding: 8px; text-align: center; font-weight: bold; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="fas fa-bolt"></i> CONCENTRATION BROKEN! Lost 1 die from fastest set due to damage.</div>`;
+            const finalHtml = newHtml.replace('<div class="reign-chat-card">', `<div class="reign-chat-card">${spoilBanner}`);
+            
+            await latestMsg.update({
+                content: finalHtml,
+                "flags.reign.results": newResults
+            });
+
+            // Re-calculate their Combat Tracker Initiative so they dynamically drop down the turn order
+            const newParsed = parseORE(newResults, reignFlags.rollFlags?.isMinion);
+            let newInit = 0;
+            if (newParsed.sets.length > 0) {
+                const newFastest = newParsed.sets.reduce((max, set) => {
+                    if (set.width > max.width) return set;
+                    if (set.width === max.width && set.height > max.height) return set;
+                    return max;
+                });
+                newInit = (newFastest.width * 10) + newFastest.height;
+                
+                const flags = reignFlags.rollFlags || {};
+                const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(reignFlags.label);
+                
+                if (isDefense) {
+                    newInit += 0.90;
+                } else if (flags.isAttack && reignFlags.itemData?.type === "weapon") {
+                    const rangeStr = (reignFlags.itemData.system.range || "0").toLowerCase().trim();
+                    let rangeWeight = 0;
+                    const rangeMap = { "touch": 1, "point": 1, "blank": 1, "short": 2, "medium": 3, "long": 4, "extreme": 6 };
+                    const keyword = Object.keys(rangeMap).find(k => rangeStr.includes(k));
+                    if (keyword) rangeWeight = rangeMap[keyword];
+                    else {
+                        const match = rangeStr.match(/(\d+)/);
+                        rangeWeight = match ? parseInt(match[1]) : 0;
+                    }
+                    newInit += Math.min(rangeWeight * 0.01, 0.89);
+                }
+                if (flags.isMinion) newInit -= 0.50;
+            }
+            
+            await combatant.update({ initiative: newInit });
+            ui.notifications.warn(`${targetActor.name}'s action was spoiled by the attack!`);
+        }
+    }
 }

@@ -25,8 +25,6 @@ export class CharacterRoller {
 
     let isCompletingCast = false;
 
-    // SPRINT 5 FIX: Global Casting State Machine & Slow Weapons
-    // This intercepts the action BEFORE the dialog is ever shown.
     if (game.combat) {
         const combatant = game.combat.combatants.find(c => c.actorId === actor.id);
         if (combatant) {
@@ -42,14 +40,12 @@ export class CharacterRoller {
                 if (game.combat.round < activeCast.round) {
                     return ui.notifications.warn(`${actor.name} is concentrating on ${activeCast.name} and cannot take other actions until Round ${activeCast.round}.`);
                 } else if (type === "item" && key === activeCast.itemId) {
-                    // Time to cast! Free the lock so the dialog can open.
                     await combatant.unsetFlag("reign", "activeCast");
                     isCompletingCast = true;
                 } else {
                     return ui.notifications.error(`You have ${activeCast.name} prepared. You must cast it before taking other actions!`);
                 }
             } else if (!isCompletingCast && type === "item" && itemRef?.type === "spell" && itemRef.system.castingTime > 0) {
-                // New multi-round spell declared! Start cast and EXIT BEFORE DIALOG.
                 const castCompleteRound = game.combat.round + itemRef.system.castingTime;
                 await combatant.setFlag("reign", "activeCast", { itemId: itemRef.id, name: itemRef.name, round: castCompleteRound });
                 
@@ -60,7 +56,7 @@ export class CharacterRoller {
                     <p style="font-size: 0.9em; color: #555;">The spell requires total concentration and will be ready to release on <strong>Round ${castCompleteRound}</strong>.</p>
                   </div>`;
                 await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: chatHtml });
-                return; // EXIT EARLY! No roll dialog until casting is complete.
+                return;
             }
         }
     }
@@ -211,6 +207,11 @@ export class CharacterRoller {
 
     const showSkillSelect = (type === "item");
     const isCombatRoll = (type === "item" && itemRef?.type === "weapon") || (type === "skill" && key === "fight") || (type === "move") || (type === "customSkill" && system.customSkills[key]?.isCombat);
+    
+    // NEW FLAG: Check if the roll is specifically a defensive action
+    const isDefenseRoll = rawSkillKey === "parry" || rawSkillKey === "dodge" || rawSkillKey === "counterspell";
+    // Ensure defensive rolls are NOT flagged as attacks
+    const isAttackRoll = isCombatRoll && !isDefenseRoll;
 
     const aquaticSkills = ["athletics", "dodge", "endurance", "vigor", "stealth"];
     const showEnvContext = isCombatRoll || aquaticSkills.includes(rawSkillKey);
@@ -475,14 +476,15 @@ export class CharacterRoller {
             if (parsed.sets.length > 0) {
                 const bestSet = parsed.sets[0]; 
                 let csHtml = `<div class="reign-chat-card" style="border-color: #1a237e;"><h3 style="color: #1a237e;">Counterspell Declared</h3><p style="font-size: 1.1em; margin-bottom: 5px;">The caster anchors their magic with <strong>${bestSet.text}</strong>.</p><p style="font-size: 0.9em; color: #555;">This produces <strong>${bestSet.width} Gobble Dice</strong> at Height <strong>${bestSet.height}</strong>. Each can cancel one die from an incoming spell set of equal or lower Height.</p></div>`;
-                await postOREChat(actor, label || "Counterspell", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: false });
+                await postOREChat(actor, label || "Counterspell", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: false, isDefense: true });
                 await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: csHtml });
             } else {
-                await postOREChat(actor, label || "Counterspell", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: false });
+                await postOREChat(actor, label || "Counterspell", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: false, isDefense: true });
                 await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: `<div class="reign-chat-card"><h3 style="color: #8b1f1f;">Counterspell Fizzled</h3><p>The caster failed to anchor the spell. They are unprotected!</p></div>` });
             }
         } else {
-            await postOREChat(actor, label || "Action", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: isCombatRoll });
+            // Pass the new isDefense flag into postOREChat so it knows to generate Gobble Dice UI
+            await postOREChat(actor, label || "Action", diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: wasCapped, isAttack: isAttackRoll, isDefense: isDefenseRoll });
         }
     };
 

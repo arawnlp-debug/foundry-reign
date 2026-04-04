@@ -11,6 +11,8 @@ import { ReignThreatSheet } from "./sheets/threat-sheet.js";
 import { ReignItemSheet } from "./sheets/item-sheet.js";
 import { generateOREChatHTML } from "./helpers/chat.js";
 import { applyDamageToTarget, applyCompanyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget } from "./combat/damage.js";
+import { ReignCombat } from "./combat/ore-combat.js";
+import { parseORE } from "./helpers/ore-engine.js";
 
 import { migrateWorld } from "./system/migration.js";
 import * as models from "./system/models.js";
@@ -18,6 +20,7 @@ import * as models from "./system/models.js";
 const { DialogV2 } = foundry.applications.api;
 
 Hooks.once("init", () => {
+  CONFIG.Combat.documentClass = ReignCombat;
   CONFIG.Combat.initiative = { formula: "0", decimals: 2 };
 
   game.settings.register("reign", "lastMigrationVersion", {
@@ -231,6 +234,51 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
   const msgId = message.id || element.dataset?.messageId;
   const msg = game.messages.get(msgId);
 
+  // PHASE B: Override Initiative Button
+  element.querySelectorAll(".set-init-btn").forEach(btn => {
+      btn.addEventListener("click", async (event) => {
+          event.preventDefault();
+          if (!msg) return;
+          if (!msg.isAuthor && !game.user.isGM) return ui.notifications.warn("Only the GM or the rolling player can set this initiative.");
+
+          const width = parseInt(btn.dataset.width);
+          const height = parseInt(btn.dataset.height);
+
+          if (game.combat && game.combat.started) {
+              const combatant = game.combat.combatants.find(c => c.actorId === msg.speaker?.actor);
+              if (combatant) {
+                  const reignFlags = msg.flags?.reign || {};
+                  const flags = reignFlags.rollFlags || {};
+                  let newInit = (width * 10) + height;
+
+                  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(reignFlags.label);
+                  if (isDefense) {
+                      newInit += 0.90;
+                  } else if (flags.isAttack && reignFlags.itemData?.type === "weapon") {
+                      const rangeStr = (reignFlags.itemData.system.range || "0").toLowerCase().trim();
+                      let rangeWeight = 0;
+                      const rangeMap = { "touch": 1, "point": 1, "blank": 1, "short": 2, "medium": 3, "long": 4, "extreme": 6 };
+                      const keyword = Object.keys(rangeMap).find(k => rangeStr.includes(k));
+                      if (keyword) rangeWeight = rangeMap[keyword];
+                      else {
+                          const match = rangeStr.match(/(\d+)/);
+                          rangeWeight = match ? parseInt(match[1]) : 0;
+                      }
+                      newInit += Math.min(rangeWeight * 0.01, 0.89);
+                  }
+                  if (flags.isMinion) newInit -= 0.50;
+
+                  await combatant.update({ initiative: newInit });
+                  ui.notifications.info(`Initiative set to ${width}x${height} for ${combatant.name}.`);
+              } else {
+                  ui.notifications.warn("Token is not in the active combat tracker.");
+              }
+          } else {
+              ui.notifications.warn("No active combat encounter.");
+          }
+      });
+  });
+
   element.querySelectorAll(".gobble-dmg-btn").forEach(btn => {
     btn.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -260,7 +308,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
           classes: ["reign-dialog-window"],
           window: { title: "Spend Gobble Die", resizable: true },
           content: content,
-          rejectClose: false, // P2-6 FIX: Safe Cancellation
+          rejectClose: false, 
           buttons: [{
               action: "confirm", label: "Gobble Attack", default: true,
               callback: (e, b, d) => {
@@ -319,6 +367,43 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
            content: finalHtml,
            "flags.reign.results": newResults
         });
+
+        // PHASE B FIX: Update the Target's Combat Tracker Initiative when their set is manually Gobbled!
+        if (game.combat && game.combat.started) {
+            const combatant = game.combat.combatants.find(c => c.actorId === msg.speaker?.actor);
+            if (combatant && combatant.initiative !== null) {
+                const newParsed = parseORE(newResults, reignFlags.rollFlags?.isMinion);
+                let newInit = 0;
+                if (newParsed.sets.length > 0) {
+                    const newFastest = newParsed.sets.reduce((max, set) => {
+                        if (set.width > max.width) return set;
+                        if (set.width === max.width && set.height > max.height) return set;
+                        return max;
+                    });
+                    newInit = (newFastest.width * 10) + newFastest.height;
+                    
+                    const flags = reignFlags.rollFlags || {};
+                    const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(reignFlags.label);
+                    
+                    if (isDefense) {
+                        newInit += 0.90;
+                    } else if (flags.isAttack && reignFlags.itemData?.type === "weapon") {
+                        const rangeStr = (reignFlags.itemData.system.range || "0").toLowerCase().trim();
+                        let rangeWeight = 0;
+                        const rangeMap = { "touch": 1, "point": 1, "blank": 1, "short": 2, "medium": 3, "long": 4, "extreme": 6 };
+                        const keyword = Object.keys(rangeMap).find(k => rangeStr.includes(k));
+                        if (keyword) rangeWeight = rangeMap[keyword];
+                        else {
+                            const match = rangeStr.match(/(\d+)/);
+                            rangeWeight = match ? parseInt(match[1]) : 0;
+                        }
+                        newInit += Math.min(rangeWeight * 0.01, 0.89);
+                    }
+                    if (flags.isMinion) newInit -= 0.50;
+                }
+                await combatant.update({ initiative: newInit });
+            }
+        }
       }
     });
   });
@@ -458,4 +543,134 @@ Hooks.on("preCreateItem", (item, data, options, userId) => {
       return false; 
     }
   }
+});
+
+// PHASE B: Track combat start/round changes to reset to Declaration and clear initiative
+const resetCombatRound = async (combat) => {
+  await combat.setFlag("reign", "phase", "declaration");
+  const updates = combat.combatants.map(c => ({
+    _id: c.id,
+    "flags.reign.declared": false,
+    initiative: null // Wipes old ORE rolls
+  }));
+  if (updates.length > 0) {
+    await combat.updateEmbeddedDocuments("Combatant", updates);
+  }
+};
+
+Hooks.on("combatStart", async (combat, context) => {
+  if (game.user.isGM) await resetCombatRound(combat);
+});
+
+Hooks.on("updateCombat", async (combat, changes, context, userId) => {
+  if (!game.user.isGM) return;
+  if (foundry.utils.hasProperty(changes, "round") && combat.started) {
+      await resetCombatRound(combat);
+  }
+});
+
+// PHASE B: Watch for all combatants confirming their declaration to automatically advance phase
+Hooks.on("updateCombatant", async (combatant, changes, context, userId) => {
+  if (!game.user.isGM) return;
+  const combat = combatant.combat;
+  if (!combat) return;
+
+  if (combat.getFlag("reign", "phase") === "declaration" && foundry.utils.hasProperty(changes, "flags.reign.declared")) {
+      const allDeclared = combat.combatants.filter(c => c.getFlag("reign", "declared")).length === combat.combatants.size;
+      if (allDeclared && combat.combatants.size > 0) {
+          await combat.setFlag("reign", "phase", "resolution");
+          combat.setupTurns();
+      }
+  }
+});
+
+// Inject Phase Toggle Buttons & Mod Combatant UI
+Hooks.on("renderCombatTracker", (app, html, data) => {
+  const combat = game.combat;
+  if (!combat) return;
+
+  const phase = combat.getFlag("reign", "phase") || "declaration";
+  const isDeclaring = phase === "declaration";
+  const isGM = game.user.isGM;
+
+  const btnHtml = `
+    <div class="reign-combat-phase-control flexrow" style="margin: 4px 8px; text-align: center; border-radius: 4px; overflow: hidden; border: 1px solid var(--color-border-dark-tertiary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); flex: 0 0 auto; display: flex;">
+      <button class="phase-btn" data-phase="declaration" style="flex:1; border: none; border-radius: 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; ${isDeclaring ? 'background: #2d5a27; color: white; font-weight: bold;' : 'background: rgba(0,0,0,0.05); color: var(--color-text-dark-secondary);'}">
+        <i class="fas fa-eye"></i> Declare
+      </button>
+      <button class="phase-btn" data-phase="resolution" style="flex:1; border: none; border-radius: 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; ${!isDeclaring ? 'background: #8b1f1f; color: white; font-weight: bold;' : 'background: rgba(0,0,0,0.05); color: var(--color-text-dark-secondary);'}">
+        <i class="fas fa-bolt"></i> Resolve
+      </button>
+    </div>
+  `;
+
+  const element = (html instanceof HTMLElement || html instanceof DocumentFragment) ? html : (html[0] || null);
+  if (!element) return;
+
+  // Insert specifically underneath the combat controls (round counter)
+  if (!element.querySelector(".reign-combat-phase-control")) {
+      const navControls = element.querySelector("#combat-controls");
+      if (navControls) {
+          navControls.insertAdjacentHTML("afterend", btnHtml);
+      }
+      
+      if (isGM) {
+          element.querySelectorAll(".phase-btn").forEach(btn => {
+              btn.addEventListener("click", async (ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  const newPhase = ev.currentTarget.dataset.phase;
+                  if (phase !== newPhase) {
+                      await combat.setFlag("reign", "phase", newPhase);
+                      combat.setupTurns();
+                  }
+              });
+          });
+      } else {
+          element.querySelectorAll(".phase-btn").forEach(btn => {
+              btn.style.cursor = "default";
+              btn.disabled = true;
+          });
+      }
+  }
+
+  const combatants = element.querySelectorAll(".combatant");
+  combatants.forEach(li => {
+      const cid = li.dataset.combatantId;
+      const c = combat.combatants.get(cid);
+      if (!c) return;
+
+      const isDeclared = c.getFlag("reign", "declared") || false;
+      const initDiv = li.querySelector(".token-initiative");
+      
+      if (initDiv) {
+          // Hide the default d20 roll button
+          const defaultRoll = initDiv.querySelector(".roll");
+          if (defaultRoll) defaultRoll.style.display = "none";
+
+          if (isDeclaring) {
+              initDiv.innerHTML = `
+                <a class="combatant-control reign-declare-btn" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}" style="color: ${isDeclared ? '#2d5a27' : '#888'}; font-size: 1.4em; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                    <i class="${isDeclared ? 'fas fa-check-circle' : 'far fa-circle'}"></i>
+                </a>
+              `;
+              
+              const declareBtn = initDiv.querySelector(".reign-declare-btn");
+              if (declareBtn) {
+                  declareBtn.addEventListener("click", async (ev) => {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      
+                      if (!isGM && !c.isOwner) return ui.notifications.warn("You do not have permission to confirm this combatant's declaration.");
+                      await c.setFlag("reign", "declared", !isDeclared);
+                  });
+              }
+          } else {
+              // In Resolve Phase, show placeholder if they haven't rolled
+              if (!Number.isNumeric(c.initiative) && !initDiv.querySelector(".reign-waiting")) {
+                  initDiv.insertAdjacentHTML('beforeend', `<span class="reign-waiting" style="color: #999; font-weight: bold; font-size: 1.2em;" title="Waiting for action...">--</span>`);
+              }
+          }
+      }
+  });
 });
