@@ -1,0 +1,42 @@
+<div class="reign-silhouette-container">
+  <svg class="damage-silhouette" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      {{#each health as |loc key|}}
+      <linearGradient id="fill-{{key}}-{{@root.appId}}" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="#8b1f1f" />
+        <stop offset="{{loc.killPct}}%" stop-color="#8b1f1f" />
+        
+        <stop offset="{{loc.killPct}}%" stop-color="#fef3c7" />
+        <stop offset="{{loc.shockPct}}%" stop-color="#fef3c7" />
+        
+        <stop offset="{{loc.shockPct}}%" stop-color="#e0e0e0" />
+        <stop offset="100%" stop-color="#e0e0e0" />
+      </linearGradient>
+      {{/each}}
+    </defs>
+
+    <g class="hit-zone {{health.head.status}}" data-loc="head">
+      <polygon points="85,10 115,10 120,40 100,55 80,40" fill="url(#fill-head-{{appId}})" />
+    </g>
+
+    <g class="hit-zone {{health.torso.status}}" data-loc="torso">
+      <polygon points="75,60 125,60 135,160 100,180 65,160" fill="url(#fill-torso-{{appId}})" />
+    </g>
+
+    <g class="hit-zone {{health.armR.status}}" data-loc="armR">
+      <polygon points="65,65 75,65 50,150 35,150" fill="url(#fill-armR-{{appId}})" />
+    </g>
+
+    <g class="hit-zone {{health.armL.status}}" data-loc="armL">
+      <polygon points="135,65 125,65 150,150 165,150" fill="url(#fill-armL-{{appId}})" />
+    </g>
+
+    <g class="hit-zone {{health.legR.status}}" data-loc="legR">
+      <polygon points="65,165 95,165 85,320 60,320" fill="url(#fill-legR-{{appId}})" />
+    </g>
+
+    <g class="hit-zone {{health.legL.status}}" data-loc="legL">
+      <polygon points="105,165 135,165 140,320 115,320" fill="url(#fill-legL-{{appId}})" />
+    </g>
+  </svg>
+</div>

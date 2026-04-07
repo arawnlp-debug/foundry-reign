@@ -1,0 +1,99 @@
+<div class="reign-sheet-root company-sheet">
+  <header class="sheet-header">
+    <div class="header-top">
+      {{!-- FIXED: Changed data-edit to data-action for ApplicationV2 compatibility --}}
+      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img" style="border-radius: 5px;"/>
+      <div class="header-fields">
+        <div class="title-row">
+          <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'REIGN.CompanyNamePlaceholder'}}" class="reign-company-title"/>
+        </div>
+        <div class="narrative-row reign-company-narrative">
+          <div class="narrative-box"><label>{{localize 'REIGN.Goals'}}</label><input type="text" name="system.biography.goals" value="{{system.biography.goals}}"/></div>
+          <div class="narrative-box"><label>{{localize 'REIGN.Leaders'}}</label><input type="text" name="system.biography.leaders" value="{{system.biography.leaders}}"/></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="sheet-body">
+    
+    <div class="company-action-bar" style="margin-bottom: 20px; text-align: center;">
+      <button type="button" data-action="rollCompanyStat" style="background: #8b1f1f; color: #fff; border: 1px solid #4a0000; border-radius: 3px; padding: 8px 15px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        <i class="fas fa-chess-knight"></i> {{localize 'REIGN.ExecuteCompanyAction'}}
+      </button>
+    </div>
+
+    <div class="company-qualities-grid">
+      {{#each qualities as |q|}}
+      <div class="quality-block">
+        <div class="quality-header flexrow">
+          <h2 class="rollable" data-action="rollCompanyStat" data-key="{{q.key}}" data-label="{{q.label}}"><i class="fas fa-dice reign-mr10"></i>{{q.label}}</h2>
+        </div>
+        <div class="quality-stats flexrow">
+          <div class="q-stat">
+            <label>{{localize 'REIGN.PermanentRating'}}</label>
+            <input type="number" name="system.qualities.{{q.key}}.permanent" value="{{q.permanent}}"/>
+          </div>
+          <div class="q-stat">
+            <label>{{localize 'REIGN.CurrentRating'}}</label>
+            <input type="number" name="system.qualities.{{q.key}}.current" value="{{q.current}}" class="current-rating"/>
+          </div>
+        </div>
+        <div class="quality-notes">
+          <label>{{localize 'REIGN.TemporaryBonuses'}}</label>
+          <textarea name="system.qualities.{{q.key}}.notes" placeholder="...">{{q.notes}}</textarea>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="stat-grid" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div class="item-list-container">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-3">{{localize 'REIGN.CompanyAssetsTitle'}}</h3>
+          <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="advantage" title="{{localize 'REIGN.AddAsset'}}"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each assets as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-3 reign-bold">{{item.name}}</span>
+          <span class="reign-col-1">{{item.system.cost}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+        <div class="reign-mt10" style="padding: 10px;">
+          <label class="reign-bold">{{localize 'REIGN.GeneralAssetsDescription'}}</label>
+          <textarea name="system.biography.assets" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.assets}}</textarea>
+        </div>
+      </div>
+
+      <div class="item-list-container">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-3">{{localize 'REIGN.CompanyLiabilitiesTitle'}}</h3>
+          <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="problem" title="{{localize 'REIGN.AddLiability'}}"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each problems as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-3 reign-bold">{{item.name}}</span>
+          <span class="reign-col-1">{{item.system.bonus}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+        <div class="reign-mt10" style="padding: 10px;">
+          <label class="reign-bold">{{localize 'REIGN.GeneralLiabilitiesNotes'}}</label>
+          <textarea name="system.biography.description" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.description}}</textarea>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</div>
