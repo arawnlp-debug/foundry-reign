@@ -340,7 +340,19 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
       }
     }
 
-    await targetActor.update({ "system.health": localHealth });
+    const healthUpdates = {};
+    for (const k of ["head", "torso", "armR", "armL", "legR", "legL"]) {
+        if (localHealth[k].shock !== targetActor.system.health[k].shock) {
+            healthUpdates[`system.health.${k}.shock`] = localHealth[k].shock;
+        }
+        if (localHealth[k].killing !== targetActor.system.health[k].killing) {
+            healthUpdates[`system.health.${k}.killing`] = localHealth[k].killing;
+        }
+    }
+    if (!foundry.utils.isEmpty(healthUpdates)) {
+        await targetActor.update(healthUpdates);
+    }
+    
     await syncCharacterStatusEffects(targetActor);
 
     const statusAlert = getStatusAlertHtml(targetActor, localHealth);
@@ -505,7 +517,19 @@ export async function applyScatteredDamageToTarget(facesArrayStr, damageType, ap
       }
     }
 
-    await targetActor.update({ "system.health": localHealth });
+    const healthUpdates = {};
+    for (const k of ["head", "torso", "armR", "armL", "legR", "legL"]) {
+        if (localHealth[k].shock !== targetActor.system.health[k].shock) {
+            healthUpdates[`system.health.${k}.shock`] = localHealth[k].shock;
+        }
+        if (localHealth[k].killing !== targetActor.system.health[k].killing) {
+            healthUpdates[`system.health.${k}.killing`] = localHealth[k].killing;
+        }
+    }
+    if (!foundry.utils.isEmpty(healthUpdates)) {
+        await targetActor.update(healthUpdates);
+    }
+    
     await syncCharacterStatusEffects(targetActor);
 
     if (isHealing) {
@@ -627,7 +651,18 @@ export async function applyHealingToTarget(width, height, healString) {
     }
 
     if (healedKilling > 0 || healedShock > 0) {
-        await targetActor.update({ "system.health": localHealth });
+        const healthUpdates = {};
+        for (const k of ["head", "torso", "armR", "armL", "legR", "legL"]) {
+            if (localHealth[k].shock !== targetActor.system.health[k].shock) {
+                healthUpdates[`system.health.${k}.shock`] = localHealth[k].shock;
+            }
+            if (localHealth[k].killing !== targetActor.system.health[k].killing) {
+                healthUpdates[`system.health.${k}.killing`] = localHealth[k].killing;
+            }
+        }
+        if (!foundry.utils.isEmpty(healthUpdates)) {
+            await targetActor.update(healthUpdates);
+        }
         await syncCharacterStatusEffects(targetActor);
         
         const safeTargetName = foundry.utils.escapeHTML(targetActor.name);
@@ -696,7 +731,18 @@ export async function applyFirstAidToTarget(width) {
     }
 
     if (converted > 0) {
-        await targetActor.update({ "system.health": localHealth });
+        const healthUpdates = {};
+        for (const k of ["head", "torso", "armR", "armL", "legR", "legL"]) {
+            if (localHealth[k].shock !== targetActor.system.health[k].shock) {
+                healthUpdates[`system.health.${k}.shock`] = localHealth[k].shock;
+            }
+            if (localHealth[k].killing !== targetActor.system.health[k].killing) {
+                healthUpdates[`system.health.${k}.killing`] = localHealth[k].killing;
+            }
+        }
+        if (!foundry.utils.isEmpty(healthUpdates)) {
+            await targetActor.update(healthUpdates);
+        }
         await syncCharacterStatusEffects(targetActor);
         
         const safeTargetName = foundry.utils.escapeHTML(targetActor.name);
