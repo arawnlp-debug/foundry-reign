@@ -1,0 +1,66 @@
+<div style="background: #1a1a1a; color: #fff; padding: 10px; text-align: center; font-size: 1.2em; font-weight: bold; border-radius: 4px; margin-bottom: 15px; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+  Expected Pool: <span id="pool-value" style="color: #4ade80;">...</span>
+</div>
+
+<form class="reign-dialog-form">
+  <div class="form-group">
+    <label>Attribute:</label>
+    <select name="attr">
+      {{selectOptions attrOptions selected=defaultAttr}}
+    </select>
+  </div>
+  
+  {{#if showSkillSelect}}
+  <div class="form-group">
+    <label>Linked Skill:</label>
+    <select name="skillKey">
+      {{selectOptions skillOptions selected=defaultSkill}}
+    </select>
+  </div>
+  {{/if}}
+
+  <div class="dialog-grid {{#if isCombatRoll}}dialog-grid-2{{/if}}">
+    {{#if isCombatRoll}}
+    <div class="form-group">
+      <label>Called Shot (-1d):</label>
+      <select name="calledShot">
+        {{selectOptions calledShotOptions selected="0"}}
+      </select>
+    </div>
+    {{/if}}
+    <div class="form-group">
+      <label>Difficulty (Min Height):</label>
+      <input type="number" name="difficulty" value="{{difficulty}}" min="0" max="10"/>
+    </div>
+  </div>
+  
+  {{#if showEnvContext}}
+  <div class="form-group" style="margin-top: 10px;">
+      <label>Environment Context:</label>
+      <select name="envContext">
+          <option value="none">Normal Environment</option>
+          <option value="swimming">Swimming (Highly restricted by Armor/Shields)</option>
+      </select>
+  </div>
+  {{/if}}
+
+  <div class="dialog-grid dialog-grid-3">
+    <div class="form-group"><label>Total Actions:</label><input type="number" name="multiActions" value="1" min="1" title="Penalty: -1d per extra action"/></div>
+    <div class="form-group"><label>Bonus Dice (+d):</label><input type="number" name="bonus" value="{{autoBonus}}"/></div>
+    <div class="form-group"><label>Penalty Dice (-d):</label><input type="number" name="penalty" value="{{autoPenalty}}" title="{{penaltyTitle}}"/></div>
+  </div>
+    
+  <div class="form-group">
+    <label>Passions:</label>
+    <div class="dialog-grid dialog-grid-3">
+      <div style="display: flex; flex-direction: column; gap: 2px;"><label style="font-size: 0.75em;">Mission</label><select name="pMiss" style="font-size: 0.85em; padding: 2px;"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+      <div style="display: flex; flex-direction: column; gap: 2px;"><label style="font-size: 0.75em;">Duty</label><select name="pDuty" style="font-size: 0.85em; padding: 2px;"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+      <div style="display: flex; flex-direction: column; gap: 2px;"><label style="font-size: 0.75em;">Craving</label><select name="pCrav" style="font-size: 0.85em; padding: 2px;"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+    </div>
+  </div>
+  
+  <div class="dialog-grid dialog-grid-2" style="margin-top: 15px;">
+    <div class="form-group"><label>Expert Die (1-10, 0=None):</label><input type="number" name="ed" value="{{initialEdValue}}" min="0" max="10"/></div>
+    <div class="form-group"><label>Master Dice (Max 1):</label><input type="number" name="md" value="{{initialMdValue}}" min="0" max="1"/></div>
+  </div>
+</form>
