@@ -1,0 +1,142 @@
+/* ====================================================
+   REIGN: REALITIES OF LORDS AND LEADERS 
+   Base Styles & Utility Classes
+==================================================== */
+
+/* -----------------------------------------
+    CORE SHEET STYLING
+----------------------------------------- */
+.reign.sheet.actor, .reign.sheet.item {
+  background: var(--reign-bg-parchment);
+  color: var(--reign-text-dark);
+  font-family: var(--reign-font-flavor);
+}
+
+.reign * {
+  box-sizing: border-box;
+}
+
+.reign-sheet-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding: 5px 10px;
+}
+
+.reign.sheet .window-content {
+  padding: 0;
+  overflow: hidden;
+  background: var(--reign-bg-parchment);
+}
+
+.reign.sheet form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* -----------------------------------------
+    STRUCTURAL UTILITY CLASSES
+----------------------------------------- */
+.reign-p10 { padding: 10px; }
+.reign-p15 { padding: 15px; }
+.reign-p8-15 { padding: 8px 15px; }
+.reign-p5-15 { padding: 5px 15px; }
+.reign-pb10 { padding-bottom: 10px; }
+.reign-mb5 { margin-bottom: 5px; }
+.reign-mb10 { margin-bottom: 10px; }
+.reign-mb20 { margin-bottom: 20px; }
+.reign-mt5 { margin-top: 5px; }
+.reign-mt10 { margin-top: 10px; }
+.reign-mt20 { margin-top: 20px; }
+.reign-ml15 { margin-left: 15px; }
+.reign-mr10 { margin-right: 10px; }
+.reign-m0 { margin: 0; }
+.reign-pt5 { padding-top: 5px; }
+
+/* Colors & Backgrounds */
+.bg-white, .reign-bg-white { background: var(--reign-bg-paper); }
+.bg-crimson { background: var(--reign-color-blood); color: var(--reign-text-light); }
+.bg-teal { background: #00695c; color: var(--reign-text-light); }
+
+/* Typography */
+.reign-bold { font-weight: bold; }
+.reign-text-center { text-align: center; }
+.reign-text-xl { font-size: 1.5em; }
+.reign-text-lg { font-size: 1.1em; }
+.reign-text-sm { font-size: 0.9em; }
+.reign-item-subtext { font-size: 0.85em; color: var(--reign-text-muted); }
+.reign-text-muted { color: var(--reign-text-muted); font-style: italic; }
+.reign-text-light { color: var(--reign-text-light) !important; }
+.reign-capitalize { text-transform: capitalize; }
+.reign-color-success { color: var(--reign-color-emerald); }
+
+/* Flexbox Layouts */
+.reign-flex-center { display: flex; align-items: center; justify-content: center; }
+.reign-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.reign-flex-around { display: flex; align-items: center; justify-content: space-around; gap: 20px; padding: 15px; }
+.reign-flex-gap5 { display: flex; gap: 5px; }
+.reign-flex-gap12 { display: flex; gap: 12px; }
+.reign-flex-col { display: flex; flex-direction: column; }
+.reign-flex-col-gap8 { display: flex; flex-direction: column; gap: 8px; }
+.reign-flex-center-gap4 { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.reign-flex-center-gap15 { display: flex; align-items: center; justify-content: center; gap: 15px; }
+.reign-flex1 { flex: 1; }
+.align-center { align-items: center; justify-content: space-between; }
+
+/* Grid Layouts */
+.reign-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+/* Flexible Column Proportions (Used in Item Lists) */
+.reign-col-1 { flex: 1; text-align: center; }
+.reign-col-2 { flex: 2; }
+.reign-col-3 { flex: 3; }
+.reign-col-4 { flex: 4; }
+.reign-col-5 { flex: 5; }
+
+/* Elements & Containers */
+.reign-block { display: block; }
+.reign-circle { border-radius: 50%; }
+.reign-scroll-y { overflow-y: auto; padding-right: 5px; }
+.reign-opacity-50 { opacity: 0.5; }
+.reign-cursor-pointer { cursor: pointer; }
+.reign-border-none { border: none !important; }
+.reign-border-top { border-top: var(--reign-border-dashed); }
+
+/* Common Input/Textarea Overrides */
+.reign textarea {
+  border: none;
+  padding: 8px;
+  width: 100%;
+  font-family: var(--reign-font-flavor);
+  resize: vertical;
+  background: transparent;
+  color: var(--reign-text-dark);
+}
+
+.reign-textarea { 
+    height: 150px; 
+    border: var(--reign-border-light); 
+    padding: 10px; 
+    resize: vertical; 
+    width: 100%; 
+    font-family: var(--reign-font-flavor); 
+    background: var(--reign-bg-paper); 
+    box-shadow: var(--reign-shadow-inset); 
+    color: var(--reign-text-dark); 
+}
+
+.reign-textarea-120 { 
+    height: 120px; 
+    border: var(--reign-border-light); 
+    padding: 10px; 
+    resize: vertical; 
+    width: 100%; 
+    font-family: var(--reign-font-flavor); 
+    background: var(--reign-bg-paper); 
+    box-shadow: var(--reign-shadow-inset); 
+    color: var(--reign-text-dark); 
+}

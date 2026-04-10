@@ -1,0 +1,152 @@
+/* ====================================================
+   REIGN: REALITIES OF LORDS AND LEADERS 
+   Item Sheet Styling (Weapons, Spells, Gear, etc.)
+==================================================== */
+
+.reign-item-root { 
+    padding: 10px; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; 
+}
+
+/* -----------------------------------------
+    HEADER
+----------------------------------------- */
+.reign .item-header { 
+    border-bottom: 3px solid var(--reign-bg-iron); 
+    padding-bottom: 10px; 
+    margin-bottom: 15px; 
+    display: flex; 
+    gap: 15px; 
+}
+
+.reign .item-header .header-details { 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    flex: 1; 
+}
+
+.reign .item-header input[name="name"] {
+    font-size: 1.8em; 
+    font-weight: bold; 
+    color: var(--reign-color-blood); 
+    border: none;
+    border-bottom: 2px solid var(--reign-bg-iron); 
+    border-radius: 0; 
+    background: transparent;
+    font-family: var(--reign-font-flavor); 
+    margin-bottom: 5px; 
+    transition: background 0.2s;
+}
+
+.reign .item-header input[name="name"]:hover, 
+.reign .item-header input[name="name"]:focus { 
+    background: rgba(0,0,0,0.03); 
+}
+
+.reign .item-type-label { 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    color: var(--reign-text-muted); 
+    letter-spacing: 2px; 
+    font-size: 0.85em; 
+}
+
+/* -----------------------------------------
+    BODY & FORMS
+----------------------------------------- */
+.reign .item-body { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    overflow-y: auto; 
+}
+
+.reign .form-group-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+}
+
+.reign .form-group label, 
+.reign .form-group-stacked label {
+    font-weight: bold; 
+    text-transform: uppercase; 
+    font-size: 0.85em; 
+    color: var(--reign-text-dark); 
+    display: block; 
+    margin-bottom: 3px;
+}
+
+.reign .form-group input, 
+.reign .form-group select {
+    width: 100%; 
+    border: var(--reign-border-light); 
+    background: var(--reign-bg-paper); 
+    border-radius: 3px; 
+    padding: 6px; 
+    font-family: var(--reign-font-flavor); 
+    box-shadow: var(--reign-shadow-inset); 
+    color: var(--reign-text-dark);
+}
+
+.reign .form-group-stacked textarea {
+    border: var(--reign-border-light); 
+    background: var(--reign-bg-paper); 
+    height: 150px; 
+    padding: 8px; 
+    border-radius: 3px; 
+    box-shadow: var(--reign-shadow-inset); 
+    font-family: var(--reign-font-flavor); 
+    color: var(--reign-text-dark);
+}
+
+/* -----------------------------------------
+    WEAPON-SPECIFIC BOXES
+----------------------------------------- */
+.reign-box-weapon { 
+    border: var(--reign-border-light); 
+    padding: 12px; 
+    background: var(--reign-bg-paper); 
+    margin-bottom: 15px; 
+    border-radius: 4px; 
+    box-shadow: var(--reign-shadow-drop); 
+}
+
+.reign-box-weapon-title { 
+    border-bottom: var(--reign-border-light); 
+    padding-bottom: 5px; 
+    margin-bottom: 10px; 
+    display: block; 
+    font-weight: bold; 
+    font-size: 0.85em; 
+    text-transform: uppercase; 
+    color: var(--reign-text-muted); 
+}
+
+.reign-weapon-ap { 
+    width: 50px; 
+    text-align: center; 
+    border: var(--reign-border-light); 
+    border-radius: 3px; 
+    font-family: var(--reign-font-data); 
+    background: var(--reign-bg-paper); 
+    color: var(--reign-text-dark); 
+}
+
+.reign-weapon-chk { 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+    font-size: 0.85em; 
+    font-weight: bold; 
+    cursor: pointer; 
+    color: var(--reign-text-dark); 
+}
+
+.reign-weapon-chk input[type="checkbox"] { 
+    accent-color: var(--reign-color-blood); 
+}
