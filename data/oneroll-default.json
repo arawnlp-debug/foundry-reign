@@ -1,0 +1,142 @@
+{
+  "tableName": "Reign 2e Default Life Paths",
+  "sets": {
+    "1": {
+      "path": "Beggar",
+      "stages": {
+        "2": { "label": "Lowly Beggar", "description": "You spent your early years on the streets.", "attributes": { "sense": 1 }, "skills": { "plead": 2, "run": 1, "sight": 1, "dodge": 1 } },
+        "3": { "label": "Canny Beggar", "description": "You learned which streets were safe and which marks were generous.", "skills": { "dodge": 1, "run": 1, "fascinate": 1, "jest": 1, "endurance": 1 } },
+        "4": { "label": "Experienced Beggar", "description": "You became a fixture of the city.", "skills": { "stealth": 2, "lie": 2 }, "customSkills": [{"name": "Weapon: Dagger", "value": 1}] },
+        "5": { "label": "Beggar Monarch", "description": "The beggars look to you for leadership and wisdom.", "attributes": { "charm": 1 } }
+      }
+    },
+    "2": {
+      "path": "Thief",
+      "stages": {
+        "2": { "label": "Petty Thief", "description": "You stole to survive, then stole for the thrill.", "attributes": { "coordination": 1 }, "skills": { "dodge": 1, "stealth": 3, "run": 1 } },
+        "3": { "label": "Cutpurse", "description": "Your fingers became your livelihood.", "skills": { "dodge": 1, "run": 1, "climb": 2 }, "customSkills": [{"name": "Weapon: Dagger", "value": 1}] },
+        "4": { "label": "Burglar", "description": "No lock can keep you out.", "wealth": 1, "skills": { "lie": 2 }, "special": "Change one Stealth die and one Climb die to an Expert Die." },
+        "5": { "label": "Criminal Mastermind", "description": "You run the underworld.", "special": "Change your ED in Stealth to an MD." }
+      }
+    },
+    "3": {
+      "path": "Entertainer",
+      "stages": {
+        "2": { "label": "Street Entertainer", "description": "You busked for coppers in the mud.", "attributes": { "charm": 1 }, "skills": { "fascinate": 2, "jest": 1 }, "customSkills": [{"name": "Perform", "value": 2}] },
+        "3": { "label": "Traveling Bard", "description": "You brought news and song to isolated villages.", "attributes": { "command": 1 } },
+        "4": { "label": "Successful Player", "description": "You performed for the wealthy and the powerful.", "skills": { "graces": 1, "inspire": 1 }, "customSkills": [{"name": "Language", "value": 1}], "special": "Change one Perform die and one Fascinate die to an Expert Die." },
+        "5": { "label": "Renowned Performer", "description": "Your name is known across the continent.", "special": "Change one of your EDs (your choice) into an MD." }
+      }
+    },
+    "4": {
+      "path": "Merchant",
+      "stages": {
+        "2": { "label": "Miserly Merchant", "description": "You learned early to hoard your coin.", "attributes": { "charm": 1 }, "wealth": 1, "skills": { "haggle": 2 }, "customSkills": [{"name": "Possession (Transport)", "value": 2}] },
+        "3": { "label": "Canny Tradesman", "description": "You expanded your routes and learned the tricks of the trade.", "skills": { "lie": 2, "haggle": 1 }, "customSkills": [{"name": "Language", "value": 1}, {"name": "Student: Navigation", "value": 1}] },
+        "4": { "label": "Banker", "description": "You let your money do the working for you.", "wealth": 2, "skills": { "direction": 1, "lie": 1 }, "special": "Change one normal Haggle die to an Expert Die." },
+        "5": { "label": "Captain of Industry", "description": "You monopolized an entire trade.", "special": "Change your Haggle ED to an MD." }
+      }
+    },
+    "5": {
+      "path": "Sailor",
+      "stages": {
+        "2": { "label": "Able Seaman", "description": "You know the rigging and how to take a beating from the sea.", "attributes": { "coordination": 1 }, "skills": { "fight": 1, "climb": 2 }, "customSkills": [{"name": "Student: Sailing", "value": 2}] },
+        "3": { "label": "Weathered Tar", "description": "You've survived storms that sank lesser vessels.", "skills": { "athletics": 1, "endurance": 2, "vigor": 2 } },
+        "4": { "label": "First Mate", "description": "You keep the crew in line and the ship on course.", "skills": { "direction": 2, "sight": 1 }, "customSkills": [{"name": "Language", "value": 1}, {"name": "Student: Navigation", "value": 1}] },
+        "5": { "label": "Captain", "description": "You command your own vessel.", "attributes": { "command": 1 } }
+      }
+    },
+    "6": {
+      "path": "Warrior",
+      "stages": {
+        "2": { "label": "Foot Soldier", "description": "You were handed a weapon and told to hold the line.", "attributes": { "body": 1 }, "skills": { "fight": 2, "dodge": 1, "parry": 2 } },
+        "3": { "label": "Veteran Warrior", "description": "You survived the meatgrinder.", "skills": { "dodge": 1, "parry": 1 }, "customSkills": [{"name": "Weapon: Choose Any", "value": 2}], "special": "Change one Fight or Weapon die to an Expert Die." },
+        "4": { "label": "Front Line Fighter", "description": "You are the first into the breach.", "customSkills": [{"name": "Weapon: Choose Any", "value": 1}], "martialPaths": [{"name": "Path 1 (Rank 2)", "system": {"rank": 2}}, {"name": "Path 2 (Rank 1)", "system": {"rank": 1}}] },
+        "5": { "label": "Champion", "description": "Lords bid for your services in single combat.", "special": "Change your ED into an MD." }
+      }
+    },
+    "7": {
+      "path": "Sage",
+      "stages": {
+        "2": { "label": "Lowly Sage", "description": "You spent your youth copying scrolls and translating texts.", "attributes": { "knowledge": 1 }, "skills": { "lore": 1, "healing": 2 }, "customSkills": [{"name": "Language", "value": 2}] },
+        "3": { "label": "Canny Sage", "description": "You learned how to find the hidden truths.", "customSkills": [{"name": "Student: Any Field", "value": 5}] },
+        "4": { "label": "Expert Sage", "description": "Lords seek your counsel.", "skills": { "healing": 1, "lore": 2, "fascinate": 2 } },
+        "5": { "label": "Master Sage", "description": "You have uncovered secrets that could change the world.", "attributes": { "knowledge": 1 } }
+      }
+    },
+    "8": {
+      "path": "Commander",
+      "stages": {
+        "2": { "label": "Squad Leader", "description": "You kept a few soldiers alive.", "attributes": { "command": 1 }, "skills": { "fight": 1, "ride": 1, "tactics": 1, "inspire": 2 } },
+        "3": { "label": "Officer", "description": "You commanded a company in the field.", "skills": { "parry": 2, "tactics": 2, "endurance": 1 } },
+        "4": { "label": "Commander", "description": "You dictate the flow of the battle.", "skills": { "sight": 1, "direction": 1, "strategy": 2, "lie": 1 } },
+        "5": { "label": "General", "description": "Entire armies march on your word.", "skills": { "strategy": 1, "tactics": 1 }, "advantages": [{"name": "Status", "system": {"cost": 1}}], "special": "Change one Strategy die to an Expert Die." }
+      }
+    },
+    "9": {
+      "path": "Sorcerer",
+      "stages": {
+        "2": { "label": "Sorcerer's Apprentice", "description": "You were taught the dangerous arts of the unseen.", "attributes": { "knowledge": 1 }, "skills": { "lore": 1, "eerie": 1, "sorcery": 3 } },
+        "3": { "label": "Hedge Wizard", "description": "You survived your early mistakes.", "skills": { "counterspell": 2, "eerie": 1, "sorcery": 2 } },
+        "4": { "label": "Adept", "description": "Your mastery over the arcane grew.", "skills": { "eerie": 2 }, "spells": [{"name": "A Spell", "system": {"intensity": 1}}, {"name": "Another Spell", "system": {"intensity": 1}}], "special": "Change one Sorcery die to an Expert Die." },
+        "5": { "label": "Master Enchanter", "description": "You manipulate reality with a thought.", "special": "Change your Sorcery ED to an MD." }
+      }
+    },
+    "10": {
+      "path": "Noble",
+      "stages": {
+        "2": { "label": "Noble Byblow", "description": "Born on the fringes of power, you learned etiquette and superiority.", "attributes": { "command": 1 }, "wealth": 1, "skills": { "graces": 2 }, "advantages": [{"name": "Status", "system": {"cost": 1}}], "customSkills": [{"name": "Weapon: Sword", "value": 1}] },
+        "3": { "label": "Minor Noble", "description": "You hold a small title and navigate the courts.", "wealth": 1, "skills": { "intimidate": 1, "lie": 1, "graces": 1 }, "advantages": [{"name": "Status", "system": {"cost": 1}}] },
+        "4": { "label": "Prominent Noble", "description": "Your family has the ear of the sovereign.", "wealth": 1, "skills": { "intimidate": 1 }, "advantages": [{"name": "Status", "system": {"cost": 2}}], "special": "Change one Intimidate die to an Expert Die." },
+        "5": { "label": "Of Royal Blood", "description": "You are in the line of succession.", "special": "Change your Intimidate ED into an MD." }
+      }
+    }
+  },
+  "waste": {
+    "A": {
+      "name": "Chart A: The Common Lot",
+      "results": {
+        "1": { "label": "Exiled", "description": "You are no longer welcome in some province, country, or region.", "skills": { "plead": 3, "dodge": 1, "run": 1 } },
+        "2": { "label": "Robbed!", "description": "Someone has stolen pretty much every cent you have in the world.", "attributes": { "sense": 1 }, "special": "If you have Wealth, you may trade it for another Advantage." },
+        "3": { "label": "Someone Got Spurned", "description": "You rejected or got rejected, and someone's heart got crushed.", "attributes": { "charm": 1 } },
+        "4": { "label": "Racer", "description": "You spent time jockeying an animal on a track.", "skills": { "ride": 3 }, "special": "Change your Ride die to an Expert Die." },
+        "5": { "label": "Outstanding Cook", "description": "You make food taste good.", "customSkills": [{"name": "Expert: Cooking", "value": 5}] },
+        "6": { "label": "Gladiator", "description": "You've fought for the entertainment of others.", "advantages": [{"name": "Thick Headed", "system": {"cost": 2}}], "customSkills": [{"name": "Weapon: Spear", "value": 3}], "martialPaths": [{"name": "Spear, Dodge, or Parry Path", "system": {"rank": 1}}] },
+        "7": { "label": "Rescued an Injured Animal", "description": "You saved a critter and nursed it back to health.", "advantages": [{"name": "Animal Companion", "system": {"cost": 3}}], "customSkills": [{"name": "Student: Animal Training", "value": 2}] },
+        "8": { "label": "Kidnapped by Barbarians", "description": "You spent time as a captive of another culture.", "skills": { "ride": 1, "endurance": 1, "plead": 1 }, "customSkills": [{"name": "Language", "value": 2}] },
+        "9": { "label": "Mystic/Religious Experience", "description": "You experienced something that fundamentally changed your worldview.", "skills": { "eerie": 2, "lore": 2, "sorcery": 1 } },
+        "10": { "label": "Served the Decadent Rich", "description": "You got to see society's best at their worst.", "skills": { "fascinate": 1, "graces": 2, "plead": 1, "lie": 1 } }
+      }
+    },
+    "B": {
+      "name": "Chart B: The Experts & Nobility",
+      "results": {
+        "1": { "label": "Mistaken Identity", "description": "Embroiled in zany misadventures when mistaken for someone else.", "wealth": 1, "skills": { "lie": 2, "stealth": 2 } },
+        "2": { "label": "Imprisoned", "description": "You were jailed somewhere crowded and unpleasant.", "skills": { "fight": 2, "vigor": 3 } },
+        "3": { "label": "Love Triangle", "description": "Hurt feelings, regrets, and an embarrassing public scene.", "advantages": [{"name": "Beauty", "system": {"cost": 3}}], "skills": { "lie": 1, "plead": 1 }, "problems": [{"name": "Mission: Find True Love"}] },
+        "4": { "label": "Caravan Debacle", "description": "Your caravan never went to its intended destination.", "skills": { "direction": 2 }, "customSkills": [{"name": "Student: Navigation", "value": 3}] },
+        "5": { "label": "Press Ganged", "description": "Forced into service aboard a warship.", "attributes": { "body": 1 }, "problems": [{"name": "Craving: Beat On Sailors"}] },
+        "6": { "label": "Vengeance Quest", "description": "They murdered your family. Now they must pay!", "customSkills": [{"name": "Weapon: Sword", "value": 2}], "martialPaths": [{"name": "Sword, Dodge, or Parry Path", "system": {"rank": 2}}] },
+        "7": { "label": "Magnificent Garden", "description": "You had a really great garden. Now it's gone.", "customSkills": [{"name": "Student: Plants and Herbs", "value": 5}] },
+        "8": { "label": "Stolen Birthright", "description": "You've been tricked out of what's yours by right.", "attributes": { "coordination": 1 }, "problems": [{"name": "Duty: Sustain Your Family's Traditions"}] },
+        "9": { "label": "Hideous Occult Ritual", "description": "It went really, really wrong.", "skills": { "counterspell": 2, "eerie": 3 }, "problems": [{"name": "Unwholesome"}] },
+        "10": { "label": "Diplomatic Incident", "description": "You created tremendous antagonism between two states.", "advantages": [{"name": "Patron", "system": {"cost": 5}}], "problems": [{"name": "Enemy"}] }
+      }
+    },
+    "C": {
+      "name": "Chart C: The Esoterica",
+      "results": {
+        "1": { "label": "Raised Wild", "description": "Abandoned in the woods and nursed by wolves.", "skills": { "hearing": 3, "sight": 2, "endurance": 2 }, "customSkills": [{"name": "Language", "value": 3}, {"name": "Expert: Throwing", "value": 2}], "special": "Lose the normal Master Die for your Native Language." },
+        "2": { "label": "Death Defier", "description": "You fought free against incredible odds.", "advantages": [{"name": "Fool Lucky", "system": {"cost": 4}}] },
+        "3": { "label": "Star Crossed Lovers", "description": "Events conspired to trap you away from your beloved.", "skills": { "lie": 1, "stealth": 1, "run": 1, "dodge": 1 }, "advantages": [{"name": "Beauty", "system": {"cost": 1}}], "problems": [{"name": "Enemy"}] },
+        "4": { "label": "Unexpected Windfall", "description": "You've come to own something of great value.", "wealth": 1, "customSkills": [{"name": "Possession", "value": 4}] },
+        "5": { "label": "Stranded", "description": "You had to survive solo for a really long time.", "skills": { "endurance": 1, "athletics": 1 }, "customSkills": [{"name": "Expert: Throwing", "value": 3}] },
+        "6": { "label": "Saved Someone's Life", "description": "You've got a friend for life.", "advantages": [{"name": "Patron", "system": {"cost": 5}}] },
+        "7": { "label": "Unlikely Education", "description": "You gained knowledge completely unrelated to your professions.", "customSkills": [{"name": "Student: Any Field", "value": 5}] },
+        "8": { "label": "Disastrous Mountain Expedition", "description": "You were exploring uncharted lands and it all went awry.", "advantages": [{"name": "Leather Hard", "system": {"cost": 3}}] },
+        "9": { "label": "Strange Birthmark", "description": "A few people who've seen it have had very strange reactions.", "advantages": [{"name": "Rabbity", "system": {"cost": 2}}, {"name": "Lucky", "system": {"cost": 2}}], "problems": [{"name": "Enemies"}] },
+        "10": { "label": "Majesty's Personal Cobbler", "description": "You made the most beautiful shoes in the kingdom.", "customSkills": [{"name": "Student: Cobbler", "value": 4, "master": true}] }
+      }
+    }
+  }
+}

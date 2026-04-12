@@ -1,0 +1,346 @@
+<div class="charactermancer-wrapper" style="height: 100%; display: flex; flex-direction: column; padding: 10px; overflow: hidden; background: #f4e8d1; color: #111; font-family: 'Georgia', serif;">
+    
+    {{#if (not pathSelected)}}
+    <div class="cm-landing" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; background: url('systems/reign/assets/reign-splash.webp') center/cover no-repeat; border: 2px solid #333; border-radius: 8px; box-shadow: inset 0 0 50px rgba(0,0,0,0.8);">
+        <div style="background: rgba(244, 232, 209, 0.9); padding: 40px; margin: 0 auto; border-radius: 8px; border: 1px solid #8b1f1f; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+            <h1 style="font-family: 'Cinzel', serif; font-size: 3em; color: #8b1f1f; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Forge Your Legend</h1>
+            <p style="color: #333; font-size: 1.2em; font-style: italic; margin-bottom: 30px;">How will your story be written?</p>
+            
+            <div class="cm-path-cards" style="display: flex; gap: 20px; justify-content: center;">
+                <div class="cm-card" style="border: 2px solid #333; border-radius: 4px; padding: 20px; width: 250px; background: rgba(255,255,255,0.7); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="font-family: 'Cinzel', serif; color: #8b1f1f; border-bottom: 1px solid #ccc;">The One-Roll</h3>
+                    <p style="font-size: 0.95em; height: 60px; color: #444;">Roll 11d10. Let fate dictate your history, skills, and starting esoterica.</p>
+                    <button type="button" data-action="selectPath" data-path="oneroll" style="background: #8b1f1f; color: white; border: 1px solid #4a0e0e; padding: 10px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase;">Roll the Bones</button>
+                </div>
+                
+                <div class="cm-card" style="border: 2px solid #333; border-radius: 4px; padding: 20px; width: 250px; background: rgba(255,255,255,0.7); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="font-family: 'Cinzel', serif; color: #333; border-bottom: 1px solid #ccc;">Point Buy</h3>
+                    <p style="font-size: 0.95em; height: 60px; color: #444;">Meticulously spend your starting budget on attributes, skills, and advantages.</p>
+                    <button type="button" data-action="selectPath" data-path="pointbuy" style="background: #333; color: white; border: 1px solid #111; padding: 10px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase;">Spend Points</button>
+                </div>
+
+                <div class="cm-card" style="border: 2px solid #333; border-radius: 4px; padding: 20px; width: 250px; background: rgba(255,255,255,0.7); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="font-family: 'Cinzel', serif; color: #555; border-bottom: 1px solid #ccc;">Manual Entry</h3>
+                    <p style="font-size: 0.95em; height: 60px; color: #444;">Skip the wizard. Open a blank sheet to manually copy over a paper character.</p>
+                    <button type="button" data-action="selectPath" data-path="manual" style="background: #555; color: white; border: 1px solid #222; padding: 10px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase;">Skip Wizard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if isOneRoll}}
+    <div class="cm-oneroll-workspace" style="display: flex; flex-direction: column; height: 100%; gap: 15px; min-height: 0;">
+        <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">
+            <h2 style="font-family: 'Cinzel', serif; font-size: 2em; color: #8b1f1f; margin: 0; border: none; text-shadow: 1px 1px 0px rgba(0,0,0,0.1);">The Bones of Fate</h2>
+            <p style="color: #444; font-style: italic; margin: 5px 0 0 0;">Cast the 11 sacred dice and let destiny forge your path.</p>
+        </div>
+
+        {{#if (not oneRoll.rolled)}}
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px;">
+            
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 25px; border: 2px solid #333; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);">
+                <label for="oneroll-table-select" style="font-family: 'Cinzel', serif; font-weight: bold; color: #333; font-size: 1.2em;">
+                    <i class="fas fa-globe"></i> Select Cultural Origin
+                </label>
+                <select id="oneroll-table-select" style="padding: 10px; font-size: 1.1em; border-radius: 2px; border: 1px solid #8b1f1f; width: 350px; cursor: pointer; text-align: center; font-family: 'Georgia', serif; background: #fff;">
+                    {{#each availableTables}}
+                        <option value="{{this.path}}">{{this.label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <button type="button" data-action="rollTheBones" style="font-family: 'Cinzel', serif; font-size: 1.8em; padding: 20px 40px; background: #8b1f1f; color: white; border: 2px solid #4a0e0e; border-radius: 4px; cursor: pointer; box-shadow: 0 6px 10px rgba(0,0,0,0.3); transition: transform 0.1s, box-shadow 0.1s;">
+                <i class="fas fa-dice"></i> Roll the Bones
+            </button>
+        </div>
+        {{else}}
+        <div class="oneroll-results" style="display: flex; gap: 20px; flex: 1; min-height: 0;">
+            
+            <div class="cm-results-left" style="flex: 1; overflow-y: auto; padding-right: 15px; border-right: 2px dashed #8b1f1f;">
+                
+                <h3 style="font-family: 'Cinzel', serif; color: #333; border-bottom: 2px solid #333; margin-top: 0; padding-bottom: 5px;">Your Life Paths (Sets)</h3>
+                {{#if oneRollDisplay.sets.length}}
+                    <ul style="list-style: none; padding: 0; margin: 0 0 25px 0;">
+                    {{#each oneRollDisplay.sets}}
+                        <li style="padding: 10px; background: rgba(255,255,255,0.6); border: 1px solid #333; border-radius: 2px; margin-bottom: 8px; box-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                            <div style="font-weight: bold; color: #8b1f1f; font-family: 'Cinzel', serif; font-size: 1.1em;"><i class="fas fa-check"></i> {{this.label}}</div>
+                            {{#if this.details.length}}
+                                <div style="font-size: 0.9em; color: #222; margin-top: 6px; padding-left: 24px; line-height: 1.4;">
+                                    {{#each this.details}}
+                                        <div style="margin-bottom: 3px; border-bottom: 1px dotted #ccc; padding-bottom: 2px;">{{{this}}}</div>
+                                    {{/each}}
+                                </div>
+                            {{/if}}
+                        </li>
+                    {{/each}}
+                    </ul>
+                {{else}}
+                    <p style="font-style: italic; color: #666; background: rgba(0,0,0,0.05); padding: 10px; border: 1px solid #ccc;">No sets rolled. A truly chaotic life.</p>
+                {{/if}}
+
+                <h3 style="font-family: 'Cinzel', serif; color: #333; border-bottom: 2px solid #333; padding-bottom: 5px;">Unusual Experiences (Waste)</h3>
+                {{#if oneRollDisplay.waste.length}}
+                    <p style="font-size: 0.9em; color: #555; margin-top: 0; font-style: italic;">Select Chart A, B, or C for each waste die.</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {{#each oneRollDisplay.waste}}
+                        <div style="background: rgba(139, 31, 31, 0.05); border: 1px solid #8b1f1f; padding: 10px; border-radius: 2px; box-shadow: 2px 2px 0px rgba(139, 31, 31, 0.1);">
+                            <div style="font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; font-family: 'Cinzel', serif; color: #8b1f1f;">
+                                <span><i class="fas fa-dice-d10"></i> Die Result: {{this.die}}</span>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                {{#each this.options}}
+                                <button type="button" data-action="selectWasteChart" data-die="{{../die}}" data-chart="{{this.chart}}" 
+                                    style="flex: 1; padding: 6px; font-size: 0.9em; font-weight: bold; border: 1px solid {{#if this.active}}#333{{else}}#999{{/if}}; 
+                                    background: {{#if this.active}}#333{{else}}#e0e0e0{{/if}}; color: {{#if this.active}}white{{else}}#444{{/if}}; cursor: pointer; transition: background 0.2s;"
+                                    title="Chart {{this.chart}}">
+                                    {{this.chart}}
+                                </button>
+                                {{/each}}
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.95em; color: #111; text-align: center; font-weight: bold; min-height: 20px;">
+                                {{#each this.options}}{{#if this.active}}{{this.label}}{{/if}}{{/each}}
+                            </div>
+                            {{#if this.details}}
+                            <div style="margin-top: 4px; font-size: 0.85em; color: #555; text-align: center; font-style: italic;">
+                                {{this.details}}
+                            </div>
+                            {{/if}}
+                        </div>
+                    {{/each}}
+                    </div>
+                {{else}}
+                    <p style="font-style: italic; color: #666; background: rgba(0,0,0,0.05); padding: 10px; border: 1px solid #ccc;">No waste dice.</p>
+                {{/if}}
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; min-height: 0;">
+                <div class="cm-biography" style="flex: 1; background: rgba(255,255,255,0.7); border: 2px solid #333; border-radius: 4px; padding: 20px; overflow-y: auto; box-shadow: inset 0 0 15px rgba(0,0,0,0.05);">
+                    <h3 style="font-family: 'Cinzel', serif; margin-top: 0; color: #8b1f1f; text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 5px;">Tale of Years</h3>
+                    {{#if oneRoll.biography.length}}
+                        {{#each oneRoll.biography}}
+                            <p style="font-size: 1em; line-height: 1.6; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #ccc; color: #222;">{{{this}}}</p>
+                        {{/each}}
+                    {{else}}
+                        <p style="color: #666; font-style: italic; text-align: center; margin-top: 50px;">Make your selections on the left to reveal your history...</p>
+                    {{/if}}
+                </div>
+
+                <div style="display: flex; gap: 10px; flex: 0 0 auto;">
+                    <button type="button" data-action="rollTheBones" style="flex: 1; padding: 15px; font-family: 'Cinzel', serif; font-size: 1.2em; font-weight: bold; background: #555; color: white; border: 2px solid #222; border-radius: 4px; cursor: pointer; transition: background 0.2s;">
+                        <i class="fas fa-undo"></i> Re-roll
+                    </button>
+                    <button type="button" data-action="acceptFate" style="flex: 2; padding: 15px; font-family: 'Cinzel', serif; font-size: 1.2em; font-weight: bold; background: #8b1f1f; color: white; border: 2px solid #4a0e0e; border-radius: 4px; cursor: pointer; transition: background 0.2s;">
+                        <i class="fas fa-check-circle"></i> Accept Fate
+                    </button>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+    {{/if}}
+
+    {{#if isPointBuy}}
+    <div class="cm-workspace" style="display: flex; gap: 20px; height: 100%; min-height: 0;">
+        
+        <div class="cm-editor" style="flex: 2; overflow-y: auto; padding-right: 15px;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #333; margin-bottom: 15px; padding-bottom: 5px;">
+                <h2 style="font-family: 'Cinzel', serif; color: #8b1f1f; margin: 0; border: none; font-size: 1.8em;">Attributes & Skills</h2>
+                <div style="font-size: 0.9em; color: #555; font-weight: bold;">Att: {{costs.attribute}}pts | Skill: {{costs.skill}}pt | ED: {{costs.ed}}pt | MD: {{costs.md}}pts</div>
+            </div>
+
+            <div class="cm-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                {{#each skillGroups as |skills attrKey|}}
+                <div class="stat-group" style="background: rgba(255,255,255,0.6); border: 2px solid #333; border-radius: 4px; padding: 12px; box-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #333; color: white; padding: 8px 12px; border-radius: 2px; margin-bottom: 12px;">
+                        <span style="font-family: 'Cinzel', serif; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; font-size: 1.1em;">{{attrKey}}</span>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <a data-action="adjustStat" data-type="attribute" data-key="{{attrKey}}" data-dir="down" style="color: #ffcdd2; cursor: pointer; text-shadow: 1px 1px 1px rgba(0,0,0,0.5);"><i class="fas fa-minus-circle"></i></a>
+                            <span style="font-size: 1.3em; font-weight: bold; width: 20px; text-align: center;">{{lookup ../draft.attributes attrKey}}</span>
+                            <a data-action="adjustStat" data-type="attribute" data-key="{{attrKey}}" data-dir="up" style="color: #c8e6c9; cursor: pointer; text-shadow: 1px 1px 1px rgba(0,0,0,0.5);"><i class="fas fa-plus-circle"></i></a>
+                        </div>
+                    </div>
+
+                    {{#each skills}}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-bottom: 1px dashed #ccc; {{#if this.isCustom}}background: rgba(139, 31, 31, 0.05);{{/if}}">
+                        
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            {{#if this.isCustom}}
+                            <a data-action="removeCustomSkill" data-key="{{this.key}}" style="color: #8b1f1f; cursor: pointer;" title="Remove Custom Skill"><i class="fas fa-trash"></i></a>
+                            {{/if}}
+                            <span style="font-size: 0.95em; text-transform: capitalize; color: #111; {{#if this.isCustom}}font-weight: bold; color: #8b1f1f;{{/if}}">{{this.label}}</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; gap: 3px;">
+                                <button type="button" data-action="toggleUpgrade" data-type="{{this.type}}" data-key="{{this.key}}" data-upgrade="expert" title="Expert Die (+{{../costs.ed}} pt)"
+                                    style="padding: 1px 5px; font-size: 0.75em; font-weight: bold; border: 1px solid #555; cursor: {{#if this.isNative}}not-allowed{{else}}pointer{{/if}}; 
+                                    background: {{#if this.data.expert}}#333{{else}}#e0e0e0{{/if}}; color: {{#if this.data.expert}}white{{else}}#666{{/if}};">
+                                    ED
+                                </button>
+                                <button type="button" data-action="toggleUpgrade" data-type="{{this.type}}" data-key="{{this.key}}" data-upgrade="master" title="Master Die (+{{../costs.md}} pts)"
+                                    style="padding: 1px 5px; font-size: 0.75em; font-weight: bold; border: 1px solid #555; cursor: {{#if this.isNative}}not-allowed{{else}}pointer{{/if}}; 
+                                    background: {{#if this.data.master}}#8b1f1f{{else}}#e0e0e0{{/if}}; color: {{#if this.data.master}}white{{else}}#666{{/if}};">
+                                    MD
+                                </button>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; align-items: center; width: 60px; justify-content: flex-end;">
+                                <a data-action="adjustStat" data-type="{{this.type}}" data-key="{{this.key}}" data-dir="down" style="color: #8b1f1f; cursor: pointer; font-size: 0.95em;"><i class="fas fa-minus"></i></a>
+                                <span style="font-weight: bold; width: 14px; text-align: center; color: #111;">{{this.data.value}}</span>
+                                <a data-action="adjustStat" data-type="{{this.type}}" data-key="{{this.key}}" data-dir="up" style="color: #333; cursor: pointer; font-size: 0.95em;"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+
+                    <div style="display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc;">
+                        <input type="text" id="new-skill-{{attrKey}}" placeholder="Add custom {{attrKey}} skill..." style="flex: 1; padding: 4px 6px; font-size: 0.9em; border: 1px solid #999; border-radius: 2px; font-family: inherit;">
+                        <button type="button" data-action="addCustomSkill" data-attr="{{attrKey}}" style="padding: 4px 10px; font-size: 0.9em; cursor: pointer; background: #e0e0e0; border: 1px solid #555; border-radius: 2px; font-weight: bold; color: #333;">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+
+                </div>
+                {{/each}}
+            </div>
+
+            <div style="margin-top: 25px; padding: 15px; border: 2px solid #512da8; border-radius: 4px; background: rgba(81, 45, 168, 0.05); box-shadow: 2px 2px 0px rgba(81, 45, 168, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="font-family: 'Cinzel', serif; margin: 0; color: #512da8; display: flex; align-items: center; gap: 8px; border: none; font-size: 1.4em;">
+                            <i class="fas fa-book-dead"></i> Sorcery
+                        </h3>
+                        <p style="font-size: 0.9em; color: #555; margin: 4px 0 0 0; font-style: italic;">Governing Attribute is determined by your specific Spells.</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="display: flex; gap: 3px;">
+                            <button type="button" data-action="toggleUpgrade" data-type="sorcery" data-upgrade="expert" title="Expert Die (+{{costs.ed}} pt)"
+                                style="padding: 2px 6px; font-size: 0.8em; font-weight: bold; border: 1px solid #512da8; cursor: pointer; 
+                                background: {{#if draft.sorcery.expert}}#512da8{{else}}#e0e0e0{{/if}}; color: {{#if draft.sorcery.expert}}white{{else}}#555{{/if}};">
+                                ED
+                            </button>
+                            <button type="button" data-action="toggleUpgrade" data-type="sorcery" data-upgrade="master" title="Master Die (+{{costs.md}} pts)"
+                                style="padding: 2px 6px; font-size: 0.8em; font-weight: bold; border: 1px solid #512da8; cursor: pointer; 
+                                background: {{#if draft.sorcery.master}}#311b92{{else}}#e0e0e0{{/if}}; color: {{#if draft.sorcery.master}}white{{else}}#555{{/if}};">
+                                MD
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; width: 70px; justify-content: flex-end;">
+                            <a data-action="adjustStat" data-type="sorcery" data-dir="down" style="color: #8b1f1f; cursor: pointer; font-size: 1.2em;"><i class="fas fa-minus"></i></a>
+                            <span style="font-weight: bold; width: 16px; text-align: center; font-size: 1.2em; color: #111;">{{draft.sorcery.value}}</span>
+                            <a data-action="adjustStat" data-type="sorcery" data-dir="up" style="color: #512da8; cursor: pointer; font-size: 1.2em;"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; padding: 25px; border: 2px dashed #8b1f1f; border-radius: 4px; background: rgba(139,31,31,0.03); transition: all 0.2s;" class="cm-drop-zone">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="font-family: 'Cinzel', serif; color: #8b1f1f; margin: 0 0 5px 0; border: none; font-size: 1.5em;"><i class="fas fa-parachute-box"></i> Shopping Cart</h3>
+                    <p style="font-size: 0.95em; color: #555; margin: 0; font-style: italic;">Drag and drop Advantages, Spells, Martial Paths, and Problems here.</p>
+                </div>
+
+                {{#if draft.advantages.length}}
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin: 0 0 6px 0; border-bottom: 1px solid #ccc; color: #333; font-family: 'Cinzel', serif;">Advantages</h4>
+                    {{#each draft.advantages}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.8); border: 1px solid #aaa; border-radius: 2px; margin-bottom: 5px; box-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
+                        <span style="color: #222; font-weight: bold;"><i class="fas fa-star" style="color: #fbc02d; font-size: 0.9em; margin-right: 6px;"></i> {{this.name}} <span style="color: #666; font-weight: normal; font-size: 0.9em;">(Cost: {{this.system.cost}})</span></span>
+                        <a data-action="removeItem" data-list="advantages" data-id="{{this._draftId}}" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.martialPaths.length}}
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin: 0 0 6px 0; border-bottom: 1px solid #ccc; color: #333; font-family: 'Cinzel', serif;">Martial Paths</h4>
+                    {{#each draft.martialPaths}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.8); border: 1px solid #aaa; border-radius: 2px; margin-bottom: 5px; box-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
+                        <span style="color: #222; font-weight: bold;"><i class="fas fa-fist-raised" style="color: #8b1f1f; font-size: 0.9em; margin-right: 6px;"></i> {{this.name}} <span style="color: #666; font-weight: normal; font-size: 0.9em;">(Rank: {{this.system.rank}})</span></span>
+                        <a data-action="removeItem" data-list="martialPaths" data-id="{{this._draftId}}" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.esoterica.length}}
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin: 0 0 6px 0; border-bottom: 1px solid #ccc; color: #333; font-family: 'Cinzel', serif;">Esoteric Disciplines</h4>
+                    {{#each draft.esoterica}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.8); border: 1px solid #aaa; border-radius: 2px; margin-bottom: 5px; box-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
+                        <span style="color: #222; font-weight: bold;"><i class="fas fa-magic" style="color: #512da8; font-size: 0.9em; margin-right: 6px;"></i> {{this.name}} <span style="color: #666; font-weight: normal; font-size: 0.9em;">(Rank: {{this.system.rank}})</span></span>
+                        <a data-action="removeItem" data-list="esoterica" data-id="{{this._draftId}}" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.spells.length}}
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin: 0 0 6px 0; border-bottom: 1px solid #ccc; color: #333; font-family: 'Cinzel', serif;">Spells</h4>
+                    {{#each draft.spells}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(255,255,255,0.8); border: 1px solid #aaa; border-radius: 2px; margin-bottom: 5px; box-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
+                        <span style="color: #222; font-weight: bold;"><i class="fas fa-scroll" style="color: #0288d1; font-size: 0.9em; margin-right: 6px;"></i> {{this.name}} <span style="color: #666; font-weight: normal; font-size: 0.9em;">(Cost: 1)</span></span>
+                        <a data-action="removeItem" data-list="spells" data-id="{{this._draftId}}" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.problems.length}}
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin: 0 0 6px 0; border-bottom: 1px solid #ccc; color: #333; font-family: 'Cinzel', serif;">Problems</h4>
+                    {{#each draft.problems}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: #ffebee; border: 1px solid #d32f2f; border-radius: 2px; margin-bottom: 5px; box-shadow: 1px 1px 0px rgba(211, 47, 47, 0.2);">
+                        <span style="color: #b71c1c; font-weight: bold;"><i class="fas fa-exclamation-circle" style="font-size: 0.9em; margin-right: 6px;"></i> {{this.name}} <span style="font-weight: normal; font-size: 0.9em;">(+XP Trigger)</span></span>
+                        <a data-action="removeItem" data-list="problems" data-id="{{this._draftId}}" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+            </div>
+
+            <div style="margin-top: 25px; padding: 20px; background: rgba(255,255,255,0.6); border: 2px solid #333; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                <span style="font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.3em; color: #333;"><i class="fas fa-coins" style="color: #fbc02d;"></i> Starting Wealth</span>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <a data-action="adjustStat" data-type="wealth" data-dir="down" style="color: #8b1f1f; cursor: pointer; font-size: 1.4em;"><i class="fas fa-minus-circle"></i></a>
+                    <span style="font-size: 1.6em; font-weight: bold; width: 30px; text-align: center; color: #111;">{{draft.wealth}}</span>
+                    <a data-action="adjustStat" data-type="wealth" data-dir="up" style="color: #333; cursor: pointer; font-size: 1.4em;"><i class="fas fa-plus-circle"></i></a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="cm-sidebar" style="flex: 0 0 280px; background: rgba(255,255,255,0.5); border-left: 2px solid #333; padding: 20px; display: flex; flex-direction: column;">
+
+            <div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #fff; border: 2px solid #333; border-radius: 4px; box-shadow: 4px 4px 0px rgba(0,0,0,0.15);">
+                <h3 style="font-family: 'Cinzel', serif; margin: 0; color: #333; font-size: 1.1em; border: none;">Points Remaining</h3>
+                <div style="font-size: 3.5em; font-weight: bold; color: {{#if (eq pointsRemaining 0)}}#8b1f1f{{else}}#333{{/if}}; text-shadow: 1px 1px 0px #ccc; margin: 10px 0;">
+                    {{pointsRemaining}}
+                </div>
+                <div style="font-size: 0.9em; color: #666; font-style: italic;">Out of Campaign Budget ({{draft.pointsMax}})</div>
+            </div>
+
+            <h3 style="font-family: 'Cinzel', serif; color: #8b1f1f; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px;">Attribute Summary</h3>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 1em; flex: 1; color: #222;">
+                <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ccc;"><strong>Body:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.body}}</span></li>
+                <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ccc;"><strong>Coordination:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.coordination}}</span></li>
+                <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ccc;"><strong>Sense:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.sense}}</span></li>
+                <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ccc;"><strong>Knowledge:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.knowledge}}</span></li>
+                <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ccc;"><strong>Command:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.command}}</span></li>
+                <li style="display: flex; justify-content: space-between; padding: 4px 0;"><strong>Charm:</strong> <span style="font-weight: bold; color: #8b1f1f;">{{draft.attributes.charm}}</span></li>
+            </ul>
+
+            <button type="button" data-action="finishCharacter" style="background: #333; color: white; border: 2px solid #111; border-radius: 4px; padding: 15px; font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background 0.2s;">
+                <i class="fas fa-hammer"></i> Forge Sheet
+            </button>
+        </div>
+
+    </div>
+    {{/if}}
+
+</div>

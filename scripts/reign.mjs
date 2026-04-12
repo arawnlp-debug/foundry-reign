@@ -13,6 +13,7 @@ import { generateOREChatHTML } from "./helpers/chat.js";
 import { applyDamageToTarget, applyCompanyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget, consumeGobbleDie } from "./combat/damage.js";
 import { ReignCombat } from "./combat/ore-combat.js";
 import { parseORE, calculateInitiative } from "./helpers/ore-engine.js";
+import { ReignCharactermancer } from "./generators/charactermancer.js";
 
 import { migrateWorld } from "./system/migration.js";
 import * as models from "./system/models.js";
@@ -44,14 +45,25 @@ Hooks.once("init", async () => {
     type: String, default: "0"
   });
 
-  game.settings.register("reign", "oneRollTablePath", {
-    name: "Custom One-Roll Tables Path",
-    hint: "Path to a custom JSON file for character generation (e.g., worlds/my-world/tables.json). Leave blank for default.",
+  game.settings.register("reign", "oneRollTables", {
+    name: "Available One-Roll Tables",
+    hint: "A comma-separated list of file paths to One-Roll JSON files. (e.g., systems/reign/data/oneroll-default.json, worlds/myworld/data/dwarven-paths.json)",
     scope: "world",
     config: true,
     type: String,
-    default: ""
+    default: "systems/reign/data/oneroll-default.json"
   });
+
+  // --- NEW POINT BUY SETTINGS ---
+  game.settings.register("reign", "campaignBudget", {
+    name: "Point Buy: Campaign Budget",
+    hint: "The total number of starting points for new characters (e.g., 85 for Beginner, 120 for Serious, 150 for Epic).",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 85
+  });
+  // ------------------------------
 
   const reignStatuses = [
     { id: "dead", name: "REIGN.StatusDead", img: "icons/svg/skull.svg", _id: "dead000000000000" },
@@ -112,6 +124,28 @@ Hooks.once("ready", async () => {
     }
     await game.settings.set("reign", "lastMigrationVersion", currentVersion);
   }
+});
+
+/**
+ * Intercept Character Creation
+ * Triggers the Charactermancer if a new, blank character is created.
+ */
+Hooks.on("createActor", async (actor, options, userId) => {
+  // Only the user who clicked "Create" should launch the app
+  if (game.user.id !== userId) return;
+  if (actor.type !== "character") return;
+  
+  // Don't trigger if the actor is being duplicated, imported from a compendium, etc.
+  if (actor.flags?.core?.sourceId || options.fromCompendium) return;
+
+  // Launch the Charactermancer and lock the underlying sheet
+  await actor.update({ "system.creationMode": true });
+  
+  // Close the default sheet that Foundry auto-opens, then open our Wizard
+  setTimeout(() => {
+    actor.sheet.close();
+    new ReignCharactermancer({ document: actor }).render(true);
+  }, 50); 
 });
 
 Hooks.on("preUpdateActor", (actor, changes, options, userId) => {
