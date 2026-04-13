@@ -3,7 +3,6 @@ const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 import { parseORE } from "../helpers/ore-engine.js";
 import { postOREChat } from "../helpers/chat.js";
-import { ReignCharactermancer } from "../generators/charactermancer.js";
 import { CharacterRoller } from "../helpers/character-roller.js";
 import { WealthRoller } from "../helpers/wealth-roller.js";
 import { syncCharacterStatusEffects } from "../combat/damage.js";
@@ -23,11 +22,6 @@ export class ReignActorSheet extends HandlebarsApplicationMixin(foundry.applicat
     window: { resizable: true, minimizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
-      generateCharacter: async function(event, target) {
-        try {
-          await ReignCharactermancer.start(this.document);
-        } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
-      },
       recoverShock: async function(event, target) {
         try {
           const system = this.document.system;

@@ -1,31 +1,54 @@
 <div class="reign-sheet-root threat-sheet">
   <header class="sheet-header">
-    <div class="header-top" style="display: flex; gap: 15px; align-items: flex-end; padding: 10px;">
-      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img reign-circle" style="width: 80px; height: 80px; border: 2px solid #000; object-fit: cover; cursor: pointer; flex: 0 0 80px;"/>
-      <div class="header-fields" style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-        <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'REIGN.ThreatName'}}" class="reign-threat-header" style="font-size: 1.8em; font-weight: bold; border: none; border-bottom: 2px solid #000; background: transparent; width: 100%;"/>
-        <div class="reign-threat-label" style="font-size: 0.9em; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 1px;">{{localize 'REIGN.UnworthyOpponent'}}</div>
+    <div class="header-top cm-flex-gap15 cm-align-end cm-p10">
+      <img src="{{actor.img}}" 
+           data-action="editImage" 
+           title="{{actor.name}}" 
+           class="profile-img reign-circle threat-profile-img" 
+           alt="{{actor.name}}"/>
+           
+      <div class="header-fields cm-flex-col cm-gap5">
+        <input name="name" 
+               type="text" 
+               value="{{actor.name}}" 
+               placeholder="{{localize 'REIGN.ThreatName'}}" 
+               class="reign-threat-header-input"/>
+               
+        <div class="reign-threat-type-label">
+          {{localize 'REIGN.UnworthyOpponent'}}
+        </div>
       </div>
     </div>
   </header>
 
   <section class="sheet-body">
-    <div class="stat-grid" style="grid-template-columns: 1fr; display: grid; gap: 15px;">
-      <div class="stat-block bg-white" style="border: 2px solid #000;">
-        <div class="stat-header reign-flex-center" style="background: #000; color: #fff; padding: 5px;">
-          <h2 class="rollable" data-action="rollThreat" style="cursor: pointer; margin: 0; color: #fff; font-size: 1.2em; text-transform: uppercase; font-weight: bold;" title="{{localize 'REIGN.RollThreatAction'}}">
+    <div class="threat-stat-grid">
+      
+      <div class="stat-block bg-white threat-main-border">
+        <div class="stat-header reign-flex-center threat-header-black">
+          <h2 class="rollable" 
+              data-action="rollThreat" 
+              title="{{localize 'REIGN.RollThreatAction'}}">
             <i class="fas fa-dice reign-mr10"></i> {{localize 'REIGN.RollThreatAction'}}
           </h2>
         </div>
 
-        <div class="reign-flex-around reign-mb10" style="padding: 15px; display: flex; justify-content: space-around; align-items: center; gap: 20px;">
+        <div class="threat-input-row cm-p15 cm-flex-around cm-align-center cm-gap20">
           <div class="reign-text-center">
-            <label class="reign-bold reign-mb5 reign-block reign-text-lg">{{localize 'REIGN.ThreatLevel'}}</label>
-            <input type="number" name="system.threatLevel" value="{{system.threatLevel}}" class="reign-threat-input" style="font-size: 2em; text-align: center; width: 80px; height: 60px; border: 2px solid #000; background: #fff;"/>
+            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+              {{localize 'REIGN.ThreatLevel'}}
+            </label>
+            <input type="number" 
+                   name="system.threatLevel" 
+                   value="{{system.threatLevel}}" 
+                   class="reign-threat-number-input"/>
           </div>
-          <div class="reign-text-center" style="flex: 0 0 50%;">
-            <label class="reign-bold reign-mb5 reign-block reign-text-lg">{{localize 'REIGN.ParentCompany'}}</label>
-            <select name="system.parentCompany" class="reign-threat-input" style="width: 100%; text-align: center; font-size: 1.1em; padding: 5px; border: 1px solid #ccc;">
+          
+          <div class="reign-text-center cm-flex-50">
+            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+              {{localize 'REIGN.ParentCompany'}}
+            </label>
+            <select name="system.parentCompany" class="reign-threat-select">
               <option value="">{{localize 'REIGN.ParentCompanyNone'}}</option>
               {{selectOptions companies selected=system.parentCompany}}
             </select>
@@ -33,44 +56,77 @@
         </div>
       </div>
 
-      <div class="dialog-grid dialog-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div class="stat-block bg-white reign-text-center reign-pb10" style="border: 2px solid #000;">
-          <div class="stat-header bg-crimson reign-flex-center" style="background: #8b1f1f; color: #fff; padding: 4px;">
-            <h2 style="margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase;">{{localize 'REIGN.Magnitude'}}</h2>
+      <div class="threat-sub-grid">
+        
+        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+          <div class="stat-header bg-crimson reign-flex-center threat-header-red">
+            <h2>{{localize 'REIGN.Magnitude'}}</h2>
           </div>
-          <div class="reign-desc-text" style="padding: 8px; color: #666; font-size: 0.85em; font-style: italic;">{{localize 'REIGN.MagnitudeDesc'}}</div>
-          <div class="reign-fraction-input" style="display: flex; justify-content: center; align-items: center; gap: 10px; padding-bottom: 10px;">
-            <input type="number" name="system.magnitude.value" value="{{system.magnitude.value}}" class="reign-fraction-val reign-mag-val" style="width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #8b1f1f; color: #8b1f1f;"/>
-            <span style="font-size: 1.5em; font-weight: bold;">/</span>
-            <input type="number" name="system.magnitude.max" value="{{system.magnitude.max}}" class="reign-fraction-max" style="width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #999; color: #666;"/>
+          <div class="reign-desc-text threat-desc-italics">
+            {{localize 'REIGN.MagnitudeDesc'}}
+          </div>
+          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+            <input type="number" 
+                   name="system.magnitude.value" 
+                   value="{{system.magnitude.value}}" 
+                   class="reign-fraction-val threat-mag-input"
+                   title="{{localize 'REIGN.CurrentMagnitude'}}"/>
+            <span class="threat-fraction-separator">/</span>
+            <input type="number" 
+                   name="system.magnitude.max" 
+                   value="{{system.magnitude.max}}" 
+                   class="reign-fraction-max threat-max-input"
+                   title="{{localize 'REIGN.MaxMagnitude'}}"/>
           </div>
         </div>
 
-        <div class="stat-block bg-white reign-text-center reign-pb10" style="border: 2px solid #000;">
-          <div class="stat-header bg-teal reign-flex-center" style="background: #00695c; color: #fff; padding: 4px;">
-            <h2 class="rollable" data-action="rollMorale" style="color:white; cursor: pointer; margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase;" title="{{localize 'REIGN.Morale'}}">
-              <i class="fas fa-dice reign-mr10"></i>{{localize 'REIGN.Morale'}}
+        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+          <div class="stat-header bg-teal reign-flex-center threat-header-teal">
+            <h2 class="rollable" 
+                data-action="rollMorale" 
+                title="{{localize 'REIGN.RollMorale'}}">
+              <i class="fas fa-dice reign-mr10"></i> {{localize 'REIGN.Morale'}}
             </h2>
           </div>
-          <div class="reign-desc-text" style="padding: 8px; color: #666; font-size: 0.85em; font-style: italic;">{{localize 'REIGN.MoraleDesc'}}</div>
-          <div class="reign-fraction-input" style="display: flex; justify-content: center; align-items: center; gap: 10px; padding-bottom: 10px;">
-            <input type="number" name="system.morale.value" value="{{system.morale.value}}" class="reign-fraction-val reign-mor-val" style="width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #00695c; color: #00695c;"/>
-            <span style="font-size: 1.5em; font-weight: bold;">/</span>
-            <input type="number" name="system.morale.max" value="{{system.morale.max}}" class="reign-fraction-max" style="width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #999; color: #666;"/>
+          <div class="reign-desc-text threat-desc-italics">
+            {{localize 'REIGN.MoraleDesc'}}
+          </div>
+          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+            <input type="number" 
+                   name="system.morale.value" 
+                   value="{{system.morale.value}}" 
+                   class="reign-fraction-val threat-mor-input"
+                   title="{{localize 'REIGN.CurrentMorale'}}"/>
+            <span class="threat-fraction-separator">/</span>
+            <input type="number" 
+                   name="system.morale.max" 
+                   value="{{system.morale.max}}" 
+                   class="reign-fraction-max threat-max-input"
+                   title="{{localize 'REIGN.MaxMorale'}}"/>
           </div>
         </div>
+        
       </div>
 
-      <div class="stat-block bg-white reign-mt20" style="border: 2px solid #000; margin-top: 10px;">
-        <div class="stat-header reign-flex-center" style="background: #000; color: #fff; padding: 5px;">
-          <h2 style="margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase;">{{localize 'REIGN.DescriptionTactics'}}</h2>
+      <div class="stat-block bg-white cm-mt10 threat-main-border">
+        <div class="stat-header reign-flex-center threat-header-black">
+          <h2>{{localize 'REIGN.DescriptionTactics'}}</h2>
         </div>
-        <div class="reign-p15" style="padding: 15px; border-bottom: 1px dashed #ccc;">
-          <label class="reign-bold reign-mb5 reign-block" style="font-weight: bold; display: block; margin-bottom: 5px;">{{localize 'REIGN.DamageFormula'}}</label>
-          <input type="text" name="system.damageFormula" value="{{system.damageFormula}}" class="reign-threat-weapon reign-mb10" placeholder="{{localize 'REIGN.Damage'}}" style="width: 100%; text-align: center; font-size: 1.1em; padding: 8px; border: 1px solid #ccc;"/>
+        <div class="cm-p15 threat-damage-formula-row">
+          <label class="reign-bold cm-mb5 cm-block">
+            {{localize 'REIGN.DamageFormula'}}
+          </label>
+          <input type="text" 
+                 name="system.damageFormula" 
+                 value="{{system.damageFormula}}" 
+                 class="reign-threat-weapon cm-mb10" 
+                 placeholder="{{localize 'REIGN.DamagePlaceholder'}}"/>
         </div>
-        <textarea name="system.description" class="reign-textarea-120" style="border: none; padding: 15px; width: 100%; box-sizing: border-box; min-height: 120px; font-family: inherit; font-size: 1em; resize: vertical; background: transparent;">{{system.description}}</textarea>
+        <textarea name="system.description" 
+                  class="reign-textarea-120 threat-description-area"
+                  placeholder="{{localize 'REIGN.TacticsPlaceholder'}}">{{system.description}}</textarea>
       </div>
+
     </div>
   </section>
 </div>

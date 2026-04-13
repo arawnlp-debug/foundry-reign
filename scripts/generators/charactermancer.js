@@ -3,7 +3,7 @@ const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 import { skillAttrMap } from "../helpers/config.js";
 
 export class ReignCharactermancer extends HandlebarsApplicationMixin(ApplicationV2) {
-static DEFAULT_OPTIONS = {
+  static DEFAULT_OPTIONS = {
     id: "reign-charactermancer",
     classes: ["reign", "charactermancer", "app-v2"],
     tag: "form",
@@ -23,6 +23,7 @@ static DEFAULT_OPTIONS = {
       addCustomSkill: this._onAddCustomSkill,
       removeCustomSkill: this._onRemoveCustomSkill,
       changeBudget: this._onChangeBudget,
+      changeTable: this._onChangeTable,
       removeItem: this._onRemoveItem,
       finishCharacter: this._onFinishCharacter,
       rollTheBones: this._onRollTheBones,
@@ -54,7 +55,12 @@ static DEFAULT_OPTIONS = {
       problems: [],
       martialPaths: [],
       esoterica: [],
-      spells: []
+      spells: [],
+      // AUDIT FIX P1: Expanded arrays to support full item drag-and-drop
+      weapons: [],
+      armor: [],
+      shields: [],
+      gear: []
     };
 
     // ONE-ROLL STATE
@@ -64,7 +70,8 @@ static DEFAULT_OPTIONS = {
       sets: [],
       waste: [],
       wasteChoices: {},
-      biography: []
+      biography: [],
+      selectedTable: ""
     };
     this.oneRollTable = null;
 
@@ -75,6 +82,14 @@ static DEFAULT_OPTIONS = {
         master: skill === "languageNative" 
       };
     }
+  }
+
+  // AUDIT FIX P1: Prevent Application closure from soft-locking the Actor
+  async close(options={}) {
+      if (this.actor?.system?.creationMode) {
+          await this.actor.update({ "system.creationMode": false });
+      }
+      return super.close(options);
   }
 
   _onRender(context, options) {
@@ -126,6 +141,11 @@ static DEFAULT_OPTIONS = {
         if (stage.martialPaths) stage.martialPaths.forEach(m => gains.push(`${m.name}`));
         if (stage.esoterica) stage.esoterica.forEach(e => gains.push(`${e.name}`));
         if (stage.spells) stage.spells.forEach(s => gains.push(`${s.name}`));
+        // Display new items if tables grant them
+        if (stage.weapons) stage.weapons.forEach(w => gains.push(`${w.name}`));
+        if (stage.armor) stage.armor.forEach(a => gains.push(`${a.name}`));
+        if (stage.shields) stage.shields.forEach(sh => gains.push(`${sh.name}`));
+        if (stage.gear) stage.gear.forEach(g => gains.push(`${g.name}`));
         if (stage.special) gains.push(`Special: ${stage.special}`);
         return gains.join(" | ");
     };
@@ -134,13 +154,15 @@ static DEFAULT_OPTIONS = {
         const tablesSetting = game.settings.get("reign", "oneRollTables") || `systems/${game.system.id}/data/oneroll-default.json`;
         const paths = tablesSetting.split(",").map(p => p.trim()).filter(p => p);
         
-        context.availableTables = paths.map(path => {
+        context.availableTables = {};
+        paths.forEach(path => {
             const filename = path.split('/').pop().replace('.json', '').replace(/-/g, ' ').replace('oneroll', 'one roll');
-            const label = filename.replace(/\b\w/g, l => l.toUpperCase()); 
-            return { path: path, label: label };
+            context.availableTables[path] = filename.replace(/\b\w/g, l => l.toUpperCase()); 
         });
 
+        context.selectedTable = this.oneRollState.selectedTable || paths[0];
         context.oneRoll = this.oneRollState;
+
         if (this.oneRollState.rolled && this.oneRollTable) {
             context.oneRollDisplay = {
                 sets: this.oneRollState.sets.map(s => {
@@ -274,7 +296,7 @@ static DEFAULT_OPTIONS = {
       if (this.oneRollTable && this.oneRollTable._path === path) return this.oneRollTable;
       
       if (path.startsWith("http://") || path.startsWith("https://")) {
-          ui.notifications.error("Security Risk: Custom tables must be stored locally in your Foundry data folder.");
+          ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.CustomTableSecurity"));
           return null;
       }
 
@@ -285,16 +307,16 @@ static DEFAULT_OPTIONS = {
               this.oneRollTable._path = path;
               return this.oneRollTable;
           } else {
-              ui.notifications.error(`Could not find table at: ${path}`);
+              ui.notifications.error(`${game.i18n.localize("REIGN.CM.Errors.TableNotFound")} ${path}`);
           }
       } catch (e) {
           console.error("Failed to load One-Roll table", e);
-          ui.notifications.error(`Error parsing JSON at: ${path}`);
+          ui.notifications.error(`${game.i18n.localize("REIGN.CM.Errors.JsonParseError")} ${path}`);
       }
       return null;
   }
 
-  // NEW HELPER: Searches World Items first, then Compendiums
+  // Searches World Items first, then Compendiums
   async _findItem(name, type) {
       const lowerName = name.toLowerCase();
       
@@ -305,7 +327,6 @@ static DEFAULT_OPTIONS = {
       // 2. Search Compendiums
       for (const pack of game.packs.values()) {
           if (pack.metadata.type === "Item") {
-              // Ensure we are getting the type fields in the index
               const index = await pack.getIndex({fields: ["type", "name"]});
               const match = index.find(i => i.type === type && i.name.toLowerCase() === lowerName);
               if (match) {
@@ -317,7 +338,6 @@ static DEFAULT_OPTIONS = {
       return null;
   }
 
-  // UPDATED: Now asynchronous to allow compendium searching
   async _applyOneRollSets(table) {
       this.draftCharacter.attributes = { body: 2, coordination: 2, sense: 2, knowledge: 2, command: 2, charm: 2 };
       for (const skill of Object.keys(skillAttrMap)) {
@@ -331,6 +351,10 @@ static DEFAULT_OPTIONS = {
       this.draftCharacter.martialPaths = [];
       this.draftCharacter.esoterica = [];
       this.draftCharacter.spells = [];
+      this.draftCharacter.weapons = [];
+      this.draftCharacter.armor = [];
+      this.draftCharacter.shields = [];
+      this.draftCharacter.gear = [];
       this.oneRollState.biography = [];
 
       for (const set of this.oneRollState.sets) {
@@ -353,7 +377,6 @@ static DEFAULT_OPTIONS = {
       this._calculatePoints();
   }
 
-  // UPDATED: Now asynchronous to pull real items
   async _applyStageGains(stage) {
       if (stage.description) this.oneRollState.biography.push(`**${stage.label}**: ${stage.description}`);
 
@@ -430,15 +453,16 @@ static DEFAULT_OPTIONS = {
           this.draftCharacter.wealth += stage.wealth;
       }
 
-      // NEW: Search for real items before defaulting to a placeholder
-      const listMap = { advantages: "advantage", problems: "problem", martialPaths: "technique", esoterica: "discipline", spells: "spell" };
+      // Search for real items before defaulting to a placeholder
+      const listMap = { advantages: "advantage", problems: "problem", martialPaths: "technique", esoterica: "discipline", spells: "spell", weapons: "weapon", armor: "armor", shields: "shield", gear: "gear" };
       for (const [list, type] of Object.entries(listMap)) {
           if (stage[list]) {
               for (const item of stage[list]) {
                   const foundItem = await this._findItem(item.name, type);
                   
                   if (foundItem) {
-                      const itemData = foundItem.toObject();
+                      // Deep clone to guarantee data integrity from the compendium
+                      const itemData = foundry.utils.deepClone(foundItem.toObject());
                       itemData._draftId = foundry.utils.randomID();
                       // Keep JSON system overrides if they exist (like cost overrides)
                       if (item.system) itemData.system = foundry.utils.mergeObject(itemData.system, item.system);
@@ -516,6 +540,7 @@ static DEFAULT_OPTIONS = {
       
       const selectElement = this.element.querySelector("#oneroll-table-select");
       const selectedPath = selectElement ? selectElement.value : `systems/${game.system.id}/data/oneroll-default.json`;
+      this.oneRollState.selectedTable = selectedPath;
 
       const table = await this._loadOneRollTable(selectedPath);
       if (!table) return;
@@ -546,9 +571,8 @@ static DEFAULT_OPTIONS = {
       this.oneRollState.wasteChoices = {};
       this.oneRollState.biography = [];
 
-      // Await is now required because of the async compendium search
       await this._applyOneRollSets(table);
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onSelectWasteChart(event, target) {
@@ -560,11 +584,16 @@ static DEFAULT_OPTIONS = {
       
       const selectElement = this.element.querySelector("#oneroll-table-select");
       const selectedPath = selectElement ? selectElement.value : `systems/${game.system.id}/data/oneroll-default.json`;
+      this.oneRollState.selectedTable = selectedPath;
 
       const table = await this._loadOneRollTable(selectedPath);
-      // Await is now required because of the async compendium search
       if(table) await this._applyOneRollSets(table);
-      this.render(true);
+      await this.render(true);
+  }
+
+  static async _onChangeTable(event, target) {
+      event.preventDefault();
+      this.oneRollState.selectedTable = target.value;
   }
 
   static async _onAcceptFate(event, target) {
@@ -584,7 +613,8 @@ static DEFAULT_OPTIONS = {
       const item = await Item.implementation.fromDropData(data);
       if (!item) return;
 
-      const itemData = item.toObject();
+      // AUDIT FIX P1: Deep clone entire toObject() structure to prevent data stripping
+      const itemData = foundry.utils.deepClone(item.toObject());
       itemData._draftId = foundry.utils.randomID();
       
       let listName = "";
@@ -594,23 +624,27 @@ static DEFAULT_OPTIONS = {
       else if (item.type === "discipline") listName = "esoterica";
       else if (item.type === "spell") {
           listName = "spells";
-          if ((Number(item.system.intensity) || 1) > 6) return ui.notifications.error("Starting characters cannot know spells above Sixth Intensity.");
+          if ((Number(item.system.intensity) || 1) > 6) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.SpellsTooHigh"));
       }
-      else { return ui.notifications.warn("You cannot purchase this item type with starting points."); }
+      // AUDIT FIX P1: Add support for equipment drag and drop
+      else if (item.type === "weapon") listName = "weapons";
+      else if (item.type === "armor") listName = "armor";
+      else if (item.type === "shield") listName = "shields";
+      else if (item.type === "gear") listName = "gear";
+      else { return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.InvalidItemType")); }
 
-      if (listName === "problems" && this.draftCharacter.problems.length >= 3) return ui.notifications.error("Maximum 3 Problems allowed.");
+      if (listName === "problems" && this.draftCharacter.problems.length >= 3) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.MaxProblems"));
 
       this.draftCharacter[listName].push(itemData);
-      const prevSpent = this.draftCharacter.pointsSpent;
       this._calculatePoints();
 
       if (this.draftCharacter.pointsSpent > this.draftCharacter.pointsMax && listName !== "problems") {
           this.draftCharacter[listName].pop();
           this._calculatePoints();
-          return ui.notifications.error("Not enough points to purchase this item.");
+          return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.NotEnoughPoints"));
       }
 
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onRemoveItem(event, target) {
@@ -620,7 +654,7 @@ static DEFAULT_OPTIONS = {
       if (!this.draftCharacter[list]) return;
       this.draftCharacter[list] = this.draftCharacter[list].filter(i => i._draftId !== draftId);
       this._calculatePoints();
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onSelectPath(event, target) {
@@ -631,16 +665,16 @@ static DEFAULT_OPTIONS = {
       this.close();
     } else if (this.creationPath === "oneroll") {
       this.draftCharacter.attributes = { body: 2, coordination: 2, sense: 2, knowledge: 2, command: 2, charm: 2 };
-      this.render(true);
+      await this.render(true);
     } else {
-      this.render(true); 
+      await this.render(true); 
     }
   }
 
   static async _onChangeBudget(event, target) {
       event.preventDefault();
       this.draftCharacter.pointsMax = parseInt(target.value) || 85;
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onAdjustStat(event, target) {
@@ -670,7 +704,7 @@ static DEFAULT_OPTIONS = {
             else if (type === "wealth") this.draftCharacter.wealth--;
             else this.draftCharacter.attributes[key]--;
             this._calculatePoints();
-            return ui.notifications.error("Not enough points!");
+            return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.NotEnoughPoints"));
         }
     } else {
         if (currentVal <= minVal) return;
@@ -681,7 +715,7 @@ static DEFAULT_OPTIONS = {
         else this.draftCharacter.attributes[key]--;
         this._calculatePoints();
     }
-    this.render(true);
+    await this.render(true);
   }
 
   static async _onToggleUpgrade(event, target) {
@@ -693,7 +727,7 @@ static DEFAULT_OPTIONS = {
       else skill = this.draftCharacter.skills[key];
 
       if (!skill) return;
-      if (key === "languageNative") return ui.notifications.warn("Native Language MD is locked.");
+      if (key === "languageNative") return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.NativeLanguageLocked"));
 
       const prevExp = skill.expert, prevMas = skill.master;
       if (upgradeType === "expert") { skill.expert = !skill.expert; if (skill.expert) skill.master = false; } 
@@ -703,9 +737,9 @@ static DEFAULT_OPTIONS = {
       if (this.draftCharacter.pointsSpent > this.draftCharacter.pointsMax) {
           skill.expert = prevExp; skill.master = prevMas;
           this._calculatePoints();
-          return ui.notifications.error("Not enough points!");
+          return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.NotEnoughPoints"));
       }
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onAddCustomSkill(event, target) {
@@ -713,10 +747,12 @@ static DEFAULT_OPTIONS = {
       const attr = target.dataset.attr; 
       const input = this.element.querySelector(`#new-skill-${attr}`);
       const name = input ? input.value.trim() : "";
-      if (!name) return ui.notifications.warn("Enter a name.");
+      if (!name) return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.EnterName"));
       const key = `custom_${foundry.utils.randomID(6)}`;
       this.draftCharacter.customSkills[key] = { name: name, value: 0, expert: false, master: false, attribute: attr };
-      this.render(true);
+      // AUDIT FIX P2: Recalculate immediately so Points Remaining updates exactly when UI re-renders
+      this._calculatePoints();
+      await this.render(true);
   }
 
   static async _onRemoveCustomSkill(event, target) {
@@ -725,7 +761,7 @@ static DEFAULT_OPTIONS = {
       if (!key || !this.draftCharacter.customSkills[key]) return;
       delete this.draftCharacter.customSkills[key];
       this._calculatePoints();
-      this.render(true);
+      await this.render(true);
   }
 
   static async _onFinishCharacter(event, target) {
@@ -765,17 +801,20 @@ static DEFAULT_OPTIONS = {
       await this.actor.update(updates);
 
       const itemsToCreate = [];
-      const itemLists = ["advantages", "problems", "martialPaths", "esoterica", "spells"];
+      const itemLists = ["advantages", "problems", "martialPaths", "esoterica", "spells", "weapons", "armor", "shields", "gear"];
       for (const list of itemLists) {
+          if (!this.draftCharacter[list]) continue;
           for (const item of this.draftCharacter[list]) {
               const cleanItem = foundry.utils.deepClone(item);
-              delete cleanItem._draftId; delete cleanItem._id;
+              delete cleanItem._draftId; 
+              delete cleanItem._id; // Ensure we don't accidentally try to overwrite an existing compendium ID
               itemsToCreate.push(cleanItem);
           }
       }
-      if (itemsToCreate.length > 0) await this.actor.createEmbeddedDocuments("Item", itemsToCreate);
+      // AUDIT FIX: Pass { keepId: false } to ensure clean ID mapping and prevent orphaned effects
+      if (itemsToCreate.length > 0) await this.actor.createEmbeddedDocuments("Item", itemsToCreate, { keepId: false });
 
-      ui.notifications.success(`${this.actor.name} forged!`);
+      ui.notifications.success(`${this.actor.name} ${game.i18n.localize("REIGN.CM.Errors.ForgedSuccess")}`);
       this.actor.sheet.render(true);
       this.close();
   }

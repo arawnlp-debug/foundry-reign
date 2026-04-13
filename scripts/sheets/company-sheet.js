@@ -9,7 +9,7 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
   static DEFAULT_OPTIONS = {
     tag: "form", 
     classes: ["reign", "sheet", "actor", "company"], 
-    position: { width: 700, height: 800 }, 
+    position: { width: 850, height: 800 }, // <-- Increased width to give the 5 columns breathing room
     
     window: {
       resizable: true,
@@ -23,14 +23,33 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
           await CompanyRoller.rollCompany(this.document, target.dataset);
         } catch(err) { ui.notifications.error(`${game.i18n.localize("REIGN.ErrorActionFailed")}: ${err.message}`); console.error(err); }
       },
+      rollQuality: async function(event, target) {
+        try {
+          await CompanyRoller.rollCompany(this.document, target.dataset.key);
+        } catch(err) { ui.notifications.error(`${game.i18n.localize("REIGN.ErrorActionFailed")}: ${err.message}`); console.error(err); }
+      },
+      adjustQualityDamage: async function(event, target) {
+        event.preventDefault();
+        const key = target.dataset.key;
+        const isIncrease = target.dataset.dir === "up";
+        
+        let currentDmg = this.document.system.qualities[key].damage || 0;
+        let maxVal = this.document.system.qualities[key].value; 
+
+        if (isIncrease && currentDmg < maxVal) {
+          await this.document.update({ [`system.qualities.${key}.damage`]: currentDmg + 1 });
+        } else if (!isIncrease && currentDmg > 0) {
+          await this.document.update({ [`system.qualities.${key}.damage`]: currentDmg - 1 });
+        }
+      },
       
       /**
        * Company Quality Improvement
        * Self-contained roll that enforces:
-       *   1. Permanent quality cannot exceed 5
-       *   2. Difficulty = current permanent rating
-       *   3. Only one improvement attempt per quality per in-game month
-       *   4. Failing a permanent improvement does NOT grant a temporary increase
+       * 1. Permanent quality cannot exceed 5
+       * 2. Difficulty = current permanent rating
+       * 3. Only one improvement attempt per quality per in-game month
+       * 4. Failing a permanent improvement does NOT grant a temporary increase
        */
       rollImprovement: async function(event, target) {
         try {
@@ -38,7 +57,7 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
           if (!qualityKey) return ui.notifications.warn("No quality specified for improvement.");
 
           const system = this.document.system;
-          const currentPerm = system.qualities[qualityKey]?.permanent || 0;
+          const currentPerm = system.qualities[qualityKey]?.value || 0;
           const qualityLabel = qualityKey.charAt(0).toUpperCase() + qualityKey.slice(1);
 
           // RAW RESTRICTION 1: Hard cap at 5
@@ -60,7 +79,7 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
           // Build quality options for pool selection
           const qualityNames = { might: "Might", treasure: "Treasure", influence: "Influence", territory: "Territory", sovereignty: "Sovereignty" };
           const qualityOptionHtml = Object.entries(qualityNames)
-            .map(([k, v]) => `<option value="${k}">${v} (${system.qualities[k]?.current || 0})</option>`)
+            .map(([k, v]) => `<option value="${k}">${v} (${system.qualities[k]?.effective || 0})</option>`)
             .join("");
 
           // RAW RESTRICTION 2: Difficulty = current permanent rating
@@ -103,8 +122,8 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
           if (!rollData) return;
 
           // Calculate and roll the pool
-          const val1 = system.qualities[rollData.q1]?.current || 0;
-          const val2 = system.qualities[rollData.q2]?.current || 0;
+          const val1 = system.qualities[rollData.q1]?.effective || 0; 
+          const val2 = system.qualities[rollData.q2]?.effective || 0; 
           const totalPool = Math.min(val1 + val2 + rollData.mod, 10);
 
           if (totalPool < 1) return ui.notifications.warn("Pool too low. Improvement attempt fails automatically.");
@@ -124,7 +143,7 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
 
           if (successSet) {
             const newPerm = currentPerm + 1;
-            await this.document.update({ [`system.qualities.${qualityKey}.permanent`]: newPerm });
+            await this.document.update({ [`system.qualities.${qualityKey}.value`]: newPerm }); 
 
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: this.document }),
@@ -204,6 +223,20 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
 
   static PARTS = { sheet: { template: "systems/reign/templates/actor/company-sheet.hbs" } };
 
+  _prepareSubmitData(event, form, formData) {
+    let data = super._prepareSubmitData(event, form, formData);
+    let flatData = foundry.utils.flattenObject(data);
+    let changed = false;
+
+    for (const key in flatData) {
+        if (key.endsWith(".value") || key.endsWith(".damage")) {
+            if (flatData[key] === "" || flatData[key] === null) { flatData[key] = 0; changed = true; } 
+            else if (typeof flatData[key] === "string" && !isNaN(parseInt(flatData[key]))) { flatData[key] = parseInt(flatData[key]) || 0; changed = true; }
+        }
+    }
+    return changed ? foundry.utils.expandObject(flatData) : data;
+  }
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     context.actor = this.document;
@@ -215,7 +248,9 @@ export class ReignCompanySheet extends HandlebarsApplicationMixin(foundry.applic
         return { 
             key: k, 
             label: game.i18n.has(labelKey) ? game.i18n.localize(labelKey) : k.toUpperCase(), 
-            ...qs[k] 
+            value: qs[k]?.value || 0,
+            damage: qs[k]?.damage || 0,
+            effective: qs[k]?.effective || 0
         };
     });
 

@@ -2,6 +2,7 @@
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 import { postOREChat } from "./chat.js";
+import { parseORE } from "./ore-engine.js";
 
 // AUDIT FIX P3: Import standard reignRender and reignClose
 import { reignRender, reignClose } from "./dialog-util.js";
@@ -13,7 +14,7 @@ export class ThreatRoller {
   static async rollThreat(actor, dataset) {
     const system = actor.system;
 
-    if (system.morale?.value === 0) return ui.notifications.warn("Morale is broken. Horde routes and cannot act.");
+    if (system.morale?.value === 0) return ui.notifications.warn(game.i18n.localize("REIGN.ThreatMoraleZero"));
 
     const basePool = system.threatLevel || 0;
     
@@ -88,7 +89,7 @@ export class ThreatRoller {
         type: "weapon", 
         name: actor.name, 
         system: { 
-            damage: system.damageFormula || "Width Shock"
+            damage: system.damageFormula || game.i18n.localize("REIGN.DamagePlaceholder") || "Width Shock"
         }
     };
     
@@ -96,6 +97,43 @@ export class ThreatRoller {
     
     if (wasCapped) {
         ui.notifications.info(`Pool capped at ${maxDice} dice due to system limits.`);
+    }
+  }
+
+  // AUDIT FIX P2: Threat Morale Automation
+  static async rollMorale(actor) {
+    const system = actor.system;
+    const moraleVal = system.morale?.value || 0;
+
+    if (moraleVal < 1) {
+        return ui.notifications.warn(game.i18n.localize("REIGN.ThreatMoraleZero"));
+    }
+
+    const maxDice = REIGN.MAX_DICE || 15;
+    let diceToRoll = Math.min(moraleVal, maxDice);
+    let wasCapped = moraleVal > maxDice;
+
+    const roll = new Roll(`${diceToRoll}d10`);
+    await roll.evaluate();
+    const results = roll.dice[0]?.results.map(r => r.result) || [];
+
+    const parsed = parseORE(results);
+    let routed = parsed.sets.length === 0;
+
+    let outcomeText = routed 
+        ? `<span style="color: #b71c1c; font-weight: bold; font-size: 1.1em; display: block; margin-top: 5px;">${game.i18n.localize("REIGN.ThreatRoutes")}</span>`
+        : `<span style="color: #2e7d32; font-weight: bold; display: block; margin-top: 5px;">${game.i18n.localize("REIGN.ThreatMoraleHold")}</span>`;
+
+    let actionLabel = game.i18n.localize("REIGN.RollMorale") + outcomeText;
+
+    await postOREChat(actor, actionLabel, diceToRoll, results, 0, 0, null, { isMinion: true, wasCapped });
+
+    if (routed) {
+        // Apply the core 'dead' / defeated status effect to visually mark the token as routed
+        await actor.toggleStatusEffect("dead", { active: true });
+        
+        // Mechanically zero out their morale so they can no longer act
+        await actor.update({ "system.morale.value": 0 });
     }
   }
 }

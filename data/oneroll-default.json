@@ -31,7 +31,7 @@
     "4": {
       "path": "Merchant",
       "stages": {
-        "2": { "label": "Miserly Merchant", "description": "You learned early to hoard your coin.", "attributes": { "charm": 1 }, "wealth": 1, "skills": { "haggle": 2 }, "customSkills": [{"name": "Possession (Transport)", "value": 2}] },
+        "2": { "label": "Miserly Merchant", "description": "You learned early to hoard your coin.", "attributes": { "charm": 1 }, "wealth": 1, "skills": { "haggle": 2 }, "advantages": [{"name": "Possession (Transport)", "system": {"cost": 2}}] },
         "3": { "label": "Canny Tradesman", "description": "You expanded your routes and learned the tricks of the trade.", "skills": { "lie": 2, "haggle": 1 }, "customSkills": [{"name": "Language", "value": 1}, {"name": "Student: Navigation", "value": 1}] },
         "4": { "label": "Banker", "description": "You let your money do the working for you.", "wealth": 2, "skills": { "direction": 1, "lie": 1 }, "special": "Change one normal Haggle die to an Expert Die." },
         "5": { "label": "Captain of Industry", "description": "You monopolized an entire trade.", "special": "Change your Haggle ED to an MD." }
@@ -129,7 +129,7 @@
         "1": { "label": "Raised Wild", "description": "Abandoned in the woods and nursed by wolves.", "skills": { "hearing": 3, "sight": 2, "endurance": 2 }, "customSkills": [{"name": "Language", "value": 3}, {"name": "Expert: Throwing", "value": 2}], "special": "Lose the normal Master Die for your Native Language." },
         "2": { "label": "Death Defier", "description": "You fought free against incredible odds.", "advantages": [{"name": "Fool Lucky", "system": {"cost": 4}}] },
         "3": { "label": "Star Crossed Lovers", "description": "Events conspired to trap you away from your beloved.", "skills": { "lie": 1, "stealth": 1, "run": 1, "dodge": 1 }, "advantages": [{"name": "Beauty", "system": {"cost": 1}}], "problems": [{"name": "Enemy"}] },
-        "4": { "label": "Unexpected Windfall", "description": "You've come to own something of great value.", "wealth": 1, "customSkills": [{"name": "Possession", "value": 4}] },
+        "4": { "label": "Unexpected Windfall", "description": "You've come to own something of great value.", "wealth": 1, "advantages": [{"name": "Possession", "system": {"cost": 4}}] },
         "5": { "label": "Stranded", "description": "You had to survive solo for a really long time.", "skills": { "endurance": 1, "athletics": 1 }, "customSkills": [{"name": "Expert: Throwing", "value": 3}] },
         "6": { "label": "Saved Someone's Life", "description": "You've got a friend for life.", "advantages": [{"name": "Patron", "system": {"cost": 5}}] },
         "7": { "label": "Unlikely Education", "description": "You gained knowledge completely unrelated to your professions.", "customSkills": [{"name": "Student: Any Field", "value": 5}] },

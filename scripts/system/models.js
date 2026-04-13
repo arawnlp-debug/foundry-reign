@@ -25,9 +25,10 @@ const makeHealthLoc = () => new SchemaField({
     killing: new NumberField({ initial: 0, min: 0, integer: true })
 });
 
+// UPDATED: Aligned with the P1 Company Fix (value = permanent, damage = temporary)
 const makeQuality = () => new SchemaField({
-    permanent: new NumberField({ initial: 0, min: 0, integer: true }),
-    current: new NumberField({ initial: 0, min: 0, integer: true }),
+    value: new NumberField({ initial: 0, min: 0, integer: true }),
+    damage: new NumberField({ initial: 0, min: 0, integer: true }),
     notes: new StringField({ initial: "" })
 });
 
@@ -172,6 +173,14 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
                 territory: makeQuality(), sovereignty: makeQuality()
             })
         };
+    }
+
+    // UPDATED: Automatically calculate the effective rating for Company Rollers
+    prepareDerivedData() {
+        for (const key of Object.keys(this.qualities)) {
+            const q = this.qualities[key];
+            q.effective = Math.max(0, q.value - (q.damage || 0));
+        }
     }
 }
 

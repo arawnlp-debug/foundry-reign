@@ -693,22 +693,63 @@
 .reign.sheet.company .reign-company-assets-text { height: 180px; width: 100%; padding: 10px; border: var(--reign-border-light); resize: vertical; font-family: var(--reign-font-flavor); background: var(--reign-bg-paper); color: var(--reign-text-dark); box-shadow: var(--reign-shadow-inset); border-radius: 3px; }
 
 /* -----------------------------------------
-    THREAT SHEET
+    THREAT SHEET & UTILITIES
 ----------------------------------------- */
-.reign-threat-header { width: 100%; font-size: 2em; font-weight: bold; color: var(--reign-color-blood); border: none; border-bottom: 2px solid var(--reign-bg-iron); background: transparent; font-family: var(--reign-font-flavor); transition: background 0.2s; }
-.reign-threat-header:hover, .reign-threat-header:focus { background: rgba(0,0,0,0.03); }
-.reign-threat-label { font-size: 0.9em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: var(--reign-text-muted); margin-top: 4px; }
-.reign-threat-input { width: 80px; height: 60px; font-size: 2.5em; text-align: center; font-weight: bold; border: var(--reign-border-iron); background: var(--reign-bg-paper); font-family: var(--reign-font-data); border-radius: 4px; box-shadow: var(--reign-shadow-inset); color: var(--reign-color-blood); }
-.reign-threat-weapon { width: 250px; text-align: center; border: var(--reign-border-light); background: var(--reign-bg-paper); color: var(--reign-text-dark); font-family: var(--reign-font-flavor); font-size: 1.1em; padding: 6px; border-radius: 3px; box-shadow: var(--reign-shadow-inset); }
-.reign-desc-text { font-size: 0.9em; color: var(--reign-text-muted); font-style: italic; padding: 5px 10px; text-align: center; }
-.reign-fraction-input { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px; font-size: 1.8em; font-weight: bold; font-family: var(--reign-font-data); }
-.reign-fraction-val { width: 60px; height: 50px; font-size: 1.2em; text-align: center; font-weight: bold; border: 2px solid var(--reign-bg-iron); background: var(--reign-bg-paper); font-family: inherit; border-radius: 4px; box-shadow: var(--reign-shadow-inset); }
-.reign-mag-val { color: var(--reign-color-blood); border-color: var(--reign-color-blood); }
-.reign-mor-val { color: var(--reign-color-emerald); border-color: var(--reign-color-emerald); }
-.reign-fraction-max { width: 60px; height: 50px; font-size: 1em; text-align: center; font-weight: bold; border: 2px solid #999; background: #eaeaea; color: #555; font-family: inherit; border-radius: 4px; }
+/* Utility Classes (Prefix: cm-) */
+.cm-flex-gap15 { display: flex; gap: 15px; }
+.cm-flex-col { display: flex; flex-direction: column; }
+.cm-gap5 { gap: 5px; }
+.cm-gap10 { gap: 10px; }
+.cm-gap20 { gap: 20px; }
+.cm-align-end { align-items: flex-end; }
+.cm-p10 { padding: 10px; }
+.cm-p15 { padding: 15px; }
+.cm-pb10 { padding-bottom: 10px; }
+.cm-mb5 { margin-bottom: 5px; }
+.cm-mb10 { margin-bottom: 10px; }
+.cm-mt10 { margin-top: 10px; }
+.cm-block { display: block; }
+.cm-text-lg { font-size: 1.1em; }
+.cm-flex-50 { flex: 0 0 50%; }
+.cm-flex-center { display: flex; justify-content: center; align-items: center; }
+.cm-flex-around { display: flex; justify-content: space-around; align-items: center; }
+
+/* Threat Specific Classes */
+.reign-threat-header-input { width: 100%; font-size: 1.8em; font-weight: bold; color: var(--reign-color-blood); border: none; border-bottom: 2px solid var(--reign-bg-iron); background: transparent; font-family: var(--reign-font-flavor); transition: background 0.2s; }
+.reign-threat-header-input:hover, .reign-threat-header-input:focus { background: rgba(0,0,0,0.03); }
+.reign-threat-type-label { font-size: 0.9em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: var(--reign-text-muted); margin-top: 4px; }
+.reign-threat-number-input { width: 80px; height: 60px; font-size: 2.5em; text-align: center; font-weight: bold; border: 2px solid #000; background: var(--reign-bg-paper); font-family: var(--reign-font-data); border-radius: 4px; box-shadow: var(--reign-shadow-inset); color: var(--reign-color-blood); }
+.reign-threat-select { width: 100%; text-align: center; font-size: 1.1em; padding: 5px; border: var(--reign-border-light); background: var(--reign-bg-paper); color: var(--reign-text-dark); border-radius: 3px; }
+.reign-threat-weapon { width: 100%; text-align: center; border: var(--reign-border-light); background: var(--reign-bg-paper); color: var(--reign-text-dark); font-family: var(--reign-font-flavor); font-size: 1.1em; padding: 8px; border-radius: 3px; box-shadow: var(--reign-shadow-inset); }
+
+.threat-profile-img { width: 80px; height: 80px; flex: 0 0 80px; border: 2px solid #000; object-fit: cover; }
+.threat-stat-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+.threat-main-border { border: 2px solid #000; border-radius: 4px; overflow: hidden; }
+
+.threat-header-black { background: #000; color: #fff; padding: 6px; }
+.threat-header-black h2 { margin: 0; color: #fff; font-size: 1.2em; text-transform: uppercase; font-weight: bold; border: none; }
+
+.threat-header-red { background: var(--reign-color-blood); color: #fff; padding: 4px; }
+.threat-header-red h2 { margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase; border: none; color: #fff; }
+
+.threat-header-teal { background: #00695c; color: #fff; padding: 4px; }
+.threat-header-teal h2 { margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase; border: none; color: #fff; cursor: pointer; }
+
+.threat-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.threat-desc-italics { padding: 8px; color: var(--reign-text-muted); font-size: 0.85em; font-style: italic; text-align: center; }
+
+.threat-mag-input { width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid var(--reign-color-blood); color: var(--reign-color-blood); font-weight: bold; font-family: var(--reign-font-data); background: var(--reign-bg-paper); border-radius: 4px; }
+.threat-mor-input { width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #00695c; color: #00695c; font-weight: bold; font-family: var(--reign-font-data); background: var(--reign-bg-paper); border-radius: 4px; }
+.threat-max-input { width: 60px; height: 45px; font-size: 1.5em; text-align: center; border: 2px solid #999; color: #666; font-weight: bold; font-family: var(--reign-font-data); background: #eaeaea; border-radius: 4px; }
+.threat-fraction-separator { font-size: 1.5em; font-weight: bold; color: var(--reign-text-dark); }
+
+.threat-input-row { padding: 15px; display: flex; justify-content: space-around; align-items: center; gap: 20px; }
+.threat-damage-formula-row { padding: 15px; border-bottom: 1px dashed var(--reign-bg-parchment); }
+.threat-description-area { border: none; padding: 15px; width: 100%; box-sizing: border-box; min-height: 120px; font-family: inherit; font-size: 1em; resize: vertical; background: transparent; color: var(--reign-text-dark); }
 
 /* Threat Sheet Dark Mode Overrides */
-.theme-dark .reign-fraction-max { background: #333; border-color: #555; color: #999; }
+.theme-dark .threat-max-input { background: #333; border-color: #555; color: #999; }
+.theme-dark .threat-header-black { background: #222; border-bottom: 1px solid #444; }
 
 /* -----------------------------------------
     ESOTERICA TAB & MAGIC

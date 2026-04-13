@@ -9,8 +9,14 @@ import { reignDialog } from "./dialog-util.js";
 /**
  * Calculates final dice counts, special dice states, and cap limits for ORE rolls.
  */
-export function calculateOREPool(rawTotal, edFaceInput, hasMdInput, calledShotInput, basePenalty, multiActions) {
-    let actualMd = hasMdInput ? 1 : 0;
+export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShotInput, basePenalty, multiActions) {
+    let actualMd = parseInt(mdCountInput) || 0;
+    
+    // AUDIT FIX: Reign Rules strictly cap Master Dice to 1 per pool.
+    if (actualMd > 1) {
+        actualMd = 1;
+    }
+    
     let actualEd = edFaceInput > 0 ? 1 : 0;
     let actualCs = 0;
     let appliedCsPenalty = 0;
@@ -313,6 +319,11 @@ export class CharacterRoller {
 
     let initialEdValue = hasExpert ? 10 : 0;
     let initialMdValue = hasMaster ? 1 : 0; 
+    
+    // Account for external items granting an MD to the pool
+    if (itemRef?.system?.qualities?.master || itemRef?.system?.qualities?.masterDie) {
+        initialMdValue += 1;
+    }
 
     let dialogTitle = `Roll ${label || "Action"}`;
     if (shieldBonus > 0) dialogTitle += ` (+${shieldBonus}d ${shieldName} Bonus)`;
@@ -352,7 +363,7 @@ export class CharacterRoller {
           bonus: parseInt(f.querySelector('[name="bonus"]')?.value) || 0, penalty: parseInt(f.querySelector('[name="penalty"]')?.value) || 0, 
           passionBonus: (parseInt(f.querySelector('[name="pMiss"]')?.value) || 0) + (parseInt(f.querySelector('[name="pDuty"]')?.value) || 0) + (parseInt(f.querySelector('[name="pCrav"]')?.value) || 0),
           ed: parseInt(f.querySelector('[name="ed"]')?.value) || 0, 
-          md: f.querySelector('[name="md"]')?.checked ? 1 : 0 
+          md: f.querySelector('[name="md"]')?.checked ? Math.max(1, initialMdValue) : 0 
         }; 
       },
       {
@@ -360,10 +371,10 @@ export class CharacterRoller {
         render: (event, html) => {
           let element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event[0] || null));
           if (!element) return;
-  
+ 
           const closeBtn = element.querySelector('.header-control[data-action="close"]');
           if (closeBtn) closeBtn.addEventListener("pointerdown", () => { element.classList.remove("reign-dialog-window"); element.style.display = "none"; });
-  
+ 
           const f = element.querySelector("form");
           const poolPreviewSpan = element.querySelector("#pool-value");
           const edInput = element.querySelector('[name="ed"]');
@@ -378,7 +389,7 @@ export class CharacterRoller {
           
           if (f) f.addEventListener("submit", e => e.preventDefault());
           if (!edInput || !mdInput || !f) return;
-  
+ 
           const updatePool = () => {
             const attrKey = f.querySelector('[name="attr"]')?.value || "none";
             const skillKey = f.querySelector('[name="skillKey"]')?.value || "none";
@@ -392,8 +403,8 @@ export class CharacterRoller {
                                  (parseInt(f.querySelector('[name="pCrav"]')?.value) || 0);
             
             const ed = parseInt(edInput.value) || 0;
-            const md = mdInput.checked ? 1 : 0;
-  
+            const md = mdInput.checked ? Math.max(1, initialMdValue) : 0;
+ 
             if (envContext === "swimming") {
                 if (armorWeight === "heavy") {
                     poolPreviewSpan.innerHTML = `<span style="color:#ff5252;">Impossible (Heavy Armor)</span>`;
@@ -402,7 +413,7 @@ export class CharacterRoller {
                     penalty += 2;
                 }
             }
-  
+ 
             let attrVal = attrKey !== "none" ? (parseInt(system.attributes[attrKey]?.value) || 0) : 0;
             let itemSkillValue = 0;
             if (showSkillSelect && skillKey !== "none") {
@@ -410,10 +421,10 @@ export class CharacterRoller {
                 else if (skillKey.startsWith("custom_")) itemSkillValue = parseInt(system.customSkills[skillKey.replace("custom_", "")]?.value) || 0;
                 else if (skillKey === "esoterica_sorcery") itemSkillValue = parseInt(system.esoterica.sorcery) || 0;
             }
-  
+ 
             let rawTotal = baseValue + attrVal + itemSkillValue + bonus + passionBonus;
-  
-            const poolMath = calculateOREPool(rawTotal, ed, md > 0, calledShot, penalty, multiActions);
+ 
+            const poolMath = calculateOREPool(rawTotal, ed, md, calledShot, penalty, multiActions);
             
             if (poolMath.diceToRoll < 1) {
                 poolPreviewSpan.innerHTML = `<span style="color:#ff5252;">Action Fails (Pool < 1)</span>`;
@@ -429,21 +440,21 @@ export class CharacterRoller {
                 poolPreviewSpan.innerHTML = displayStr;
             }
           };
-  
+ 
           const enforceExclusivity = () => {
             if ((parseInt(edInput.value) || 0) > 0) { mdInput.checked = false; mdInput.disabled = true; } else mdInput.disabled = false;
             if (mdInput.checked) { edInput.value = 0; edInput.disabled = true; } else edInput.disabled = false;
             updatePool();
           };
-  
+ 
           edInput.addEventListener("input", enforceExclusivity); 
           mdInput.addEventListener("change", enforceExclusivity); 
-  
+ 
           f.querySelectorAll("input, select").forEach(input => {
               if (input !== mdInput) input.addEventListener("input", updatePool);
               input.addEventListener("change", updatePool);
           });
-  
+ 
           enforceExclusivity(); 
         }
       }
@@ -476,7 +487,11 @@ export class CharacterRoller {
 
     let rawTotal = baseValue + attrVal + itemSkillValue + rollData.bonus + rollData.passionBonus;
 
-    const poolMath = calculateOREPool(rawTotal, rollData.ed, rollData.md > 0, rollData.calledShot, rollData.penalty, rollData.multiActions);
+    if (rollData.md > 1) {
+        ui.notifications.info("Reign rules limit you to a maximum of 1 Master Die per roll. Extra Master Dice were ignored.");
+    }
+
+    const poolMath = calculateOREPool(rawTotal, rollData.ed, rollData.md, rollData.calledShot, rollData.penalty, rollData.multiActions);
 
     if (rollData.calledShot > 0 && poolMath.actualMd > 0) {
         ui.notifications.warn("Called shots are unnecessary with a Master Die.");

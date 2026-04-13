@@ -49,8 +49,9 @@ export class CompanyRoller {
           const q2 = f.querySelector('[name="q2"]').value;
           const mod = parseInt(f.querySelector('[name="mod"]').value) || 0;
           
-          let val1 = system.qualities[q1]?.current || 0;
-          let val2 = q2 !== "none" ? (system.qualities[q2]?.current || 0) : 0;
+          // Phase 1 Fix: Pull from .effective instead of .current
+          let val1 = system.qualities[q1]?.effective || 0;
+          let val2 = q2 !== "none" ? (system.qualities[q2]?.effective || 0) : 0;
           let intendedPool = val1 + val2 + mod;
           let diceToRoll = Math.min(intendedPool, 10);
           
@@ -100,8 +101,9 @@ export class CompanyRoller {
     
     if (!rollData) return;
     
-    let val1 = system.qualities[rollData.q1]?.current || 0;
-    let val2 = rollData.q2 !== "none" ? (system.qualities[rollData.q2]?.current || 0) : 0;
+    // Phase 1 Fix: Pull from .effective instead of .current
+    let val1 = system.qualities[rollData.q1]?.effective || 0;
+    let val2 = rollData.q2 !== "none" ? (system.qualities[rollData.q2]?.effective || 0) : 0;
     let intendedPool = val1 + val2 + rollData.mod;
     let diceToRoll = Math.min(intendedPool, 10);
     let wasCapped = intendedPool > 10;
@@ -115,13 +117,16 @@ export class CompanyRoller {
     let costPaidNotice = "";
     if (rollData.cost !== "none") {
         const latestActor = game.actors.get(actor.id);
-        let currentTemp = latestActor.system.qualities[rollData.cost]?.current || 0;
         
-        if (currentTemp > 0) {
-            await latestActor.update({ [`system.qualities.${rollData.cost}.current`]: currentTemp - 1 });
+        // Phase 1 Fix: Check Effective rating and increment Damage (instead of decrementing Current)
+        let currentDmg = latestActor.system.qualities[rollData.cost]?.damage || 0;
+        let effectiveVal = latestActor.system.qualities[rollData.cost]?.effective || 0;
+        
+        if (effectiveVal > 0) {
+            await latestActor.update({ [`system.qualities.${rollData.cost}.damage`]: currentDmg + 1 });
             costPaidNotice = ` [Paid 1 Temp ${rollData.cost.toUpperCase()}]`;
         } else {
-            ui.notifications.warn(`${latestActor.name} has 0 Temporary ${rollData.cost.toUpperCase()}! Proceeding desperately...`);
+            ui.notifications.warn(`${latestActor.name} has 0 Effective ${rollData.cost.toUpperCase()}! Proceeding desperately...`);
             costPaidNotice = ` [Desperate! 0 Temp ${rollData.cost.toUpperCase()}]`;
         }
     }

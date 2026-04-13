@@ -107,6 +107,22 @@ Hooks.once("init", async () => {
   DocumentSheetConfig.registerSheet(Actor, "reign", ReignCompanySheet, { types: ["company"], makeDefault: true });
   DocumentSheetConfig.registerSheet(Actor, "reign", ReignThreatSheet, { types: ["threat"], makeDefault: true });
   DocumentSheetConfig.registerSheet(Item, "reign", ReignItemSheet, { makeDefault: true });
+
+  /**
+   * P3 FIX: Expose Global API for Macros
+   * This allows GMs to access core logic without opening sheets.
+   */
+  game.reign = {
+    parseORE,
+    calculateInitiative,
+    applyDamageToTarget,
+    applyCompanyDamageToTarget,
+    applyScatteredDamageToTarget,
+    applyHealingToTarget,
+    applyFirstAidToTarget,
+    consumeGobbleDie,
+    ReignCharactermancer
+  };
 });
 
 Hooks.once("ready", async () => {
@@ -250,6 +266,23 @@ Hooks.on("updateItem", async (item, changes, options, userId) => {
         ui.notifications.info(`${item.name} unequipped.`);
     }
   }
+});
+
+// P2 FIX: Delete Orphaned Effects when Item is deleted
+Hooks.on("deleteItem", async (item, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (!item.parent || item.parent.type !== "character") return;
+
+    const actor = item.parent;
+    const itemUuid = item.uuid;
+    
+    // Find any effects on the actor that originated from this deleted item
+    const effectIdsToTrash = actor.effects.filter(e => e.origin === itemUuid).map(e => e.id);
+    
+    if (effectIdsToTrash.length > 0) {
+        await actor.deleteEmbeddedDocuments("ActiveEffect", effectIdsToTrash);
+        console.log(`Reign | Cleaned up ${effectIdsToTrash.length} orphaned active effect(s) from deleted item: ${item.name}`);
+    }
 });
 
 Hooks.on("updateActiveEffect", async (effect, changes, options, userId) => {
@@ -476,11 +509,12 @@ Hooks.on("preCreateItem", (item, data, options, userId) => {
 });
 
 const resetCombatRound = async (combat) => {
+  if (!game.combats.has(combat.id)) return;
   await combat.setFlag("reign", "phase", "declaration");
   const updates = combat.combatants.map(c => ({
     _id: c.id,
     "flags.reign.declared": false,
-    initiative: null // Wipes old ORE rolls
+    initiative: null 
   }));
   if (updates.length > 0) {
     await combat.updateEmbeddedDocuments("Combatant", updates);
@@ -493,6 +527,7 @@ Hooks.on("combatStart", async (combat, context) => {
 
 Hooks.on("updateCombat", async (combat, changes, context, userId) => {
   if (!game.user.isGM) return;
+  if (!game.combats.has(combat.id)) return;
   if (foundry.utils.hasProperty(changes, "round") && combat.started) {
       await resetCombatRound(combat);
   }
@@ -501,7 +536,7 @@ Hooks.on("updateCombat", async (combat, changes, context, userId) => {
 Hooks.on("updateCombatant", async (combatant, changes, context, userId) => {
   if (!game.user.isGM) return;
   const combat = combatant.combat;
-  if (!combat) return;
+  if (!combat || !game.combats.has(combat.id)) return;
 
   if (combat.getFlag("reign", "phase") === "declaration" && foundry.utils.hasProperty(changes, "flags.reign.declared")) {
       const allDeclared = combat.combatants.filter(c => c.getFlag("reign", "declared")).length === combat.combatants.size;
@@ -512,28 +547,60 @@ Hooks.on("updateCombatant", async (combatant, changes, context, userId) => {
   }
 });
 
+// Robust jQuery-based UI Injection for the Combat Tracker
 Hooks.on("renderCombatTracker", (app, html, data) => {
   const combat = game.combat;
   if (!combat) return;
 
+  const $html = html instanceof jQuery ? html : $(html[0] || html);
   const phase = combat.getFlag("reign", "phase") || "declaration";
   const isDeclaring = phase === "declaration";
   const isGM = game.user.isGM;
 
+  // REFACTORED PHASE TOGGLE BUTTONS
   const btnHtml = `
-    <div class="reign-combat-phase-control flexrow" style="margin: 4px 8px; text-align: center; border-radius: 4px; overflow: hidden; border: 1px solid var(--color-border-dark-tertiary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); flex: 0 0 auto; display: flex;">
-      <button class="phase-btn" data-phase="declaration" style="flex:1; border: none; border-radius: 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; ${isDeclaring ? 'background: #2d5a27; color: white; font-weight: bold;' : 'background: rgba(0,0,0,0.05); color: var(--color-text-dark-secondary);'}">
+    <div class="reign-combat-phase-control flexrow" style="margin: 4px 8px; text-align: center; border-radius: 4px; display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 2px;">
+      <button class="phase-btn cm-declare-btn" data-phase="declaration" style="flex:1; border: 1px solid transparent; border-radius: 3px 0 0 3px; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: #aaa; transition: all 0.2s ease;">
         <i class="fas fa-eye"></i> Declare
       </button>
-      <button class="phase-btn" data-phase="resolution" style="flex:1; border: none; border-radius: 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; ${!isDeclaring ? 'background: #8b1f1f; color: white; font-weight: bold;' : 'background: rgba(0,0,0,0.05); color: var(--color-text-dark-secondary);'}">
+      <button class="phase-btn cm-resolve-btn" data-phase="resolution" style="flex:1; border: 1px solid transparent; border-radius: 0 3px 3px 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: #aaa; transition: all 0.2s ease;">
         <i class="fas fa-bolt"></i> Resolve
       </button>
     </div>
   `;
 
-  const element = (html instanceof HTMLElement || html instanceof DocumentFragment) ? html : (html[0] || null);
-  if (!element) return;
+  if (!$html.find(".reign-combat-phase-control").length) {
+      $html.find(".combat-tracker-header").after(btnHtml);
+      if (isGM) {
+          $html.find(".phase-btn").off("click").on("click", async (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              const activeCombat = game.combats.get(combat.id);
+              if (!activeCombat) return;
+              const newPhase = ev.currentTarget.dataset.phase;
+              if (phase !== newPhase) {
+                  await activeCombat.setFlag("reign", "phase", newPhase);
+                  activeCombat.setupTurns();
+              }
+          });
+      } else {
+          $html.find(".phase-btn").css("cursor", "default").prop("disabled", true);
+      }
+  }
 
+  // FORCE DYNAMIC HIGHLIGHTS (Bypasses CSS caching)
+  const $decBtn = $html.find(".cm-declare-btn");
+  const $resBtn = $html.find(".cm-resolve-btn");
+
+  if (isDeclaring) {
+      $decBtn.css({"background": "#2e7d32", "color": "white", "border": "1px solid #4caf50", "box-shadow": "0 0 8px #4caf50", "font-weight": "bold", "text-shadow": "1px 1px 2px black"});
+      $resBtn.css({"background": "transparent", "color": "#888", "border": "1px solid transparent", "box-shadow": "none", "font-weight": "normal"});
+  } else {
+      $resBtn.css({"background": "#b71c1c", "color": "white", "border": "1px solid #e53935", "box-shadow": "0 0 8px #e53935", "font-weight": "bold", "text-shadow": "1px 1px 2px black"});
+      $decBtn.css({"background": "transparent", "color": "#888", "border": "1px solid transparent", "box-shadow": "none", "font-weight": "normal"});
+  }
+
+  // PENALTY BANNER
   const currentTurn = combat.combatant;
   if (currentTurn && currentTurn.actor) {
       const statuses = Array.from(currentTurn.actor.statuses);
@@ -542,77 +609,50 @@ Hooks.on("renderCombatTracker", (app, html, data) => {
       if (statuses.includes("prone")) penalties.push("PRONE (−1d)");
       if (statuses.includes("blind")) penalties.push("BLIND (−2d Ranged / Diff 4 Melee)");
       
-      if (penalties.length > 0 && !element.querySelector(".reign-wound-banner")) {
-          const navControls = element.querySelector("#combat-controls");
+      if (penalties.length > 0 && !$html.find(".reign-wound-banner").length) {
           const bannerHtml = `
-            <div class="reign-wound-banner" style="background: #ffcdd2; color: #b71c1c; border: 1px solid #d32f2f; text-align: center; padding: 6px; margin: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+            <div class="reign-wound-banner" style="background: #ffcdd2; color: #b71c1c; border: 1px solid #d32f2f; text-align: center; padding: 6px; margin: 4px 8px 8px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.2); flex: 0 0 auto;">
                 <i class="fas fa-exclamation-triangle"></i> Current Turn Penalties:<br>
                 <span style="font-weight: normal; font-size: 0.95em; color: #8b0000;">${penalties.join(" | ")}</span>
             </div>
           `;
-          if (navControls) navControls.insertAdjacentHTML("afterend", bannerHtml);
+          $html.find(".reign-combat-phase-control").after(bannerHtml);
       }
   }
 
-  if (!element.querySelector(".reign-combat-phase-control")) {
-      const navControls = element.querySelector("#combat-controls");
-      if (navControls) {
-          navControls.insertAdjacentHTML("afterend", btnHtml);
-      }
-      
-      if (isGM) {
-          element.querySelectorAll(".phase-btn").forEach(btn => {
-              btn.addEventListener("click", async (ev) => {
-                  ev.preventDefault();
-                  ev.stopPropagation();
-                  const newPhase = ev.currentTarget.dataset.phase;
-                  if (phase !== newPhase) {
-                      await combat.setFlag("reign", "phase", newPhase);
-                      combat.setupTurns();
-                  }
-              });
-          });
-      } else {
-          element.querySelectorAll(".phase-btn").forEach(btn => {
-              btn.style.cursor = "default";
-              btn.disabled = true;
-          });
-      }
-  }
-
-  const combatants = element.querySelectorAll(".combatant");
-  combatants.forEach(li => {
+  // INITIATIVE LIST
+  const combatants = $html.find(".combatant");
+  combatants.each((idx, li) => {
       const cid = li.dataset.combatantId;
       const c = combat.combatants.get(cid);
       if (!c) return;
 
       const isDeclared = c.getFlag("reign", "declared") || false;
-      const initDiv = li.querySelector(".token-initiative");
+      const $initDiv = $(li).find(".token-initiative");
       
-      if (initDiv) {
-          const defaultRoll = initDiv.querySelector(".roll");
-          if (defaultRoll) defaultRoll.style.display = "none";
+      if ($initDiv.length) {
+          $initDiv.find(".roll").hide();
 
           if (isDeclaring) {
-              initDiv.innerHTML = `
-                <a class="combatant-control reign-declare-btn" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}" style="color: ${isDeclared ? '#2d5a27' : '#888'}; font-size: 1.4em; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+              $initDiv.html(`
+                <a class="combatant-control reign-declare-btn" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}" style="color: ${isDeclared ? '#4caf50' : '#888'}; font-size: 1.4em; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; transition: color 0.2s ease;">
                     <i class="${isDeclared ? 'fas fa-check-circle' : 'far fa-circle'}"></i>
                 </a>
-              `;
+              `);
               
-              const declareBtn = initDiv.querySelector(".reign-declare-btn");
-              if (declareBtn) {
-                  declareBtn.addEventListener("click", async (ev) => {
-                      ev.preventDefault();
-                      ev.stopPropagation();
-                      
-                      if (!isGM && !c.isOwner) return ui.notifications.warn("You do not have permission to confirm this combatant's declaration.");
-                      await c.setFlag("reign", "declared", !isDeclared);
-                  });
-              }
+              $initDiv.find(".reign-declare-btn").off("click").on("click", async (ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  const activeCombat = game.combats.get(combat.id);
+                  if (!activeCombat) return;
+                  const activeCombatant = activeCombat.combatants.get(cid);
+                  if (!activeCombatant) return;
+                  if (!isGM && !activeCombatant.isOwner) return ui.notifications.warn("You do not have permission to confirm this combatant's declaration.");
+                  await activeCombatant.setFlag("reign", "declared", !isDeclared);
+              });
           } else {
-              if (!Number.isNumeric(c.initiative) && !initDiv.querySelector(".reign-waiting")) {
-                  initDiv.insertAdjacentHTML('beforeend', `<span class="reign-waiting" style="color: #999; font-weight: bold; font-size: 1.2em;" title="Waiting for action...">--</span>`);
+              if (!Number.isNumeric(c.initiative) && !$initDiv.find(".reign-waiting").length) {
+                  $initDiv.append(`<span class="reign-waiting" style="color: #999; font-weight: bold; font-size: 1.2em;" title="Waiting for action...">--</span>`);
               }
           }
       }

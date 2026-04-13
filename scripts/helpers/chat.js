@@ -43,17 +43,21 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
   const spellIntensity = isSpell ? (parseInt(itemData.system.intensity) || 0) : 0;
   const difficulty = flags.difficulty || 0;
 
+  // AUDIT FIX P2: Security - Escape all raw string inputs from items to prevent XSS
   let rawDmgStr = itemData?.system?.damageFormula || itemData?.system?.damage || "";
+  if (typeof rawDmgStr === "string") rawDmgStr = foundry.utils.escapeHTML(rawDmgStr);
+  
   if (!rawDmgStr && flags.isAttack && itemData?.type === "weapon") {
       rawDmgStr = "Width Shock";
   }
 
-  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(label);
+  const safeLabel = foundry.utils.escapeHTML(label);
+  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(safeLabel);
   let defenseType = "none";
   if (isDefense) {
-      if (/dodge/i.test(label)) defenseType = "dodge";
-      else if (/parry/i.test(label)) defenseType = "parry";
-      else if (/counterspell/i.test(label)) defenseType = "counterspell";
+      if (/dodge/i.test(safeLabel)) defenseType = "dodge";
+      else if (/parry/i.test(safeLabel)) defenseType = "parry";
+      else if (/counterspell/i.test(safeLabel)) defenseType = "counterspell";
       else defenseType = "generic";
   }
 
@@ -68,14 +72,14 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       });
   }
 
-  const isFirstAid = /healing|medicine/i.test(label);
+  const isFirstAid = /healing|medicine/i.test(safeLabel);
   const isHealingSpell = isSpell && /healing/i.test(rawDmgStr);
 
   let wasteType = null;
   let wasteAp = itemData?.system?.qualities?.armorPiercing || 0;
   const wasteMatch = rawDmgStr.match(/waste\s+(shock|killing|healing)/i);
   if (wasteMatch) {
-      wasteType = wasteMatch[1].toLowerCase();
+      wasteType = foundry.utils.escapeHTML(wasteMatch[1].toLowerCase());
   }
 
   const isAttack = (!!flags.isAttack || (isSpell && rawDmgStr.trim() !== "")) && !isHealingSpell && !isDefense;
@@ -87,15 +91,15 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       wasteData = {
           type: wasteType.charAt(0).toUpperCase() + wasteType.slice(1),
           faces: JSON.stringify(wasteFaces),
-          locations: wasteLocs.join(", "),
-          ap: wasteAp,
+          locations: foundry.utils.escapeHTML(wasteLocs.join(", ")),
+          ap: parseInt(wasteAp) || 0,
           isHealing: wasteType === "healing"
       };
   }
 
   const templateData = {
-    actorType,
-    label: foundry.utils.escapeHTML(label),
+    actorType: foundry.utils.escapeHTML(actorType),
+    label: safeLabel,
     totalPool,
     wasCapped: !!flags.wasCapped,
     poolBreakdown: flags.poolBreakdown || [],
@@ -135,10 +139,10 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     const setObj = {
       width: s.width,
       height: s.height,
-      text: s.text,
-      location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid) && !isDefense) ? getHitLocationLabel(locKey) : null,
+      text: foundry.utils.escapeHTML(s.text),
+      location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid) && !isDefense) ? foundry.utils.escapeHTML(getHitLocationLabel(locKey)) : null,
       isSuccess,
-      failReason,
+      failReason: foundry.utils.escapeHTML(failReason),
       dice: getDiceData(Array(s.width).fill(s.height), isSuccess, false),
       dmg: null,
       heal: null,
@@ -153,6 +157,7 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
         let calculatedVal = primaryStr.replace(/width/ig, s.width);
         calculatedVal = calculatedVal.replace(/(\d+)\s*\+\s*(\d+)/g, (match, a, b) => parseInt(a) + parseInt(b));
         
+        // AUDIT FIX P2: Final sanitization pass before sending payload to HTML bindings
         if (isHealingSpell) {
             setObj.heal = {
                 formula: foundry.utils.escapeHTML(calculatedVal)
@@ -160,8 +165,8 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
         } else {
             setObj.dmg = {
                 formula: foundry.utils.escapeHTML(calculatedVal),
-                ap: itemData.system.qualities?.armorPiercing || 0,
-                slow: itemData.system.qualities?.slow || 0,
+                ap: parseInt(itemData.system.qualities?.armorPiercing) || 0,
+                slow: parseInt(itemData.system.qualities?.slow) || 0,
                 twoHanded: !!itemData.system.qualities?.twoHanded,
                 massive: !!itemData.system.qualities?.massive,
                 area: parseInt(itemData.system.qualities?.area) || 0
@@ -171,7 +176,7 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     }
 
     if (actorType === "company" && flags.targetQuality && flags.targetQuality !== "none") {
-      setObj.companyDmg = { width: s.width, quality: flags.targetQuality.toUpperCase() };
+      setObj.companyDmg = { width: s.width, quality: foundry.utils.escapeHTML(flags.targetQuality.toUpperCase()) };
     }
 
     templateData.sets.push(setObj);
@@ -198,12 +203,13 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
 export async function postOREChat(actor, label, totalPool, results, expertDie, masterDiceCount, item = null, flags = {}, rollInstance = null) {
   const parsed = parseORE(results, flags.isMinion);
 
-  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(label);
+  const safeLabel = foundry.utils.escapeHTML(label);
+  const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(safeLabel);
   let defenseType = "none";
   if (isDefense) {
-      if (/dodge/i.test(label)) defenseType = "dodge";
-      else if (/parry/i.test(label)) defenseType = "parry";
-      else if (/counterspell/i.test(label)) defenseType = "counterspell";
+      if (/dodge/i.test(safeLabel)) defenseType = "dodge";
+      else if (/parry/i.test(safeLabel)) defenseType = "parry";
+      else if (/counterspell/i.test(safeLabel)) defenseType = "counterspell";
       else defenseType = "generic";
   }
 
@@ -220,12 +226,12 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
 
   if (game.combat && actor && parsed.sets.length > 0) {
     const range = item?.type === "weapon" ? (item.system.range || "0") : "0";
-    const initValue = calculateInitiative(parsed.sets, isDefense, flags.isAttack, flags.isMinion, range);
+    const initValue = calculateInitiative(parsed.sets, isDefense, flags.isAttack, flags.isMinion, foundry.utils.escapeHTML(range));
 
     const combatants = game.combat.combatants.filter(c => c.actorId === actor.id);
     
     if (item?.type === "weapon" && item.system.qualities?.slow > 0 && combatants.length > 0) {
-        const slowRounds = item.system.qualities.slow;
+        const slowRounds = parseInt(item.system.qualities.slow) || 0;
         const currentRound = game.combat.round;
         const updates = combatants.map(c => ({ _id: c.id, initiative: initValue, "flags.reign.slowCooldown": currentRound + slowRounds }));
         await game.combat.updateEmbeddedDocuments("Combatant", updates);
@@ -247,7 +253,7 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
 
   const messageFlags = { 
     reign: { 
-        actorType, label, totalPool, results, expertDie, masterDiceCount, 
+        actorType, label: safeLabel, totalPool, results, expertDie, masterDiceCount, 
         itemData, rollFlags: flags,
         isDefense, defenseType, gobbleDice
     } 
