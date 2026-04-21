@@ -2,7 +2,7 @@
   "id": "reign",
   "title": "Reign: Realities of Lords and Leaders",
   "description": "An unofficial fan-made system for playing Reign (2nd Edition) on Foundry VTT, fully automating the One-Roll Engine (ORE).",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "authors": [
     {
       "name": "Llew ap Hywel",
@@ -12,11 +12,11 @@
   ],
   "url": "https://github.com/arawnlp-debug/foundry-reign",
   "manifest": "https://raw.githubusercontent.com/arawnlp-debug/foundry-reign/main/system.json",
-  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v1.5.1/reign.zip",
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v2.0.0/reign.zip",
   "license": "MIT",
   "compatibility": {
-    "minimum": "13",
-    "verified": "13"
+    "minimum": "14",
+    "verified": "14"
   },
   "esmodules": [
     "scripts/reign.mjs"
@@ -28,7 +28,8 @@
     "styles/item-sheet.css",
     "styles/chat.css",
     "styles/dialogs.css",
-    "styles/charactermancer.css"
+    "styles/charactermancer.css",
+    "styles/companymancer.css"
   ],
   "languages": [
     {
@@ -109,6 +110,11 @@
         "htmlFields": [
           "system.effect"
         ]
+      },
+      "asset": {
+        "htmlFields": [
+          "system.description"
+        ]
       }
     }
   },
@@ -138,6 +144,13 @@
       "name": "esoterica",
       "label": "Spells & Esoteric Disciplines",
       "path": "packs/esoterica.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "company-assets",
+      "label": "Company Assets",
+      "path": "packs/company-assets.db",
       "type": "Item",
       "system": "reign"
     }

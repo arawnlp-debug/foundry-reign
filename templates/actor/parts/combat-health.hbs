@@ -1,0 +1,58 @@
+<div class="reign-health-container reign-mb20">
+  <div class="health-actions-sub-header">
+      <span class="health-hint">(L-Click: Add Shock, R-Click: Add Kill, Shift-Click: Remove)</span>
+      
+      <div class="label-center reign-flex-gap5">
+          <button type="button" data-action="recoverShock" class="recovery-btn" title="Halve current Shock damage (Post-Combat)">
+            <i class="fas fa-heartbeat"></i> Short Rest
+          </button>
+          <button type="button" data-action="restAndRecover" class="recovery-btn" title="Natural Healing (1 Day / 1 Week)">
+            <i class="fas fa-campground"></i> Long Rest
+          </button>
+      </div>
+
+      <div class="label-right">
+          {{#if activeShields.length}}
+            <div class="shield-badge" title="Active Shield Protection">
+              <i class="fas fa-shield-alt"></i> {{activeShields.[0].system.shieldSize}}
+            </div>
+          {{/if}}
+      </div>
+  </div>
+
+  <div class="reign-health-split">
+    <div class="silhouette-wrapper">
+       {{> "systems/reign/templates/parts/damage-silhouette.hbs"}}
+    </div>
+    <div class="reign-health-data-list">
+       {{#each reignHealth as |loc|}}
+       <div class="reign-health-row reign-health-grid">
+         <div class="location-label-group">
+           {{#if @root.activeShields.length}}
+             <a class="shield-toggle {{#if loc.isShielded}}active{{/if}}" 
+                data-action="toggleShieldLocation" 
+                data-loc="{{loc.key}}" 
+                data-shield-id="{{@root.activeShields.[0].id}}" 
+                title="Protect this location">
+                <i class="fas fa-shield-alt"></i>
+             </a>
+           {{/if}}
+           <span class="loc-text">{{loc.label}}</span>
+           
+           <div class="reign-armor-indicators">
+             {{#each @root.armors as |ar|}}
+               {{#if ar.system.equipped}}
+                 <i class="fas fa-tshirt" title="Armor Equipped: {{ar.name}} ({{ar.system.armorWeight}})"></i>
+               {{/if}}
+             {{/each}}
+           </div>
+         </div>
+         
+         <div class="reign-ar-badge-col">
+             <input type="number" value="{{loc.armor}}" class="reign-ar-input reign-ar-badge" title="Total AR (Auto-Calculated)" readonly tabindex="-1"/>
+         </div>
+       </div>
+       {{/each}}
+    </div>
+  </div>
+</div>

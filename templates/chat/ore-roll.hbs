@@ -1,75 +1,70 @@
 <div class="reign-chat-card">
-    <header class="chat-header" style="border-bottom: 2px solid var(--reign-bg-iron); padding-bottom: 8px; margin-bottom: 12px;">
-        <h3 style="display: flex; align-items: center; gap: 5px; margin: 0; color: var(--reign-color-blood); font-weight: bold; font-size: 1.3em;">
-            <i class="fas fa-dice-d10"></i> Rolling {{label}}
-        </h3>
+    <header class="reign-roll-title">
+        <i class="fas fa-dice-d10"></i> Rolling {{label}}
     </header>
 
     {{#if (gt multiActions 1)}}
-        <div class="multi-action-flag" style="background: #fff3e0; color: #e65100; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 8px; border: 1px solid #ffb74d; border-radius: 4px; font-size: 0.9em;">
+        <div class="reign-banner reign-banner-warning">
             ATTEMPTING {{multiActions}} ACTIONS<br>
-            <span style="font-size: 0.85em; font-weight: normal;">(Requires {{multiActions}} matched sets)</span>
+            <small>(Requires {{multiActions}} matched sets)</small>
         </div>
     {{/if}}
 
     {{#if (gt calledShot 0)}}
-        <div class="called-shot-flag" style="background: #e0f2f1; color: #00695c; padding: 6px; font-weight: bold; text-align: center; margin-bottom: 8px; border: 1px solid #4db6ac; border-radius: 4px; font-size: 0.9em;">
+        <div class="reign-banner reign-banner-info">
             <i class="fas fa-crosshairs"></i> CALLED SHOT: Height {{calledShot}}
         </div>
     {{/if}}
 
-    {{!-- PHASE 6.1 FIX: Pool Breakdown using Details/Summary tags --}}
-    <details class="pool-details" style="font-style: italic; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px;">
-        <summary style="cursor: pointer; font-weight: bold; list-style-position: inside; outline: none;">
-            Pool: {{totalPool}}d10 {{#if wasCapped}}<span style='color: #8b1f1f;'>(Capped)</span>{{/if}}
+    <details class="reign-pool-breakdown">
+        <summary>
+            Pool: {{totalPool}}d10 {{#if wasCapped}}<span class="reign-text-danger">(Capped)</span>{{/if}}
         </summary>
         {{#if poolBreakdown.length}}
-            <ul style="margin: 5px 0 0 15px; padding: 0; font-size: 0.85em; font-style: normal; color: #444; list-style-type: square;">
+            <ul>
                 {{#each poolBreakdown as |b|}}
-                    {{!-- FIX: Using the safe boolean instead of the missing 'includes' helper --}}
-                    <li><strong>{{b.label}}:</strong> <span style="color: {{#if b.isPenalty}}#c62828{{else}}#2e7d32{{/if}};">{{b.value}}</span></li>
+                    <li><strong>{{b.label}}:</strong> <span class="{{#if b.isPenalty}}reign-text-critical{{else}}reign-text-success{{/if}}">{{b.value}}</span></li>
                 {{/each}}
             </ul>
         {{/if}}
     </details>
 
     <div class="sets-result">
-        <div class="section-label" style="font-size: 0.9em; text-transform: uppercase; color: var(--reign-text-muted); border-bottom: var(--reign-border-dashed); margin-bottom: 8px; padding-bottom: 2px;">Matched Sets</div>
+        <div class="reign-section-title">Matched Sets</div>
+        
         {{#if sets.length}}
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+            <div class="reign-flex-col-gap8 reign-mb-medium">
                 {{#each sets as |set|}}
-                    <div class="ore-set" style="background: rgba(0,0,0,0.03); border-left: 5px solid {{#if set.isSuccess}}#2d5a27{{else}}#8b1f1f{{/if}}; padding: 8px 10px; border-radius: 0 4px 4px 0; display: flex; flex-direction: column; gap: 5px;">
+                    <div class="ore-set {{#if set.isSuccess}}reign-set-success{{else}}reign-set-fail{{/if}}">
                         
-                        <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
-                            <div class="dice-row" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                {{#each set.dice as |die|}}
-                                    <div class="reign-die {{die.cssClass}}" title="{{#if (eq die.cssClass 'matched')}}Matched Die{{else}}Waste Die{{/if}}">{{die.value}}</div>
-                                {{/each}}
-                            </div>
+                        <div class="dice-tray wrap">
+                            {{#each set.dice as |die|}}
+                                <div class="reign-die {{die.cssClass}}" title="{{#if (eq die.cssClass 'matched')}}Matched Die{{else}}Waste Die{{/if}}">{{die.value}}</div>
+                            {{/each}}
                         </div>
                         
-                        <div style="font-size: 0.9em; margin-top: 4px; font-family: var(--reign-font-data); padding-left: 5px;">
+                        <div class="set-details reign-mt-small">
                             {{#if set.location}}
-                               <i class="fas fa-bullseye" style="color: #2d5a27;"></i> HIT: <strong>{{set.location}}</strong>
+                               <i class="fas fa-bullseye reign-text-success"></i> HIT: <strong>{{set.location}}</strong>
                             {{else if set.isSuccess}}
-                               <i class="fas fa-check-circle" style="color: #2d5a27;"></i> <strong style="color: #2d5a27;">Success</strong>
+                               <i class="fas fa-check-circle reign-text-success"></i> <strong class="reign-text-success">Success</strong>
                             {{/if}}
 
                             {{#unless set.isSuccess}}
-                                <div style="color: #8b1f1f; font-weight: bold; margin-top: 2px; font-size: 0.9em;"><i class="fas fa-times-circle"></i> FAILED: {{set.failReason}}</div>
+                               <div class="reign-text-danger reign-text-bold reign-mt-small"><i class="fas fa-times-circle"></i> FAILED: {{set.failReason}}</div>
                             {{/unless}}
                         </div>
 
-                        {{!-- PHASE 3.1: Updated Gobble UI Block --}}
+                        {{!-- Gobble UI Block --}}
                         {{#if ../isDefense}}
-                            <div style="font-size: 0.9em; color: #0d47a1; margin-top: 6px; text-align: center; padding: 6px; border-top: 1px dashed #90caf9; background: #e3f2fd; border-radius: 3px; width: 100%;">
-                                <div style="margin-bottom: 4px;"><strong><i class="fas fa-shield-alt"></i> Generates {{set.width}} Gobble Dice of Height {{set.height}}</strong></div>
-                                <div style="font-size: 0.85em; font-style: italic; color: #1565c0;">
+                            <div class="reign-gobble-gen">
+                                <div><strong><i class="fas fa-shield-alt"></i> Generates {{set.width}} Gobble Dice of Height {{set.height}}</strong></div>
+                                <div class="reign-gobble-gen-defense">
                                     Defense Type: <strong>{{../defenseTypeLabel}}</strong><br>
                                     {{#if (eq ../defenseType "dodge")}}
-                                        <span style="color: #c62828;">(Can only protect yourself)</span>
+                                        <span class="reign-text-danger">(Can only protect yourself)</span>
                                     {{else}}
-                                        <span style="color: #2e7d32;">(Can protect yourself or allies)</span>
+                                        <span class="reign-text-success">(Can protect yourself or allies)</span>
                                     {{/if}}
                                 </div>
                             </div>
@@ -77,64 +72,71 @@
 
                         {{!-- Damage Tags Block --}}
                         {{#if set.dmg}}
-                            <div style="font-size: 0.85em; color: #333; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; padding-top: 4px; border-top: 1px dashed #ccc; width: 100%;">
+                            <div class="reign-dmg-tags">
                                 <div><strong>Damage:</strong> {{set.dmg.formula}}</div>
-                                <div class="tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                    {{#if set.dmg.ap}}<span style="background:#333; color:#fff; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; font-weight: bold;">AP {{set.dmg.ap}}</span>{{/if}}
-                                    {{#if set.dmg.slow}}<span style="background:#555; color:#fff; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; font-weight: bold;">SLOW {{set.dmg.slow}}</span>{{/if}}
-                                    {{#if set.dmg.twoHanded}}<span style="background:#4a4a8a; color:#fff; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; font-weight: bold;">2H</span>{{/if}}
-                                    {{#if set.dmg.massive}}<span style="background:#6b3a1f; color:#fff; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; font-weight: bold;">MASSIVE</span>{{/if}}
-                                    {{#if set.dmg.area}}<span style="background:#d97706; color:#fff; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; font-weight: bold;">AREA {{set.dmg.area}}d</span>{{/if}}
+                                <div class="dice-tray wrap">
+                                    {{#if set.dmg.ap}}<span class="reign-tag ap-tag">AP {{set.dmg.ap}}</span>{{/if}}
+                                    {{#if set.dmg.slow}}<span class="reign-tag">SLOW {{set.dmg.slow}}</span>{{/if}}
+                                    {{#if set.dmg.twoHanded}}<span class="reign-tag">2H</span>{{/if}}
+                                    {{#if set.dmg.massive}}<span class="reign-tag massive-tag">MASSIVE</span>{{/if}}
+                                    {{#if set.dmg.area}}<span class="reign-tag area-tag">AREA {{set.dmg.area}}d</span>{{/if}}
                                 </div>
                             </div>
                         {{/if}}
 
                         {{!-- Healing Block --}}
                         {{#if set.heal}}
-                            <div style="font-size: 0.85em; color: #1b5e20; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px dashed #ccc; width: 100%;">
+                            <div class="reign-heal-tags">
                                 <span><strong>Healing:</strong> {{set.heal.formula}}</span>
                             </div>
                         {{/if}}
 
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; width: 100%; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px;">
+                        <div class="reign-action-buttons">
                             {{#if set.initBtn}}
-                                <button class="set-init-btn" data-width="{{set.width}}" data-height="{{set.height}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff8e1; border: 1px solid #f57f17; color: #f57f17; border-radius: 3px; transition: all 0.2s;" title="Use this set's speed for Combat Initiative">
+                                <button class="reign-btn-small reign-btn-init set-init-btn" data-width="{{set.width}}" data-height="{{set.height}}" title="Use this set's speed for Combat Initiative">
                                     <i class="fas fa-bolt"></i>
                                 </button>
                             {{/if}}
 
+                            {{!-- P1 RAW FIX: Button to select the active Gobble Set --}}
+                            {{#if ../needsGobbleSelection}}
+                                <button class="reign-btn-small reign-btn-gobble select-gobble-set-btn" data-width="{{set.width}}" data-height="{{set.height}}" title="Select this set as your Gobble Dice">
+                                    <i class="fas fa-hand-pointer"></i>
+                                </button>
+                            {{/if}}
+
                             {{#unless ../isDefense}}
-                                <button class="gobble-dmg-btn" data-height="{{set.height}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e0f2f1; border: 1px solid #00897b; border-radius: 3px; color: #00695c; transition: all 0.2s;" title="Gobble 1 Die (Use Dodge or Parry)">
+                                <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Use Dodge or Parry)">
                                     <i class="fas fa-shield-alt"></i>
                                 </button>
                             {{/unless}}
 
                             {{#if set.dmg}}
-                                <button class="apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #eee; border: 1px solid #999; border-radius: 3px; color: #111; transition: all 0.2s;" title="Apply Primary Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                <button class="reign-btn-small reign-btn-damage apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" title="Apply Primary Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-hand-fist"></i>
                                 </button>
                             {{/if}}
 
                             {{#if set.heal}}
-                                <button class="apply-heal-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-heal-string="{{set.heal.formula}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e8f5e9; border: 1px solid #2e7d32; color: #1b5e20; border-radius: 3px; transition: all 0.2s;" title="Apply Magical Healing" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                <button class="reign-btn-small reign-btn-heal apply-heal-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-heal-string="{{set.heal.formula}}" title="Apply Magical Healing" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-hand-holding-medical"></i>
                                 </button>
                             {{/if}}
 
                             {{#if ../isFirstAid}}
-                                <button class="apply-first-aid-btn" data-width="{{set.width}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #0277bd; color: #01579b; border-radius: 3px; transition: all 0.2s;" title="Apply First Aid (Convert Killing to Shock)" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                <button class="reign-btn-small reign-btn-first-aid apply-first-aid-btn" data-width="{{set.width}}" title="Apply First Aid (Convert Killing to Shock)" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-notes-medical"></i>
                                 </button>
                             {{/if}}
 
                             {{#if set.companyDmg}}
-                                <button class="apply-company-dmg-btn" data-width="{{set.companyDmg.width}}" data-quality="{{set.companyDmg.quality}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff3e0; border: 1px solid #ff9800; color: #e65100; transition: all 0.2s;" title="Apply Company Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                <button class="reign-btn-small reign-btn-company apply-company-dmg-btn" data-width="{{set.companyDmg.width}}" data-quality="{{set.companyDmg.quality}}" title="Apply Company Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-chess-rook"></i>
                                 </button>
                             {{/if}}
 
                             {{#if ../hasEffects}}
-                                <button class="apply-condition-btn" data-item-uuid="{{../itemUuid}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #f3e5f5; border: 1px solid #7b1fa2; color: #4a148c; transition: all 0.2s;" title="Apply Condition to Targets" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                <button class="reign-btn-small reign-btn-condition apply-condition-btn" data-item-uuid="{{../itemUuid}}" title="Apply Condition to Targets" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-bolt"></i>
                                 </button>
                             {{/if}}
@@ -143,48 +145,59 @@
                 {{/each}}
             </div>
         {{else}}
-            <div style="text-align: center; padding: 15px; color: #8b1f1f; font-weight: bold; font-size: 1.1em; background: #ffebee; border: 1px dashed #8b1f1f; margin: 10px 0; border-radius: 4px;">No Sets Found</div>
+            <div class="reign-banner reign-banner-fail">No Sets Found</div>
         {{/if}}
     </div>
 
-    {{!-- PHASE 3.1: Display the Gobble Dice counter on the Defense card --}}
+    {{!-- Display the Gobble Dice counter or Selection Prompt on the Defense card --}}
     {{#if isDefense}}
-        <div class="gobble-tracker" style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 4px; border: 1px solid #90caf9; margin-bottom: 10px;">
-            <div class="section-label" style="font-size: 0.9em; text-transform: uppercase; color: #0d47a1; border-bottom: 1px dashed #90caf9; margin-bottom: 8px; padding-bottom: 2px;">
-                <i class="fas fa-shield-alt"></i> Available Gobble Dice ({{gobbleCount}})
+        {{#if needsGobbleSelection}}
+            <div class="reign-gobble-tracker" style="margin-top: 15px;">
+                <div class="reign-section-title" style="color: var(--reign-orange); border-color: var(--reign-orange);">
+                    <i class="fas fa-exclamation-triangle"></i> Select Gobble Dice
+                </div>
+                <div style="padding: 8px; text-align: center; color: var(--reign-text-dark); opacity: 0.8; font-style: italic; font-size: 0.9em;">
+                    You rolled multiple sets! Click the <i class="fas fa-hand-pointer"></i> icon on a set above to lock it in as your active Gobble Dice.
+                </div>
             </div>
-            <div class="dice-row" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                {{#if gobbleDice.length}}
-                    {{#each gobbleDice as |die|}}
-                        <div class="reign-die" style="background: #1976d2; color: white; border: 1px solid #0d47a1;" title="Available Gobble Die">{{die}}</div>
-                    {{/each}}
-                {{else}}
-                    <span style='font-size: 0.85em; color: #d32f2f; font-style: italic; font-weight: bold;'>All Gobble Dice Spent!</span>
-                {{/if}}
+        {{else}}
+            <div class="reign-gobble-tracker">
+                <div class="reign-section-title" style="color: var(--reign-blue); border-color: var(--reign-blue);">
+                    <i class="fas fa-shield-alt"></i> Available Gobble Dice ({{gobbleCount}})
+                </div>
+                <div class="dice-tray wrap gobble-list">
+                    {{#if gobbleDice.length}}
+                        {{#each gobbleDice as |die|}}
+                            <div class="reign-die gobble-badge" title="Available Gobble Die">{{die}}</div>
+                        {{/each}}
+                    {{else}}
+                        <span class="reign-text-danger reign-text-bold reign-text-muted">All Gobble Dice Spent!</span>
+                    {{/if}}
+                </div>
             </div>
-        </div>
+        {{/if}}
     {{/if}}
 
-    <div class="waste-result" style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 4px; border: 1px solid #eaeaea;">
-        <div class="section-label" style="font-size: 0.9em; text-transform: uppercase; color: var(--reign-text-muted); border-bottom: var(--reign-border-dashed); margin-bottom: 8px; padding-bottom: 2px;">Unmatched Dice (Waste)</div>
-        <div class="dice-row" style="display: flex; flex-wrap: wrap; gap: 8px;">
+    <div class="reign-callout">
+        <div class="reign-section-title">Unmatched Dice (Waste)</div>
+        <div class="dice-tray wrap">
             {{#if waste.length}}
                 {{#each waste as |die|}}
                     <div class="reign-die waste" title="Waste Die">{{die.value}}</div>
                 {{/each}}
             {{else}}
-                <span style='font-size: 0.85em; color: #999; font-style: italic;'>None</span>
+                <span class="reign-text-muted">None</span>
             {{/if}}
         </div>
         
-        {{!-- SECONDARY DAMAGE ENGINE: Waste Hit/Heal UI Block --}}
+        {{!-- Waste Hit/Heal UI Block --}}
         {{#if wasteDmg}}
-            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-size: 0.85em; color: {{#if wasteDmg.isHealing}}#2e7d32{{else}}#8b1f1f{{/if}}; line-height: 1.3;">
+            <div class="reign-heal-tags">
+                <div style="color: {{#if wasteDmg.isHealing}}var(--reign-green){{else}}var(--reign-red){{/if}};">
                     <strong>Waste Effect:</strong><br>
                     1 {{wasteDmg.type}} to {{wasteDmg.locations}}
                 </div>
-                <button class="apply-waste-dmg-btn" data-faces="{{wasteDmg.faces}}" data-type="{{wasteDmg.type}}" data-ap="{{wasteDmg.ap}}" style="flex: 0 0 32px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: {{#if wasteDmg.isHealing}}#e8f5e9{{else}}#ffebee{{/if}}; border: 1px solid {{#if wasteDmg.isHealing}}#2e7d32{{else}}#ef5350{{/if}}; color: {{#if wasteDmg.isHealing}}#1b5e20{{else}}#c62828{{/if}}; border-radius: 3px; transition: all 0.2s;" title="Apply Waste {{#if wasteDmg.isHealing}}Healing{{else}}Hits{{/if}}">
+                <button class="reign-btn-small apply-waste-dmg-btn {{#if wasteDmg.isHealing}}reign-btn-heal{{else}}reign-btn-waste-dmg{{/if}}" data-faces="{{wasteDmg.faces}}" data-type="{{wasteDmg.type}}" data-ap="{{wasteDmg.ap}}" title="Apply Waste {{#if wasteDmg.isHealing}}Healing{{else}}Hits{{/if}}">
                     <i class="fas {{#if wasteDmg.isHealing}}fa-heartbeat{{else}}fa-meteor{{/if}}"></i>
                 </button>
             </div>
@@ -192,13 +205,13 @@
     </div>
 
     {{#if (gt expertDie 0)}}
-        <div class="ed-result" style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 8px; font-size: 0.9em;">
-            <strong>Expert Die Face:</strong> <span style="background: #2d5a27; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold; margin-left: 5px;">{{expertDie}}</span>
+        <div class="reign-ed-result">
+            <strong>Expert Die Face:</strong> <span class="reign-ed-badge">{{expertDie}}</span>
         </div>
     {{/if}}
     {{#if (gt masterDiceCount 0)}}
-        <div class="md-result" style="margin-top: 6px; font-size: 0.9em; color: #2d5a27;">
-            <strong>Master Dice Used:</strong> <span style="font-weight: bold;">{{masterDiceCount}}</span>
+        <div class="reign-md-result">
+            <strong>Master Dice Used:</strong> <span>{{masterDiceCount}}</span>
         </div>
     {{/if}}
 </div>

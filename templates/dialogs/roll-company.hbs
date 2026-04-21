@@ -1,43 +1,83 @@
-<div style="background: #1a1a1a; color: #fff; padding: 10px; text-align: center; font-size: 1.2em; font-weight: bold; border-radius: 4px; margin-bottom: 15px; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
-  Expected Pool: <span id="pool-value" style="color: #4ade80;">...</span>
+<div class="reign-dialog-pool-preview">
+  Expected Pool: <span id="pool-value" class="reign-text-success">...</span>
+  
+  {{#if hasPledges}}
+  <div class="reign-dialog-warchest">
+     <i class="fas fa-handshake"></i> War Chest Active: 
+     {{#if pledges.bonus}}<strong>+{{pledges.bonus}}d</strong> {{/if}}
+     {{#if pledges.ed}}<strong>+{{pledges.ed}} ED</strong> {{/if}}
+     {{#if pledges.md}}<strong>+{{pledges.md}} MD</strong>{{/if}}
+     <br><span class="reign-text-muted">(These will be consumed upon rolling)</span>
+  </div>
+  {{/if}}
 </div>
+
 <form class="reign-dialog-form">
-  <div class="form-group" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
-    <label style="color: #8b1f1f; font-weight: bold;">Action Catalog:</label>
+  <div class="form-group reign-mb-medium" style="padding-bottom: 15px; border-bottom: 1px dashed var(--reign-border-dashed);">
+    <label class="reign-text-danger reign-text-bold">Action Catalog:</label>
     <select name="preset" id="reign-action-preset">
       {{selectOptions presetOptions}}
     </select>
   </div>
+  
   <div class="dialog-grid dialog-grid-2">
     <div class="form-group">
       <label>Primary Quality:</label>
-      <select name="q1" id="reign-q1">
-        {{selectOptions qualityOptions selected=key1}}
-      </select>
+      <div class="reign-checkbox-row">
+        <select name="q1" id="reign-q1" class="reign-flex-2">
+          {{selectOptions qualityOptions selected=key1}}
+        </select>
+        <input type="number" name="q1Limit" id="reign-q1-limit" placeholder="Max" title="Allocate Dice (Subdividing the Pot)" class="reign-flex-1" min="1"/>
+      </div>
     </div>
     <div class="form-group">
       <label>Secondary Quality:</label>
-      <select name="q2" id="reign-q2">
-        {{selectOptions qualityOptionsWithNone selected="none"}}
-      </select>
+      <div class="reign-checkbox-row">
+        <select name="q2" id="reign-q2" class="reign-flex-2">
+          {{selectOptions qualityOptionsWithNone selected="none"}}
+        </select>
+        <input type="number" name="q2Limit" id="reign-q2-limit" placeholder="Max" title="Allocate Dice (Subdividing the Pot)" class="reign-flex-1" min="1"/>
+      </div>
     </div>
   </div>
-  <div class="dialog-grid dialog-grid-2" style="margin-top: 10px;">
+  
+  <div class="dialog-grid dialog-grid-2 reign-mt10">
     <div class="form-group"><label>Difficulty (Min Height):</label><input type="number" name="difficulty" id="reign-diff" value="0" min="0" max="10"/></div>
     <div class="form-group"><label>Mod Dice (+d):</label><input type="number" name="mod" value="0"/></div>
   </div>
-  <div class="dialog-grid dialog-grid-2" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">
+  
+  <div class="dialog-grid dialog-grid-2 reign-dialog-section">
     <div class="form-group">
-      <label style="color: #d97706;">Action Cost (Pay 1 Temp):</label>
-      <select name="cost" id="reign-cost">
-        {{selectOptions costOptions selected="none"}}
-      </select>
+      <label class="reign-text-warning" title="Uncheck to bypass RAW degradation (e.g. via Esoterica)">Action Economy Fatigue:</label>
+      <div class="reign-checkbox-group">
+        <label class="reign-checkbox-row">
+          <input type="checkbox" name="erodeQ1" checked/>
+          <span id="label-erode-q1">Erode: Q1</span>
+        </label>
+        <label class="reign-checkbox-row">
+          <input type="checkbox" name="erodeQ2" checked/>
+          <span id="label-erode-q2">Erode: Q2</span>
+        </label>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Target Quality (If Attacking):</label>
-      <select name="targetQuality" id="reign-target">
-        {{selectOptions qualityOptionsWithNone selected="none"}}
-      </select>
+    
+    <div class="form-group reign-flex-col" style="gap: 10px;">
+      <div>
+        <label class="reign-text-danger reign-text-bold">Target Enemy Company:</label>
+        <select name="targetCompany" id="reign-target-company">
+          <option value="none">-- None --</option>
+          {{#each targetCompanies}}
+            <option value="{{this.id}}">{{this.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      
+      <div>
+        <label>Target Quality (To Damage):</label>
+        <select name="targetQuality" id="reign-target">
+          {{selectOptions qualityOptionsWithNone selected="none"}}
+        </select>
+      </div>
     </div>
   </div>
 </form>

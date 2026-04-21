@@ -21,11 +21,9 @@ function getDiceData(diceArray, isSuccess = true, isWaste = false) {
 
 /**
  * Generates the full ORE chat card HTML from roll results.
- * * Gobble Dice Flow:
- * - On defense rolls: if flags.gobbleDice is undefined, auto-generates from matched sets.
- * - On defense regeneration (after consumption): flags.gobbleDice contains the REDUCED array,
- * so the template renders the correct remaining count.
- * - On attack rolls: gobbleDice is null/undefined — template hides the tracker.
+ * * Gobble Dice Flow (V2.0.0 RAW Fix):
+ * - On defense rolls: if flags.gobbleDice is undefined AND there is >1 set, we prompt the user.
+ * - If there is only 1 set, we auto-assign it.
  *
  * @param {string} actorType - The type of actor rolling.
  * @param {string} label - The roll label.
@@ -35,9 +33,10 @@ function getDiceData(diceArray, isSuccess = true, isWaste = false) {
  * @param {number} masterDiceCount - Number of Master Dice used.
  * @param {Object|null} itemData - The serialized item data, if any.
  * @param {Object} flags - Additional roll flags (isAttack, isDefense, gobbleDice, etc).
+ * @param {Object|null} [parsedOverride=null] - Pre-parsed ORE result to avoid redundant re-parsing.
  */
-export async function generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData = null, flags = {}) {
-  const parsed = parseORE(results, flags.isMinion);
+export async function generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData = null, flags = {}, parsedOverride = null) {
+  const parsed = parsedOverride || parseORE(results, flags.isMinion);
   
   const isSpell = itemData && itemData.type === "spell";
   const spellIntensity = isSpell ? (parseInt(itemData.system.intensity) || 0) : 0;
@@ -61,15 +60,20 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       else defenseType = "generic";
   }
 
-  // GOBBLE DICE: If this is a defense roll and no gobbleDice were passed in flags,
-  // auto-generate from matched sets. If flags.gobbleDice IS provided (e.g. after consumption),
-  // use it directly — this is how the tracker shows the remaining count after a die is spent.
+  // P1 RAW FIX: Stop auto-gobbling all sets.
   let gobbleDice = flags.gobbleDice;
+  let needsGobbleSelection = false;
+  
   if (isDefense && gobbleDice === undefined) {
-      gobbleDice = [];
-      parsed.sets.forEach(s => {
-          for(let i = 0; i < s.width; i++) gobbleDice.push(s.height);
-      });
+      if (parsed.sets.length === 1) {
+          // If only one set was rolled, auto-assign it for UX speed
+          gobbleDice = [];
+          for (let i = 0; i < parsed.sets[0].width; i++) gobbleDice.push(parsed.sets[0].height);
+      } else if (parsed.sets.length > 1) {
+          // If multiple sets were rolled, flag the template to show the selection buttons
+          needsGobbleSelection = true;
+          gobbleDice = null;
+      }
   }
 
   const isFirstAid = /healing|medicine/i.test(safeLabel);
@@ -97,32 +101,11 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       };
   }
 
-  const templateData = {
-    actorType: foundry.utils.escapeHTML(actorType),
-    label: safeLabel,
-    totalPool,
-    wasCapped: !!flags.wasCapped,
-    poolBreakdown: flags.poolBreakdown || [],
-    isAttack: isAttack,
-    isDefense: isDefense,
-    defenseType: defenseType,
-    defenseTypeLabel: defenseType !== "none" ? (defenseType.charAt(0).toUpperCase() + defenseType.slice(1)) : "",
-    gobbleDice: gobbleDice,
-    gobbleCount: gobbleDice ? gobbleDice.length : 0,
-    isHealingSpell: isHealingSpell,
-    isFirstAid: isFirstAid,
-    isMinion: !!flags.isMinion,
-    multiActions: flags.multiActions || 1,
-    calledShot: flags.calledShot || 0,
-    expertDie: expertDie || 0,
-    masterDiceCount: masterDiceCount || 0,
-    sets: [],
-    waste: getDiceData(parsed.waste, false, true),
-    wasteDmg: wasteData, 
-    itemUuid: itemData?.uuid || null,
-    hasEffects: !!itemData?.hasEffects 
-  };
+  // PHASE 4: MAGIC TRANSFER SYSTEM
+  // Check if at least one set actually succeeded to reveal the Apply Effect button
+  let hasSuccessfulSet = false;
 
+  const setsData = [];
   parsed.sets.forEach((s, index) => {
     let locKey = getHitLocation(s.height);
     let isSuccess = true;
@@ -135,6 +118,8 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       isSuccess = false;
       failReason = `Intensity ${spellIntensity} Required`;
     }
+
+    if (isSuccess) hasSuccessfulSet = true;
 
     const setObj = {
       width: s.width,
@@ -157,7 +142,6 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
         let calculatedVal = primaryStr.replace(/width/ig, s.width);
         calculatedVal = calculatedVal.replace(/(\d+)\s*\+\s*(\d+)/g, (match, a, b) => parseInt(a) + parseInt(b));
         
-        // AUDIT FIX P2: Final sanitization pass before sending payload to HTML bindings
         if (isHealingSpell) {
             setObj.heal = {
                 formula: foundry.utils.escapeHTML(calculatedVal)
@@ -165,11 +149,11 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
         } else {
             setObj.dmg = {
                 formula: foundry.utils.escapeHTML(calculatedVal),
-                ap: parseInt(itemData.system.qualities?.armorPiercing) || 0,
-                slow: parseInt(itemData.system.qualities?.slow) || 0,
-                twoHanded: !!itemData.system.qualities?.twoHanded,
-                massive: !!itemData.system.qualities?.massive,
-                area: parseInt(itemData.system.qualities?.area) || 0
+                ap: parseInt(itemData?.system?.qualities?.armorPiercing) || 0,
+                slow: parseInt(itemData?.system?.qualities?.slow) || 0,
+                twoHanded: !!itemData?.system?.qualities?.twoHanded,
+                massive: !!itemData?.system?.qualities?.massive,
+                area: parseInt(itemData?.system?.qualities?.area) || 0
             };
         }
       }
@@ -179,8 +163,36 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       setObj.companyDmg = { width: s.width, quality: foundry.utils.escapeHTML(flags.targetQuality.toUpperCase()) };
     }
 
-    templateData.sets.push(setObj);
+    setsData.push(setObj);
   });
+
+  const templateData = {
+    actorType: foundry.utils.escapeHTML(actorType),
+    label: safeLabel,
+    totalPool,
+    wasCapped: !!flags.wasCapped,
+    poolBreakdown: flags.poolBreakdown || [],
+    isAttack: isAttack,
+    isDefense: isDefense,
+    defenseType: defenseType,
+    defenseTypeLabel: defenseType !== "none" ? (defenseType.charAt(0).toUpperCase() + defenseType.slice(1)) : "",
+    needsGobbleSelection: needsGobbleSelection,
+    gobbleDice: gobbleDice,
+    gobbleCount: gobbleDice ? gobbleDice.length : 0,
+    isHealingSpell: isHealingSpell,
+    isFirstAid: isFirstAid,
+    isMinion: !!flags.isMinion,
+    multiActions: flags.multiActions || 1,
+    calledShot: flags.calledShot || 0,
+    expertDie: expertDie || 0,
+    masterDiceCount: masterDiceCount || 0,
+    sets: setsData,
+    hasSuccessfulSet: hasSuccessfulSet, 
+    waste: getDiceData(parsed.waste, false, true),
+    wasteDmg: wasteData, 
+    itemUuid: itemData?.uuid || null,
+    hasEffects: !!itemData?.hasEffects 
+  };
 
   return await foundry.applications.handlebars.renderTemplate("systems/reign/templates/chat/ore-roll.hbs", templateData);
 }
@@ -199,8 +211,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
  * @param {Item|null} item - The source item, if any.
  * @param {Object} flags - Additional roll flags.
  * @param {Roll|null} rollInstance - The Foundry Roll object for Dice So Nice.
+ * @param {Object} advancedMods - Snapshot of active modifier data to prevent state desync.
  */
-export async function postOREChat(actor, label, totalPool, results, expertDie, masterDiceCount, item = null, flags = {}, rollInstance = null) {
+export async function postOREChat(actor, label, totalPool, results, expertDie, masterDiceCount, item = null, flags = {}, rollInstance = null, advancedMods = {}) {
   const parsed = parseORE(results, flags.isMinion);
 
   const safeLabel = foundry.utils.escapeHTML(label);
@@ -213,15 +226,14 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
       else defenseType = "generic";
   }
 
-  // GOBBLE DICE: Auto-generate for defense rolls if not explicitly provided.
-  // These are stored in the message flags and consumed by damage.js consumeGobbleDie().
+  // P1 RAW FIX: Stop auto-gobbling all sets. Only auto-gobble if exactly 1 set.
   let gobbleDice = flags.gobbleDice;
   if (isDefense && gobbleDice === undefined) {
-      gobbleDice = [];
-      parsed.sets.forEach(s => {
-          for(let i = 0; i < s.width; i++) gobbleDice.push(s.height);
-      });
-      flags.gobbleDice = gobbleDice;
+      if (parsed.sets.length === 1) {
+          gobbleDice = [];
+          for (let i = 0; i < parsed.sets[0].width; i++) gobbleDice.push(parsed.sets[0].height);
+          flags.gobbleDice = gobbleDice;
+      }
   }
 
   if (game.combat && actor && parsed.sets.length > 0) {
@@ -242,19 +254,32 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
   }
 
   const actorType = actor?.type || "character";
-  const itemData = item ? (typeof item.toObject === "function" ? item.toObject() : item) : null;
   
-  if (itemData && item) {
-      itemData.uuid = item.uuid;
-      itemData.hasEffects = (item.effects && item.effects.size > 0);
-  }
+  // Slim projection: only serialize the fields actually consumed by chat cards and damage applicators.
+  // Avoids bloating ChatMessage documents with full item notes/HTML/effect arrays.
+  const itemData = item ? {
+    uuid: item.uuid,
+    name: item.name,
+    type: item.type,
+    hasEffects: item.effects ? (item.effects.size > 0 || item.effects.contents?.length > 0) : false,
+    system: {
+      damageFormula: item.system.damageFormula,
+      damage: item.system.damage,
+      range: item.system.range,
+      intensity: item.system.intensity,
+      pool: item.system.pool,
+      castingStat: item.system.castingStat,
+      qualities: item.system.qualities ? foundry.utils.deepClone(item.system.qualities) : {}
+    }
+  } : null;
   
-  const flavor = await generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData, flags);
+  const flavor = await generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData, flags, parsed);
 
+  // ✅ Serialize `advancedMods` natively into `rollFlags`
   const messageFlags = { 
     reign: { 
         actorType, label: safeLabel, totalPool, results, expertDie, masterDiceCount, 
-        itemData, rollFlags: flags,
+        itemData, rollFlags: { ...flags, advancedMods },
         isDefense, defenseType, gobbleDice
     } 
   };
@@ -270,4 +295,86 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
   }
 
   await ChatMessage.create(messageData);
+}
+
+/**
+ * P1 RAW FIX: Assigns a specific set to become the Gobble Dice pool.
+ * This is triggered when a player clicks a set on a defense card with multiple options.
+ */
+export async function assignGobbleSet(message, width, height) {
+    const flags = message.flags?.reign;
+    if (!flags) return;
+
+    const newGobbleArray = [];
+    for (let i = 0; i < width; i++) {
+        newGobbleArray.push(height);
+    }
+
+    const updatedRollFlags = foundry.utils.deepClone(flags.rollFlags || {});
+    updatedRollFlags.gobbleDice = newGobbleArray;
+
+    const newContent = await generateOREChatHTML(
+        flags.actorType,
+        flags.label,
+        flags.totalPool,
+        flags.results,
+        flags.expertDie,
+        flags.masterDiceCount,
+        flags.itemData,
+        updatedRollFlags
+    );
+
+    await message.update({
+        content: newContent,
+        "flags.reign.rollFlags": updatedRollFlags,
+        "flags.reign.gobbleDice": newGobbleArray
+    });
+    
+    ui.notifications.info(`Assigned ${width}x${height} as Gobble Dice.`);
+}
+
+/**
+ * PHASE 4: MAGIC TRANSFER SYSTEM
+ * Extracts Active Effects from a source Item and copies them to all currently targeted Tokens.
+ * This is triggered by the UI button on a successful Spell or Technique chat card.
+ */
+export async function applyItemEffectsToTargets(itemUuid) {
+    const targets = Array.from(game.user.targets);
+    if (targets.length === 0) return ui.notifications.warn("Please target at least one token to apply the effect to.");
+
+    const item = await fromUuid(itemUuid);
+    if (!item) return ui.notifications.error("Could not find the source item to extract effects from.");
+
+    // Retrieve native Active Effects
+    const effects = Array.from(item.effects || []);
+    if (effects.length === 0) return ui.notifications.warn(`The item '${item.name}' has no Active Effects built into it.`);
+
+    const effectsToApply = effects.map(e => {
+        let effData = e.toObject();
+        effData.origin = itemUuid;
+        effData.disabled = false; // Force the effect to be active immediately when pasted onto the target
+        delete effData._id;       // Strip ID to ensure Foundry creates a new instance on the target
+        return effData;
+    });
+
+    for (const target of targets) {
+        const actor = target.actor;
+        if (!actor) continue;
+        
+        await actor.createEmbeddedDocuments("ActiveEffect", effectsToApply);
+        
+        const safeItemName = foundry.utils.escapeHTML(item.name);
+        const safeTargetName = foundry.utils.escapeHTML(actor.name);
+        
+        // Post a stylized narrative chat message confirming the transfer
+        await ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: game.user.character }),
+            content: `<div class="reign-chat-card reign-card-magic">
+                        <h3 class="reign-text-magic"><i class="fas fa-sparkles"></i> Effect Applied</h3>
+                        <p>The mystical effects of <strong>${safeItemName}</strong> wrap around <strong>${safeTargetName}</strong>.</p>
+                      </div>`
+        });
+    }
+    
+    ui.notifications.success(`Successfully applied ${item.name} effects to ${targets.length} target(s).`);
 }

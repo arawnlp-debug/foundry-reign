@@ -1,8 +1,9 @@
 // scripts/generators/charactermancer.js
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 import { skillAttrMap } from "../helpers/config.js";
+import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
 
-export class ReignCharactermancer extends HandlebarsApplicationMixin(ApplicationV2) {
+export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicationMixin(ApplicationV2)) {
   static DEFAULT_OPTIONS = {
     id: "reign-charactermancer",
     classes: ["reign", "charactermancer", "app-v2"],
@@ -11,24 +12,23 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       title: "Reign: Forge Your Legend", 
       resizable: true, 
       width: 950, 
-      height: 800,
-      /* Added the correct sub-containers for scrolling */
-      scrollable: [".cm-results-left", ".cm-biography", ".cm-editor"]
+      height: 800
     },
     position: { width: 950, height: 800 },
+    // V14 Architecture: Bind actions directly to the prototype
     actions: {
-      selectPath: this._onSelectPath,
-      adjustStat: this._onAdjustStat,
-      toggleUpgrade: this._onToggleUpgrade,
-      addCustomSkill: this._onAddCustomSkill,
-      removeCustomSkill: this._onRemoveCustomSkill,
-      changeBudget: this._onChangeBudget,
-      changeTable: this._onChangeTable,
-      removeItem: this._onRemoveItem,
-      finishCharacter: this._onFinishCharacter,
-      rollTheBones: this._onRollTheBones,
-      selectWasteChart: this._onSelectWasteChart,
-      acceptFate: this._onAcceptFate
+      selectPath: this.prototype._onSelectPath,
+      adjustStat: this.prototype._onAdjustStat,
+      toggleUpgrade: this.prototype._onToggleUpgrade,
+      addCustomSkill: this.prototype._onAddCustomSkill,
+      removeCustomSkill: this.prototype._onRemoveCustomSkill,
+      changeBudget: this.prototype._onChangeBudget,
+      changeTable: this.prototype._onChangeTable,
+      removeItem: this.prototype._onRemoveItem,
+      finishCharacter: this.prototype._onFinishCharacter,
+      rollTheBones: this.prototype._onRollTheBones,
+      selectWasteChart: this.prototype._onSelectWasteChart,
+      acceptFate: this.prototype._onAcceptFate
     }
   };
 
@@ -41,7 +41,6 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     this.actor = options.document;
     this.creationPath = null; 
     
-    // THE DRAFT PATTERN
     this.draftCharacter = {
       name: "Unnamed Legend",
       pointsMax: 85, 
@@ -56,14 +55,12 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       martialPaths: [],
       esoterica: [],
       spells: [],
-      // AUDIT FIX P1: Expanded arrays to support full item drag-and-drop
       weapons: [],
       armor: [],
       shields: [],
       gear: []
     };
 
-    // ONE-ROLL STATE
     this.oneRollState = {
       rolled: false,
       dice: [],
@@ -76,15 +73,16 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     this.oneRollTable = null;
 
     for (const skill of Object.keys(skillAttrMap)) {
+      const isNative = skill === "languageNative";
       this.draftCharacter.skills[skill] = {
-        value: 0,
+        // V14 FIX: Native Language starts with 1D and is upgraded to a Master Die
+        value: isNative ? 1 : 0,
         expert: false,
-        master: skill === "languageNative" 
+        master: isNative 
       };
     }
   }
 
-  // AUDIT FIX P1: Prevent Application closure from soft-locking the Actor
   async close(options={}) {
       if (this.actor?.system?.creationMode) {
           await this.actor.update({ "system.creationMode": false });
@@ -121,7 +119,7 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     context.draft = this.draftCharacter;
 
     this.draftCharacter.pointsMax = game.settings.get("reign", "campaignBudget") || 85;
-    context.costs = { attribute: 5, skill: 1, ed: 1, md: 6 };
+    context.costs = { attribute: 5, skill: 1, ed: 1, md: 5 };
     
     this._calculatePoints();
     context.pointsRemaining = this.draftCharacter.pointsMax - this.draftCharacter.pointsSpent;
@@ -130,7 +128,6 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     context.isOneRoll = this.creationPath === "oneroll";
     context.isPointBuy = this.creationPath === "pointbuy";
 
-    // --- Format Gains Helper for the UI ---
     const formatGains = (stage) => {
         const gains = [];
         if (stage.attributes) Object.entries(stage.attributes).forEach(([k, v]) => gains.push(`+${v} ${k.toUpperCase()}`));
@@ -141,7 +138,6 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
         if (stage.martialPaths) stage.martialPaths.forEach(m => gains.push(`${m.name}`));
         if (stage.esoterica) stage.esoterica.forEach(e => gains.push(`${e.name}`));
         if (stage.spells) stage.spells.forEach(s => gains.push(`${s.name}`));
-        // Display new items if tables grant them
         if (stage.weapons) stage.weapons.forEach(w => gains.push(`${w.name}`));
         if (stage.armor) stage.armor.forEach(a => gains.push(`${a.name}`));
         if (stage.shields) stage.shields.forEach(sh => gains.push(`${sh.name}`));
@@ -234,49 +230,69 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
 
   _calculatePoints() {
     let spent = 0;
-    const costAttr = 5, costSkill = 1, costED = 1, costMD = 6;
+    const costAttr = 5, costSkill = 1, costED = 1, costMD = 5;
 
+    // Attributes
     for (const val of Object.values(this.draftCharacter.attributes)) {
       if (val > 1) spent += ((val - 1) * costAttr);
     }
 
+    // Core Skills
     for (const [key, skill] of Object.entries(this.draftCharacter.skills)) {
-      spent += (skill.value * costSkill); 
       let isNativeLang = (key === "languageNative");
+      
+      // V14 FIX: The first regular die of Native Language is completely free.
+      // Any additional dice purchased cost the standard 1 point.
+      let chargeableDice = isNativeLang ? Math.max(0, skill.value - 1) : skill.value;
+      spent += (chargeableDice * costSkill); 
+      
+      // The Master Die upgrade for Native Language is completely free.
       if (skill.expert && !isNativeLang) spent += costED; 
       if (skill.master && !isNativeLang) spent += costMD; 
     }
 
+    // Sorcery
     spent += (this.draftCharacter.sorcery.value * costSkill);
     if (this.draftCharacter.sorcery.expert) spent += costED;
     if (this.draftCharacter.sorcery.master) spent += costMD;
 
+    // Custom Skills
     for (const skill of Object.values(this.draftCharacter.customSkills)) {
         spent += (skill.value * costSkill);
         if (skill.expert) spent += costED;
         if (skill.master) spent += costMD;
     }
 
+    // Wealth Base
     spent += this.draftCharacter.wealth;
+    
+    // Perks, Paths, and Magic
     for (const item of this.draftCharacter.advantages) spent += (Number(item.system.cost) || 0);
     for (const item of this.draftCharacter.martialPaths) spent += (Number(item.system.rank) || 1);
     for (const item of this.draftCharacter.esoterica) spent += (Number(item.system.rank) || 1);
 
+    // Equipment wealthCost (Possessions)
+    for (const item of this.draftCharacter.weapons) spent += (Number(item.system.wealthCost) || 0);
+    for (const item of this.draftCharacter.armor) spent += (Number(item.system.wealthCost) || 0);
+    for (const item of this.draftCharacter.shields) spent += (Number(item.system.wealthCost) || 0);
+    for (const item of this.draftCharacter.gear) spent += (Number(item.system.wealthCost) || 0);
+
+    // Spell Logic (Attuned vs Free vs Normal)
     const isAttuned = this.draftCharacter.advantages.some(a => /attuned/i.test(a.name));
     let attunedSpellClaimed = false;
 
-    const spellsByIntensity = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+    const spellsByIntensity = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [] };
     
     for (const spell of this.draftCharacter.spells) {
         if (isAttuned && !attunedSpellClaimed && /permanent attunement/i.test(spell.name)) {
             attunedSpellClaimed = true;
             continue; 
         }
-        const intensity = Math.clamp(Number(spell.system.intensity) || 1, 1, 6);
+        const intensity = Math.max(1, Math.min(10, Number(spell.system.intensity) || 1));
         spellsByIntensity[intensity].push(spell);
     }
 
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 10; i++) {
         const count = spellsByIntensity[i].length;
         if (count === 0) continue;
 
@@ -316,15 +332,11 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       return null;
   }
 
-  // Searches World Items first, then Compendiums
   async _findItem(name, type) {
       const lowerName = name.toLowerCase();
-      
-      // 1. Search Sidebar Items
       let found = game.items.find(i => i.type === type && i.name.toLowerCase() === lowerName);
       if (found) return found;
 
-      // 2. Search Compendiums
       for (const pack of game.packs.values()) {
           if (pack.metadata.type === "Item") {
               const index = await pack.getIndex({fields: ["type", "name"]});
@@ -341,7 +353,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
   async _applyOneRollSets(table) {
       this.draftCharacter.attributes = { body: 2, coordination: 2, sense: 2, knowledge: 2, command: 2, charm: 2 };
       for (const skill of Object.keys(skillAttrMap)) {
-          this.draftCharacter.skills[skill] = { value: 0, expert: false, master: skill === "languageNative" };
+          const isNative = skill === "languageNative";
+          this.draftCharacter.skills[skill] = { value: isNative ? 1 : 0, expert: false, master: isNative };
       }
       this.draftCharacter.customSkills = {};
       this.draftCharacter.sorcery = { value: 0, expert: false, master: false };
@@ -392,7 +405,6 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
           const lower = name.toLowerCase();
 
           if (/athletics|endurance|fight|parry|run|vigor/.test(lower)) return "body";
-          
           if (lower.includes("perform")) {
               if (currentStage?.attributes?.command) return "command";
               if (currentStage?.attributes?.coordination) return "coordination";
@@ -453,7 +465,6 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
           this.draftCharacter.wealth += stage.wealth;
       }
 
-      // Search for real items before defaulting to a placeholder
       const listMap = { advantages: "advantage", problems: "problem", martialPaths: "technique", esoterica: "discipline", spells: "spell", weapons: "weapon", armor: "armor", shields: "shield", gear: "gear" };
       for (const [list, type] of Object.entries(listMap)) {
           if (stage[list]) {
@@ -461,14 +472,12 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
                   const foundItem = await this._findItem(item.name, type);
                   
                   if (foundItem) {
-                      // Deep clone to guarantee data integrity from the compendium
-                      const itemData = foundry.utils.deepClone(foundItem.toObject());
+                      const safeItem = new Item.implementation(foundItem.toObject());
+                      const itemData = safeItem.toObject();
                       itemData._draftId = foundry.utils.randomID();
-                      // Keep JSON system overrides if they exist (like cost overrides)
                       if (item.system) itemData.system = foundry.utils.mergeObject(itemData.system, item.system);
                       this.draftCharacter[list].push(itemData);
                   } else {
-                      // Fallback to placeholder
                       this.draftCharacter[list].push({
                           _draftId: foundry.utils.randomID(),
                           name: `[PLACEHOLDER] ${item.name}`,
@@ -535,8 +544,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       }
   }
 
-  static async _onRollTheBones(event, target) {
-      event.preventDefault();
+  async _onRollTheBones(event, target) {
+      event.preventDefault(); 
       
       const selectElement = this.element.querySelector("#oneroll-table-select");
       const selectedPath = selectElement ? selectElement.value : `systems/${game.system.id}/data/oneroll-default.json`;
@@ -575,8 +584,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onSelectWasteChart(event, target) {
-      event.preventDefault();
+  async _onSelectWasteChart(event, target) {
+      event.preventDefault(); 
       const die = target.dataset.die;
       const chart = target.dataset.chart;
 
@@ -591,17 +600,17 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onChangeTable(event, target) {
-      event.preventDefault();
+  async _onChangeTable(event, target) {
+      event.preventDefault(); 
       this.oneRollState.selectedTable = target.value;
   }
 
-  static async _onAcceptFate(event, target) {
-       event.preventDefault();
+  async _onAcceptFate(event, target) {
+       event.preventDefault(); 
        const bioText = this.oneRollState.biography.join("\n\n");
        this.oneRollState.finalBio = bioText;
        
-       await ReignCharactermancer._onFinishCharacter.call(this, event, target);
+       await this._onFinishCharacter(event, target);
   }
 
   async _handleItemDrop(event) {
@@ -613,8 +622,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       const item = await Item.implementation.fromDropData(data);
       if (!item) return;
 
-      // AUDIT FIX P1: Deep clone entire toObject() structure to prevent data stripping
-      const itemData = foundry.utils.deepClone(item.toObject());
+      const safeItem = new Item.implementation(item.toObject());
+      const itemData = safeItem.toObject();
       itemData._draftId = foundry.utils.randomID();
       
       let listName = "";
@@ -624,9 +633,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       else if (item.type === "discipline") listName = "esoterica";
       else if (item.type === "spell") {
           listName = "spells";
-          if ((Number(item.system.intensity) || 1) > 6) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.SpellsTooHigh"));
+          if ((Number(item.system.intensity) || 1) > 10) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.SpellsTooHigh") || "Intensity too high.");
       }
-      // AUDIT FIX P1: Add support for equipment drag and drop
       else if (item.type === "weapon") listName = "weapons";
       else if (item.type === "armor") listName = "armor";
       else if (item.type === "shield") listName = "shields";
@@ -634,6 +642,21 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       else { return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.InvalidItemType")); }
 
       if (listName === "problems" && this.draftCharacter.problems.length >= 3) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.MaxProblems"));
+
+      if (listName === "martialPaths" || listName === "esoterica") {
+          if (listName === "martialPaths" && this.draftCharacter.martialPaths.length >= 15) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.MaxTechniques") || "Maximum 15 Martial Techniques permitted.");
+          if (listName === "esoterica" && this.draftCharacter.esoterica.length >= 15) return ui.notifications.error(game.i18n.localize("REIGN.CM.Errors.MaxDisciplines") || "Maximum 15 Esoteric Disciplines permitted.");
+
+          const rank = parseInt(itemData.system.rank) || 1;
+          const pathName = itemData.system.path?.trim().toLowerCase();
+          if (pathName && rank > 1) {
+              for (let req = 1; req < rank; req++) {
+                  if (!this.draftCharacter[listName].some(i => i.system.path?.trim().toLowerCase() === pathName && parseInt(i.system.rank) === req)) {
+                      return ui.notifications.error(`Cannot add "${item.name}". You must purchase Rank ${req} of the "${itemData.system.path}" path first!`);
+                  }
+              }
+          }
+      }
 
       this.draftCharacter[listName].push(itemData);
       this._calculatePoints();
@@ -647,8 +670,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onRemoveItem(event, target) {
-      event.preventDefault();
+  async _onRemoveItem(event, target) {
+      event.preventDefault(); 
       const list = target.dataset.list;
       const draftId = target.dataset.id;
       if (!this.draftCharacter[list]) return;
@@ -657,7 +680,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onSelectPath(event, target) {
+  async _onSelectPath(event, target) {
+    event.preventDefault(); 
     this.creationPath = target.dataset.path;
     if (this.creationPath === "manual") {
       await this.actor.update({ "system.creationMode": false });
@@ -671,14 +695,14 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     }
   }
 
-  static async _onChangeBudget(event, target) {
-      event.preventDefault();
+  async _onChangeBudget(event, target) {
+      event.preventDefault(); 
       this.draftCharacter.pointsMax = parseInt(target.value) || 85;
       await this.render(true);
   }
 
-  static async _onAdjustStat(event, target) {
-    event.preventDefault();
+  async _onAdjustStat(event, target) {
+    event.preventDefault(); 
     const type = target.dataset.type, key = target.dataset.key, isIncrease = target.dataset.dir === "up";
     let currentVal;
     if (type === "skill") currentVal = this.draftCharacter.skills[key].value;
@@ -687,7 +711,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
     else if (type === "wealth") currentVal = this.draftCharacter.wealth;
     else currentVal = this.draftCharacter.attributes[key];
 
-    const maxVal = 5, minVal = type === "attribute" ? 1 : 0;
+    // V14 FIX: Lock Native Language to a minimum value of 1.
+    const maxVal = 5, minVal = type === "attribute" ? 1 : (key === "languageNative" ? 1 : 0);
 
     if (isIncrease) {
         if (currentVal >= maxVal) return; 
@@ -696,6 +721,7 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
         else if (type === "sorcery") this.draftCharacter.sorcery.value++;
         else if (type === "wealth") this.draftCharacter.wealth++;
         else this.draftCharacter.attributes[key]++;
+        
         this._calculatePoints();
         if (this.draftCharacter.pointsSpent > this.draftCharacter.pointsMax) {
             if (type === "skill") this.draftCharacter.skills[key].value--;
@@ -708,18 +734,38 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
         }
     } else {
         if (currentVal <= minVal) return;
-        if (type === "skill") this.draftCharacter.skills[key].value--;
-        else if (type === "customSkill") this.draftCharacter.customSkills[key].value--;
-        else if (type === "sorcery") this.draftCharacter.sorcery.value--;
+        
+        if (type === "skill") {
+            this.draftCharacter.skills[key].value--;
+            if (this.draftCharacter.skills[key].value === 0 && key !== "languageNative") {
+                this.draftCharacter.skills[key].expert = false;
+                this.draftCharacter.skills[key].master = false;
+            }
+        }
+        else if (type === "customSkill") {
+            this.draftCharacter.customSkills[key].value--;
+            if (this.draftCharacter.customSkills[key].value === 0) {
+                this.draftCharacter.customSkills[key].expert = false;
+                this.draftCharacter.customSkills[key].master = false;
+            }
+        }
+        else if (type === "sorcery") {
+            this.draftCharacter.sorcery.value--;
+            if (this.draftCharacter.sorcery.value === 0) {
+                this.draftCharacter.sorcery.expert = false;
+                this.draftCharacter.sorcery.master = false;
+            }
+        }
         else if (type === "wealth") this.draftCharacter.wealth--;
         else this.draftCharacter.attributes[key]--;
+        
         this._calculatePoints();
     }
     await this.render(true);
   }
 
-  static async _onToggleUpgrade(event, target) {
-      event.preventDefault();
+  async _onToggleUpgrade(event, target) {
+      event.preventDefault(); 
       const type = target.dataset.type, key = target.dataset.key, upgradeType = target.dataset.upgrade; 
       let skill;
       if (type === "customSkill") skill = this.draftCharacter.customSkills[key];
@@ -728,6 +774,10 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
 
       if (!skill) return;
       if (key === "languageNative") return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.NativeLanguageLocked"));
+
+      if (skill.value < 1) {
+          return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.UpgradeRequiresValue") || "You must have at least 1 regular die in a Skill to upgrade it to Expert or Master.");
+      }
 
       const prevExp = skill.expert, prevMas = skill.master;
       if (upgradeType === "expert") { skill.expert = !skill.expert; if (skill.expert) skill.master = false; } 
@@ -742,21 +792,20 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onAddCustomSkill(event, target) {
-      event.preventDefault();
+  async _onAddCustomSkill(event, target) {
+      event.preventDefault(); 
       const attr = target.dataset.attr; 
       const input = this.element.querySelector(`#new-skill-${attr}`);
       const name = input ? input.value.trim() : "";
       if (!name) return ui.notifications.warn(game.i18n.localize("REIGN.CM.Errors.EnterName"));
       const key = `custom_${foundry.utils.randomID(6)}`;
       this.draftCharacter.customSkills[key] = { name: name, value: 0, expert: false, master: false, attribute: attr };
-      // AUDIT FIX P2: Recalculate immediately so Points Remaining updates exactly when UI re-renders
       this._calculatePoints();
       await this.render(true);
   }
 
-  static async _onRemoveCustomSkill(event, target) {
-      event.preventDefault();
+  async _onRemoveCustomSkill(event, target) {
+      event.preventDefault(); 
       const key = target.dataset.key;
       if (!key || !this.draftCharacter.customSkills[key]) return;
       delete this.draftCharacter.customSkills[key];
@@ -764,8 +813,8 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
       await this.render(true);
   }
 
-  static async _onFinishCharacter(event, target) {
-      event.preventDefault();
+  async _onFinishCharacter(event, target) {
+      event.preventDefault(); 
       const updates = {
           "system.creationMode": false, 
           "system.wealth.value": this.draftCharacter.wealth,
@@ -807,14 +856,16 @@ export class ReignCharactermancer extends HandlebarsApplicationMixin(Application
           for (const item of this.draftCharacter[list]) {
               const cleanItem = foundry.utils.deepClone(item);
               delete cleanItem._draftId; 
-              delete cleanItem._id; // Ensure we don't accidentally try to overwrite an existing compendium ID
+              delete cleanItem._id; 
               itemsToCreate.push(cleanItem);
           }
       }
-      // AUDIT FIX: Pass { keepId: false } to ensure clean ID mapping and prevent orphaned effects
-      if (itemsToCreate.length > 0) await this.actor.createEmbeddedDocuments("Item", itemsToCreate, { keepId: false });
+      
+      if (itemsToCreate.length > 0) {
+          await this.actor.createEmbeddedDocuments("Item", itemsToCreate, { keepId: false });
+      }
 
-      ui.notifications.success(`${this.actor.name} ${game.i18n.localize("REIGN.CM.Errors.ForgedSuccess")}`);
+      ui.notifications.success(`${this.actor.name} ${game.i18n.localize("REIGN.CM.Errors.ForgedSuccess") || "has been successfully forged!"}`);
       this.actor.sheet.render(true);
       this.close();
   }

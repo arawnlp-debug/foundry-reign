@@ -1,5 +1,5 @@
 // scripts/system/models.js
-const { StringField, NumberField, BooleanField, SchemaField, ObjectField, HTMLField } = foundry.data.fields;
+const { StringField, NumberField, BooleanField, SchemaField, ObjectField, HTMLField, ArrayField } = foundry.data.fields;
 
 import { getEffectiveShieldLocations } from "../helpers/config.js";
 
@@ -25,10 +25,11 @@ const makeHealthLoc = () => new SchemaField({
     killing: new NumberField({ initial: 0, min: 0, integer: true })
 });
 
-// UPDATED: Aligned with the P1 Company Fix (value = permanent, damage = temporary)
 const makeQuality = () => new SchemaField({
     value: new NumberField({ initial: 0, min: 0, integer: true }),
     damage: new NumberField({ initial: 0, min: 0, integer: true }),
+    uses: new NumberField({ initial: 0, min: 0, integer: true }),
+    effective: new NumberField({ initial: 0, min: 0, integer: true }), // V14 FIX: Explicitly define derived fields
     notes: new StringField({ initial: "" })
 });
 
@@ -72,50 +73,82 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
             }),
             xp: new SchemaField({ value: new NumberField({ initial: 0, min: 0, integer: true }), spent: new NumberField({ initial: 0, min: 0, integer: true }) }),
             wealth: new SchemaField({ value: new NumberField({ initial: 0, min: 0, integer: true }) }),
+            
+            // ACTIVE EFFECT CATCH-BASINS
             modifiers: new SchemaField({
-                pool: new NumberField({ initial: 0, integer: true }),
-                armor: new NumberField({ initial: 0, integer: true }),
-                speed: new NumberField({ initial: 0, integer: true })
+                globalPool: new NumberField({ initial: 0, integer: true }),
+                globalSpeed: new NumberField({ initial: 0, integer: true }), 
+                bonusDamage: new NumberField({ initial: 0, integer: true }),
+                skills: new ObjectField({ initial: {} }), 
+                attributes: new ObjectField({ initial: {} }),
+                actionEconomy: new SchemaField({
+                    ignoreMultiPenaltySkills: new ArrayField(new StringField()),
+                    freeGobbleDice: new NumberField({ initial: 0, integer: true })
+                }),
+                healthMax: new SchemaField({
+                    head: new NumberField({ initial: 0, integer: true }),
+                    torso: new NumberField({ initial: 0, integer: true }),
+                    armL: new NumberField({ initial: 0, integer: true }),
+                    armR: new NumberField({ initial: 0, integer: true }),
+                    legL: new NumberField({ initial: 0, integer: true }),
+                    legR: new NumberField({ initial: 0, integer: true })
+                }),
+                naturalArmor: new SchemaField({
+                    head: new NumberField({ initial: 0, integer: true }),
+                    torso: new NumberField({ initial: 0, integer: true }),
+                    armL: new NumberField({ initial: 0, integer: true }),
+                    armR: new NumberField({ initial: 0, integer: true }),
+                    legL: new NumberField({ initial: 0, integer: true }),
+                    legR: new NumberField({ initial: 0, integer: true })
+                }),
+                hitRedirects: new SchemaField({
+                    head: new StringField({ initial: "" }),
+                    torso: new StringField({ initial: "" }),
+                    armL: new StringField({ initial: "" }),
+                    armR: new StringField({ initial: "" }),
+                    legL: new StringField({ initial: "" }),
+                    legR: new StringField({ initial: "" })
+                }),
+                combat: new SchemaField({
+                    bonusDamageShock: new NumberField({ initial: 0, integer: true }),
+                    bonusDamageKilling: new NumberField({ initial: 0, integer: true }),
+                    ignoreArmorTarget: new NumberField({ initial: 0, integer: true }),
+                    forceHitLocation: new NumberField({ initial: 0, integer: true }),
+                    shiftHitLocationUp: new NumberField({ initial: 0, integer: true }),
+                    combineGobbleDice: new BooleanField({ initial: false }),
+                    crossBlockActive: new BooleanField({ initial: false }),
+                    appendManeuvers: new ArrayField(new StringField())
+                }),
+                systemFlags: new SchemaField({
+                    ignoreHeadShock: new BooleanField({ initial: false }),
+                    ignoreTorsoPenalties: new BooleanField({ initial: false }),
+                    ignoreFatiguePenalties: new BooleanField({ initial: false }),
+                    ignoreHeavyArmorSwim: new BooleanField({ initial: false }),
+                    cannotUseTwoHanded: new BooleanField({ initial: false }),
+                    immuneToBeauty: new BooleanField({ initial: false })
+                })
             })
         };
     }
 
     /**
      * Dynamically calculates maximum health boxes per location,
-     * factoring in active Problems and Advantages.
-     * @returns {Object} Key-value pairs of hit locations and their max integer value.
+     * factoring in Active Effect Basin Modifiers (Thick Headed, etc.).
      */
     get effectiveMax() {
         const maxes = { head: 4, torso: 10, armL: 5, armR: 5, legL: 5, legR: 5 };
-        const traitHooks = this.parent?.items?.filter(i => ["advantage", "problem"].includes(i.type)) || [];
         
         for (const loc of Object.keys(maxes)) {
             let max = maxes[loc];
-            const locHookPath = `${loc}.max`;
-            
-            for (const item of traitHooks) {
-                // Supports both legacy "head.max:+1" and modern "[head.max] +1" syntax
-                const hookMatch = (item.system.hook || "").match(/\[(.+?)\]\s*([\+\-]\d+)/) || (item.system.hook || "").match(/^([a-zA-Z.]+):([\+\-]?\d+)$/);
-                if (hookMatch) {
-                    const hookTarget = hookMatch[1].trim();
-                    const hookVal = parseInt(hookMatch[2].replace(/\s/g, "")) || 0;
-                    if (hookTarget === locHookPath) max += hookVal;
-                }
-            }
+            max += (this.modifiers?.healthMax?.[loc] || 0);
             maxes[loc] = Math.max(1, max);
         }
         return maxes;
     }
 
-    /**
-     * Dynamically calculates the Armor Rating per hit location based on equipped items.
-     * Non-linear stacking: Only the highest AR applies per location per RAW.
-     * @returns {Object} Key-value pairs of hit locations and their AR integer value.
-     */
     get effectiveArmor() {
         const ar = { head: 0, torso: 0, armL: 0, armR: 0, legL: 0, legR: 0 };
         const equippedArmors = this.parent?.items?.filter(i => i.type === "armor" && i.system.equipped) || [];
-        const globalAr = this.modifiers?.armor || 0;
 
         for (const loc of Object.keys(ar)) {
             let itemAr = 0;
@@ -124,7 +157,7 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                     itemAr = Math.max(itemAr, armor.system.ar || 0);
                 }
             }
-            ar[loc] = itemAr + globalAr;
+            ar[loc] = itemAr + (this.modifiers?.naturalArmor?.[loc] || 0);
         }
         return ar;
     }
@@ -155,8 +188,8 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
         this.hasTowerShieldPenalty = !!equippedTower;
         
         if (equippedTower && !equippedTower.system.isStationary) {
-            if (!this.modifiers) this.modifiers = { speed: 0, pool: 0, armor: 0 };
-            this.modifiers.speed -= 2; 
+            if (!this.modifiers) this.modifiers = {};
+            this.modifiers.globalSpeed = (this.modifiers.globalSpeed || 0) - 2; 
         }
     }
 }
@@ -171,15 +204,29 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
             qualities: new SchemaField({
                 might: makeQuality(), treasure: makeQuality(), influence: makeQuality(),
                 territory: makeQuality(), sovereignty: makeQuality()
+            }),
+            pledges: new SchemaField({
+                bonus: new NumberField({ initial: 0, min: 0, integer: true }),
+                ed: new NumberField({ initial: 0, min: 0, integer: true }),
+                md: new NumberField({ initial: 0, min: 0, integer: true })
+            }),
+            modifiers: new SchemaField({
+                qualities: new ObjectField({ initial: {} }),
+                globalPool: new NumberField({ initial: 0, integer: true }),
+                preventAllDegradation: new BooleanField({ initial: false })
+            }),
+            // NEW: XP Support for Companies
+            xp: new SchemaField({ 
+                value: new NumberField({ initial: 0, min: 0, integer: true }), 
+                spent: new NumberField({ initial: 0, min: 0, integer: true }) 
             })
         };
     }
 
-    // UPDATED: Automatically calculate the effective rating for Company Rollers
     prepareDerivedData() {
         for (const key of Object.keys(this.qualities)) {
             const q = this.qualities[key];
-            q.effective = Math.max(0, q.value - (q.damage || 0));
+            q.effective = Math.max(0, q.value - (q.damage || 0) - (q.uses || 0));
         }
     }
 }
@@ -215,7 +262,7 @@ export class ReignWeaponData extends foundry.abstract.TypeDataModel {
             pool: new StringField({ initial: "" }),
             range: new StringField({ initial: "" }),
             equipped: new BooleanField({ initial: false }),
-            equippedTimestamp: new NumberField({ initial: 0 }), // Tracks equip order for hand conflict resolution
+            equippedTimestamp: new NumberField({ initial: 0 }), 
             qualities: new SchemaField({
                 armorPiercing: new NumberField({ initial: 0, integer: true }),
                 slow: new NumberField({ initial: 0, integer: true }),
@@ -224,7 +271,7 @@ export class ReignWeaponData extends foundry.abstract.TypeDataModel {
                 area: new NumberField({ initial: 0, integer: true })
             }),
             notes: new HTMLField({ initial: "" }),
-            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) // Ready for Charactermancer
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) 
         };
     }
 }
@@ -245,25 +292,19 @@ export class ReignArmorData extends foundry.abstract.TypeDataModel {
                 legR: new BooleanField({ initial: false })
             }),
             notes: new HTMLField({ initial: "" }),
-            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) // Ready for Charactermancer
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) 
         };
     }
 
-    /**
-     * Auto-derives physical weight class based on coverage and AR thickness per RAW classification.
-     */
-    prepareDerivedData() {
+    // V14 FIX: Transformed from mutating derived data to a native getter
+    get derivedWeight() {
         const locs = this.protectedLocations || {};
         const covered = Object.values(locs).filter(v => v).length;
         const coversAllLimbs = locs.armL && locs.armR && locs.legL && locs.legR;
         
-        if (coversAllLimbs && this.ar >= 2) {
-            this.derivedWeight = "heavy";
-        } else if (covered <= 2 && this.ar <= 2) {
-            this.derivedWeight = "light";
-        } else {
-            this.derivedWeight = "medium";
-        }
+        if (coversAllLimbs && this.ar >= 2) return "heavy";
+        if (covered <= 2 && this.ar <= 2) return "light";
+        return "medium";
     }
 }
 
@@ -277,7 +318,7 @@ export class ReignShieldData extends foundry.abstract.TypeDataModel {
             coverAR: new NumberField({ initial: 1, integer: true }), 
             equipped: new BooleanField({ initial: false }),
             equippedTimestamp: new NumberField({ initial: 0 }),
-            isStationary: new BooleanField({ initial: true }), // Required for Tower Shield cover mechanics
+            isStationary: new BooleanField({ initial: true }), 
             protectedLocations: new SchemaField({
                 head: new BooleanField({ initial: false }),
                 torso: new BooleanField({ initial: false }),
@@ -287,14 +328,10 @@ export class ReignShieldData extends foundry.abstract.TypeDataModel {
                 legR: new BooleanField({ initial: false })
             }),
             notes: new HTMLField({ initial: "" }),
-            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) // Ready for Charactermancer
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true })
         };
     }
 
-    /**
-     * Safely derives which locations are actually covered based on 
-     * shield size, limits, and stationary status for Tower Shields.
-     */
     get effectiveLocations() {
         if (this.shieldSize === "tower") {
             const locs = { head: false, torso: false, armL: false, armR: false, legL: false, legR: false };
@@ -318,14 +355,11 @@ export class ReignShieldData extends foundry.abstract.TypeDataModel {
     }
 }
 
-/**
- * Shared schema for Reign Magic (Martial Techniques & Esoteric Disciplines).
- */
 export class ReignMagicData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return {
             path: new StringField({ initial: "" }),
-            associatedSkill: new StringField({ initial: "" }), // For Charactermancer prerequisites
+            associatedSkill: new StringField({ initial: "" }),
             rank: new NumberField({ initial: 1, min: 1, max: 5, integer: true }),
             pool: new StringField({ initial: "" }), 
             page: new StringField({ initial: "" }),
@@ -338,7 +372,7 @@ export class ReignMagicData extends foundry.abstract.TypeDataModel {
 export class ReignSpellData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return {
-            school: new StringField({ initial: "" }), // For Charactermancer groupings
+            school: new StringField({ initial: "" }),
             intensity: new NumberField({ initial: 1, min: 1, max: 10, integer: true }),
             castingTime: new NumberField({ initial: 0, min: 0, integer: true }),
             castingStat: new StringField({ initial: "knowledge", choices: ["body", "coordination", "sense", "knowledge", "command", "charm"] }), 
@@ -355,7 +389,7 @@ export class ReignGearData extends foundry.abstract.TypeDataModel {
         return { 
             quantity: new NumberField({ initial: 1, min: 0, integer: true }), 
             notes: new HTMLField({ initial: "" }),
-            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) // Ready for Charactermancer
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) 
         };
     }
 }
@@ -364,8 +398,7 @@ export class ReignAdvantageData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return { 
             cost: new NumberField({ initial: 1, integer: true }), 
-            effect: new HTMLField({ initial: "" }), 
-            hook: new StringField({ initial: "" }) // Maintained for legacy compatibility; new architecture will prefer ActiveEffects
+            effect: new HTMLField({ initial: "" })
         };
     }
 }
@@ -374,8 +407,16 @@ export class ReignProblemData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return { 
             bonus: new NumberField({ initial: 1, integer: true }), 
-            effect: new HTMLField({ initial: "" }), 
-            hook: new StringField({ initial: "" }) // Maintained for legacy compatibility; new architecture will prefer ActiveEffects
+            effect: new HTMLField({ initial: "" })
+        };
+    }
+}
+
+export class ReignAssetData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        return { 
+            description: new HTMLField({ initial: "" }),
+            cost: new NumberField({ initial: 10, integer: true, min: 0 }) 
         };
     }
 }

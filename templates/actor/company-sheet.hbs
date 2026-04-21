@@ -14,98 +14,196 @@
     </div>
   </header>
 
+  <nav class="sheet-tabs tabs" style="display: flex; gap: 10px; border-bottom: 2px solid #ccc; margin-bottom: 10px;">
+    <a class="item {{tabs.details}}" data-action="changeTab" data-tab="details" style="font-weight: bold; cursor: pointer; padding: 5px 10px;">Company Details</a>
+    <a class="item {{tabs.effects}}" data-action="changeTab" data-tab="effects" style="font-weight: bold; cursor: pointer; padding: 5px 10px;">Active Effects</a>
+  </nav>
+
   <section class="sheet-body">
     
-    <div class="company-action-bar" style="margin-bottom: 20px; text-align: center;">
-      <button type="button" data-action="rollCompanyStat" style="background: #8b1f1f; color: #fff; border: 1px solid #4a0000; border-radius: 3px; padding: 8px 15px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-        <i class="fas fa-chess-knight"></i> {{localize 'REIGN.ExecuteCompanyAction'}}
-      </button>
-    </div>
+    {{!-- DETAILS TAB --}}
+    <div class="tab details {{tabs.details}}" data-tab="details">
+      <div class="company-action-bar" style="margin-bottom: 20px; display: flex; justify-content: center; align-items: flex-start; gap: 20px;">
+        <button type="button" data-action="rollCompanyStat" style="background: #8b1f1f; color: #fff; border: 1px solid #4a0000; border-radius: 3px; padding: 10px 20px; font-size: 1.2em; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); align-self: center;">
+          <i class="fas fa-chess-knight"></i> {{localize 'REIGN.ExecuteCompanyAction'}}
+        </button>
 
-    <div class="company-qualities-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
-      {{#each qualities as |q|}}
-      <div class="quality-block" style="border: 2px solid #333; border-radius: 4px; background: rgba(0,0,0,0.03); display: flex; flex-direction: column;">
-        <div class="quality-header flexrow" style="background: #333; color: white; padding: 5px 10px; border-bottom: 1px solid #111; justify-content: space-between; align-items: center;">
-          <h2 class="rollable" data-action="rollQuality" data-key="{{q.key}}" data-label="{{q.label}}" style="margin: 0; font-size: 0.9em; font-family: 'Cinzel', serif; border: none; text-shadow: none; cursor: pointer; color: white;" title="Roll {{q.label}} (Effective: {{q.effective}})">
-            <i class="fas fa-dice reign-mr10"></i>{{q.label}}
-          </h2>
-          <button type="button" class="improve-btn" data-action="rollImprovement" data-key="{{q.key}}" title="Permanently improve {{q.label}} (RAW Ch10)" style="background: transparent; color: white; border: none; padding: 0; cursor: pointer; line-height: 1;">
-            <i class="fas fa-arrow-up"></i>
-          </button>
+        <div class="xp-panel" style="background: rgba(0,0,0,0.05); border: 1px solid #ccc; border-radius: 4px; padding: 5px 15px; display: flex; flex-direction: column; align-items: center;">
+            <h4 style="margin: 0 0 5px 0; font-family: 'Cinzel', serif; color: #333; font-size: 0.9em; border-bottom: 1px dashed #999; padding-bottom: 2px;">Company XP</h4>
+            <div style="display: flex; gap: 15px;">
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Unspent Experience">
+                    <span style="font-size: 0.7em; font-weight: bold; color: #555;">UNSPENT</span>
+                    <input type="number" name="system.xp.value" value="{{system.xp.value}}" style="width: 45px; height: 24px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-weight: bold; color: #2e7d32;" min="0"/>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Total Spent XP">
+                    <span style="font-size: 0.7em; font-weight: bold; color: #555;">SPENT</span>
+                    <input type="number" name="system.xp.spent" value="{{system.xp.spent}}" style="width: 45px; height: 24px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-weight: bold;" min="0"/>
+                </div>
+            </div>
         </div>
-        
-        <div class="quality-stats" style="display: flex; flex-direction: column; align-items: center; padding: 15px 5px; flex: 1;">
+
+        <div class="war-chest-panel" style="background: rgba(0,0,0,0.05); border: 1px solid #ccc; border-radius: 4px; padding: 5px 15px; display: flex; flex-direction: column; align-items: center;">
+            <h4 style="margin: 0 0 5px 0; font-family: 'Cinzel', serif; color: #333; font-size: 0.9em; border-bottom: 1px dashed #999; padding-bottom: 2px;">War Chest (Pledged Dice)</h4>
+            <div style="display: flex; gap: 15px;">
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Pledged Standard Dice (+1d)">
+                    <span style="font-size: 0.7em; font-weight: bold; color: #555;">DICE</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <a data-action="adjustPledge" data-type="bonus" data-dir="down" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-minus-square"></i></a>
+                        <span style="font-weight: bold; min-width: 12px; text-align: center;">{{system.pledges.bonus}}</span>
+                        <a data-action="adjustPledge" data-type="bonus" data-dir="up" style="color: #2e7d32; cursor: pointer;"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Pledged Expert Dice (+ED)">
+                    <span style="font-size: 0.7em; font-weight: bold; color: #42a5f5;">ED</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <a data-action="adjustPledge" data-type="ed" data-dir="down" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-minus-square"></i></a>
+                        <span style="font-weight: bold; min-width: 12px; text-align: center; color: #42a5f5;">{{system.pledges.ed}}</span>
+                        <a data-action="adjustPledge" data-type="ed" data-dir="up" style="color: #2e7d32; cursor: pointer;"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Pledged Master Dice (+MD)">
+                    <span style="font-size: 0.7em; font-weight: bold; color: #ab47bc;">MD</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <a data-action="adjustPledge" data-type="md" data-dir="down" style="color: #8b1f1f; cursor: pointer;"><i class="fas fa-minus-square"></i></a>
+                        <span style="font-weight: bold; min-width: 12px; text-align: center; color: #ab47bc;">{{system.pledges.md}}</span>
+                        <a data-action="adjustPledge" data-type="md" data-dir="up" style="color: #2e7d32; cursor: pointer;"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="company-qualities-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+        {{#each qualities as |q|}}
+        <div class="quality-block" style="border: 2px solid #333; border-radius: 4px; background: rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+          <div class="quality-header flexrow" style="background: #333; color: white; padding: 5px 10px; border-bottom: 1px solid #111; justify-content: space-between; align-items: center;">
+            <h2 class="rollable" data-action="rollQuality" data-key="{{q.key}}" data-label="{{q.label}}" style="margin: 0; font-size: 0.9em; font-family: 'Cinzel', serif; border: none; text-shadow: none; cursor: pointer; color: white;" title="Roll {{q.label}} (Effective: {{q.effective}})">
+              <i class="fas fa-dice reign-mr10"></i>{{q.label}}
+            </h2>
+            <button type="button" class="improve-btn" data-action="rollImprovement" data-key="{{q.key}}" title="Permanently improve {{q.label}} via Action Roll (RAW Ch10)" style="background: transparent; color: white; border: none; padding: 0; cursor: pointer; line-height: 1;">
+              <i class="fas fa-arrow-up"></i>
+            </button>
+          </div>
           
-          <div style="font-size: 3.5em; font-weight: bold; line-height: 1; margin-bottom: 12px; color: {{#if q.damage}}#8b1f1f{{else}}#333{{/if}}; text-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
-              {{q.effective}}
-          </div>
+          <div class="quality-stats" style="display: flex; flex-direction: column; align-items: center; padding: 15px 5px; flex: 1;">
+            
+            <div style="font-size: 3.5em; font-weight: bold; line-height: 1; margin-bottom: 12px; color: {{#if q.damage}}#8b1f1f{{else}}#333{{/if}}; text-shadow: 1px 1px 0px rgba(0,0,0,0.1);">
+                {{q.effective}}
+            </div>
 
-          <div style="display: flex; flex-direction: row; justify-content: center; gap: 15px; width: 100%; border-top: 1px dashed #ccc; padding-top: 10px;">
-              <div style="display: flex; flex-direction: column; align-items: center;" title="Permanent Rating">
-                  <span style="font-size: 0.7em; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 2px;">Perm</span>
-                  <input type="number" name="system.qualities.{{q.key}}.value" value="{{q.value}}" style="height: 26px; width: 40px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-size: 1em; font-family: inherit;" min="0" max="6"/>
-              </div>
-              
-              <div style="display: flex; flex-direction: column; align-items: center;" title="Temporary Damage">
-                  <span style="font-size: 0.7em; color: #8b1f1f; text-transform: uppercase; font-weight: bold; margin-bottom: 2px;">Dmg</span>
-                  <div style="display: flex; align-items: center; gap: 5px; height: 26px;">
-                      <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="down" style="color: #2d5a27; cursor: pointer;" title="Recover Damage"><i class="fas fa-minus-circle fa-lg"></i></a>
-                      <span style="font-size: 1.2em; font-weight: bold; min-width: 14px; text-align: center;">{{q.damage}}</span>
-                      <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="up" style="color: #8b1f1f; cursor: pointer;" title="Take Damage"><i class="fas fa-plus-circle fa-lg"></i></a>
-                  </div>
-              </div>
-          </div>
+            <div style="display: flex; flex-direction: row; justify-content: center; gap: 15px; width: 100%; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Permanent Rating">
+                    <span style="font-size: 0.7em; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 2px;">Perm</span>
+                    <input type="number" name="system.qualities.{{q.key}}.value" value="{{q.value}}" style="height: 26px; width: 40px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-size: 1em; font-family: inherit;" min="0" max="6"/>
+                    <a data-action="upgradeQualityXP" data-key="{{q.key}}" title="Upgrade with XP (Cost: 10 x New Level)" style="font-size: 0.7em; color: #2e7d32; cursor: pointer; margin-top: 4px; font-weight: bold;"><i class="fas fa-arrow-circle-up"></i> BUY</a>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Temporary Damage">
+                    <span style="font-size: 0.7em; color: #8b1f1f; text-transform: uppercase; font-weight: bold; margin-bottom: 2px;">Dmg</span>
+                    <div style="display: flex; align-items: center; gap: 5px; height: 26px;">
+                        <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="down" style="color: #2d5a27; cursor: pointer;" title="Recover Damage"><i class="fas fa-minus-circle fa-lg"></i></a>
+                        <span style="font-size: 1.2em; font-weight: bold; min-width: 14px; text-align: center;">{{q.damage}}</span>
+                        <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="up" style="color: #8b1f1f; cursor: pointer;" title="Take Damage"><i class="fas fa-plus-circle fa-lg"></i></a>
+                    </div>
+                </div>
 
+                <div style="display: flex; flex-direction: column; align-items: center;" title="Uses this Month (Action Penalty / Splitting the Pot)">
+                    <span style="font-size: 0.7em; color: #d97706; text-transform: uppercase; font-weight: bold; margin-bottom: 2px;">Uses</span>
+                    <input type="number" name="system.qualities.{{q.key}}.uses" value="{{q.uses}}" style="height: 26px; width: 40px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-size: 1em; font-family: inherit; color: #d97706; font-weight: bold;" min="0"/>
+                </div>
+            </div>
+
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      
+      <div class="stat-grid" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="item-list-container">
+          <div class="list-header flexrow">
+            <h3 class="reign-col-3">{{localize 'REIGN.CompanyAssetsTitle'}}</h3>
+            <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+            <a class="item-create control-btn" data-action="itemCreate" data-type="asset" title="{{localize 'REIGN.AddAsset'}}"><i class="fas fa-plus"></i></a>
+          </div>
+          {{#each assets as |item|}}
+          <div class="item-row flexrow" data-item-id="{{item.id}}">
+            <span class="reign-col-3 reign-bold">{{item.name}}</span>
+            <span class="reign-col-1">{{item.system.cost}}</span>
+            <div class="item-controls">
+              <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+              <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+              <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+          <div class="reign-mt10" style="padding: 10px;">
+            <label class="reign-bold">{{localize 'REIGN.GeneralAssetsDescription'}}</label>
+            <textarea name="system.biography.assets" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.assets}}</textarea>
+          </div>
+        </div>
+
+        <div class="item-list-container">
+          <div class="list-header flexrow">
+            <h3 class="reign-col-3">{{localize 'REIGN.CompanyLiabilitiesTitle'}}</h3>
+            <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+            <a class="item-create control-btn" data-action="itemCreate" data-type="problem" title="{{localize 'REIGN.AddLiability'}}"><i class="fas fa-plus"></i></a>
+          </div>
+          {{#each problems as |item|}}
+          <div class="item-row flexrow" data-item-id="{{item.id}}">
+            <span class="reign-col-3 reign-bold">{{item.name}}</span>
+            <span class="reign-col-1">{{item.system.bonus}}</span>
+            <div class="item-controls">
+              <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+              <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+              <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+          <div class="reign-mt10" style="padding: 10px;">
+            <label class="reign-bold">{{localize 'REIGN.GeneralLiabilitiesNotes'}}</label>
+            <textarea name="system.biography.description" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.description}}</textarea>
+          </div>
         </div>
       </div>
-      {{/each}}
     </div>
-    
-    <div class="stat-grid" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-      <div class="item-list-container">
-        <div class="list-header flexrow">
-          <h3 class="reign-col-3">{{localize 'REIGN.CompanyAssetsTitle'}}</h3>
-          <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
-          <a class="item-create control-btn" data-action="itemCreate" data-type="advantage" title="{{localize 'REIGN.AddAsset'}}"><i class="fas fa-plus"></i></a>
-        </div>
-        {{#each assets as |item|}}
-        <div class="item-row flexrow" data-item-id="{{item.id}}">
-          <span class="reign-col-3 reign-bold">{{item.name}}</span>
-          <span class="reign-col-1">{{item.system.cost}}</span>
-          <div class="item-controls">
-            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
-            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
-            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
-          </div>
-        </div>
-        {{/each}}
-        <div class="reign-mt10" style="padding: 10px;">
-          <label class="reign-bold">{{localize 'REIGN.GeneralAssetsDescription'}}</label>
-          <textarea name="system.biography.assets" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.assets}}</textarea>
-        </div>
-      </div>
 
-      <div class="item-list-container">
-        <div class="list-header flexrow">
-          <h3 class="reign-col-3">{{localize 'REIGN.CompanyLiabilitiesTitle'}}</h3>
-          <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
-          <a class="item-create control-btn" data-action="itemCreate" data-type="problem" title="{{localize 'REIGN.AddLiability'}}"><i class="fas fa-plus"></i></a>
-        </div>
-        {{#each problems as |item|}}
-        <div class="item-row flexrow" data-item-id="{{item.id}}">
-          <span class="reign-col-3 reign-bold">{{item.name}}</span>
-          <span class="reign-col-1">{{item.system.bonus}}</span>
-          <div class="item-controls">
-            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
-            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
-            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+    {{!-- EFFECTS TAB --}}
+    <div class="tab effects {{tabs.effects}}" data-tab="effects">
+      <div class="reign-effects-tab-container">
+        <h3 class="reign-effects-header" style="display: flex; justify-content: space-between; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-bottom: 10px;">
+          <span>Active Company Effects (Assets / Problems)</span>
+          <a data-action="createEffect" title="Add Effect" class="reign-create-effect-btn" style="cursor: pointer; color: #8b1f1f;">
+            <i class="fas fa-plus"></i> Create Effect
+          </a>
+        </h3>
+
+        {{#if effects.length}}
+          <div class="effects-list" style="display: flex; flex-direction: column; gap: 8px;">
+            {{#each effects as |effect|}}
+              <div class="effect-item reign-flex-between reign-effect-box" data-effect-id="{{effect.id}}" style="display: flex; justify-content: space-between; padding: 10px; border: 1px solid #ccc; background: rgba(0,0,0,0.02); border-radius: 4px; align-items: center;">
+                <div class="reign-flex-center-gap15 {{#if effect.disabled}}reign-opacity-50{{/if}}" style="display: flex; align-items: center; gap: 15px;">
+                  <img src="{{effect.img}}" class="reign-effect-img" style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;"/>
+                  <div class="reign-flex-col" style="display: flex; flex-direction: column;">
+                    <span class="reign-effect-name" style="font-weight: bold;">{{effect.name}}</span>
+                    {{#if effect.disabled}}
+                      <span class="reign-effect-disabled-text" style="font-size: 0.8em; color: #888;">(Disabled)</span>
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="effect-controls reign-flex-gap12" style="display: flex; gap: 12px;">
+                  <a data-action="toggleEffect" title="{{#if effect.disabled}}Enable{{else}}Disable{{/if}}" class="reign-cursor-pointer reign-text-lg" style="cursor: pointer; color: #333;">
+                    <i class="fas {{#if effect.disabled}}fa-check-circle{{else}}fa-times-circle{{/if}}"></i>
+                  </a>
+                  <a data-action="editEffect" title="Quick Builder" class="reign-cursor-pointer reign-text-lg" style="cursor: pointer; color: #333;"><i class="fas fa-edit"></i></a>
+                  <a data-action="advancedEditEffect" title="Advanced Editor" class="reign-cursor-pointer reign-text-lg" style="cursor: pointer; color: #333;"><i class="fas fa-cogs"></i></a>
+                  <a data-action="deleteEffect" title="Delete" class="reign-cursor-pointer reign-text-lg reign-color-blood" style="cursor: pointer; color: #8b1f1f;"><i class="fas fa-trash"></i></a>
+                </div>
+              </div>
+            {{/each}}
           </div>
-        </div>
-        {{/each}}
-        <div class="reign-mt10" style="padding: 10px;">
-          <label class="reign-bold">{{localize 'REIGN.GeneralLiabilitiesNotes'}}</label>
-          <textarea name="system.biography.description" class="reign-company-assets-text" style="height: 80px; border: 1px solid #ccc; background: #fff; margin-top: 5px;">{{system.biography.description}}</textarea>
-        </div>
+        {{else}}
+          <p class="reign-empty-effects-msg" style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">No Active Effects modifying this Company's Qualities.</p>
+        {{/if}}
       </div>
     </div>
 

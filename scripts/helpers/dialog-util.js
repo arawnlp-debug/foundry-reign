@@ -2,135 +2,133 @@
 const { DialogV2 } = foundry.applications.api;
 
 /**
- * Standard render handler to attach close events to the header cross and prevent form submission.
- * This ensures consistency across all Reign dialogs in V13.
+ * Standard render handler fallback.
  */
-export function reignRender(event, html) {
-    let element = event?.target?.element ?? (event instanceof HTMLElement ? event : (event[0] || null));
+export function reignRender(element) {
     if (!element) return;
-
-    // Ensure the dialog window has the correct class for system styling
-    element.classList.add("reign-dialog-window");
-
-    const closeBtn = element.querySelector('.header-control[data-action="close"]');
-    if (closeBtn) closeBtn.addEventListener("pointerdown", () => { 
-        element.classList.remove("reign-dialog-window"); 
-        element.style.display = "none"; 
-    });
-
-    const f = element.querySelector("form");
-    if (f) f.addEventListener("submit", e => e.preventDefault());
-    
-    return element;
+    if (element instanceof HTMLElement) element.classList.add("reign-dialog-window");
 }
 
 /**
- * Standard cleanup function for closing dialogs cleanly in V13.
- * Prevents "ghost" elements from remaining in the DOM if the application isn't fully destroyed.
+ * Standard cleanup function for closing dialogs safely.
  */
 export function reignClose(d) {
-    if (d.element) { 
-        d.element.classList.remove("reign-dialog-window"); 
-        d.element.style.display = "none"; 
+    if (d && typeof d.close === 'function') {
+        if (d.element) d.element.style.display = "none";
+        d.close({ animate: false });
     }
-    if (typeof d.close === 'function') d.close({ animate: false });
 }
 
 /**
- * Wraps DialogV2.wait for standard Reign dialogs.
- * AUDIT FIX B7: Uses try/finally to ensure reignClose always executes, 
- * even if the provided callback throws an error.
+ * Immediately hides and destroys a dialog to prevent the "ghost window" artifact
+ * where the parchment background lingers for a frame after content is cleared.
+ * @param {ApplicationV2} app - The dialog application instance.
+ */
+function killDialog(app) {
+    if (app?.element) app.element.style.display = "none";
+    app.close({ animate: false });
+}
+
+/**
+ * V14 COMPLIANCE FIX: Manual Promise Wrapper for DialogV2.
+ * Bypasses the rigid configuration validation of DialogV2.wait() by instantiating natively 
+ * and utilizing standard ApplicationV2 Event Listeners for DOM injection.
  */
 export async function reignDialog(title, content, callback, options = {}) {
-    const { defaultLabel = "Confirm", width = 400, rejectClose = false, buttons = null, render = reignRender } = options;
+    const { defaultLabel = "Confirm", width = 400, buttons = null, render = null } = options;
     
-    const defaultButtons = [{
-        action: "confirm", 
-        label: defaultLabel, 
-        default: true,
-        callback: (e, b, d) => {
-            try {
-                return callback ? callback(e, b, d) : true;
-            } finally {
-                reignClose(d);
-            }
+    return new Promise((resolve) => {
+        const finalButtons = buttons ? [...buttons] : [{
+            action: "confirm", 
+            label: defaultLabel, 
+            default: true,
+            callback: (e, b, d) => callback ? callback(e, b, d) : true
+        }];
+
+        let app = null;
+
+        for (let btn of finalButtons) {
+            const originalCallback = btn.callback;
+            btn.callback = (e, b, d) => {
+                try {
+                    const result = originalCallback ? originalCallback(e, b, d) : true;
+                    resolve(result);
+                    // GHOST FIX: Hide the element immediately so the parchment
+                    // background never flashes after the form content is cleared.
+                    killDialog(d);
+                    return false; // Prevent default V14 animated close
+                } catch(err) {
+                    console.error("Reign Dialog | Button callback failed:", err);
+                    resolve(null);
+                }
+            };
         }
-    }];
 
-    return await DialogV2.wait({
-        classes: ["reign-dialog-window"],
-        window: { title, resizable: true },
-        position: { width, height: "auto" },
-        content,
-        rejectClose,
-        render: render,
-        buttons: buttons || defaultButtons
+        app = new DialogV2({
+            classes: ["reign-dialog-window"],
+            window: { title, resizable: true },
+            position: { width, height: "auto" },
+            content,
+            buttons: finalButtons 
+        });
+
+        // GHOST FIX: Override close to always hide-then-destroy instantly.
+        // This catches the 'X' header button, Escape key, and any other close path.
+        const originalClose = app.close.bind(app);
+        app.close = (closeOptions = {}) => {
+            closeOptions.animate = false;
+            if (app.element) app.element.style.display = "none";
+            return originalClose(closeOptions);
+        };
+
+        app.addEventListener("close", () => resolve(null));
+
+        app.addEventListener("render", (event) => {
+            const el = app.element;
+            if (!el) return;
+            
+            const f = el.querySelector("form");
+            if (f) f.addEventListener("submit", ev => ev.preventDefault());
+            
+            if (typeof render === "function") {
+                render({ target: { element: el } }, el);
+            }
+            
+            // Recalculate height AFTER custom HTML injects, and enable scroll-y 
+            // so tall forms never clip the bottom Confirm buttons.
+            requestAnimationFrame(() => {
+                if (app.rendered) {
+                    app.setPosition({ height: "auto" });
+                    const dialogContent = el.querySelector('.dialog-content');
+                    if (dialogContent) {
+                        dialogContent.style.overflowY = 'auto';
+                        dialogContent.style.maxHeight = '75vh'; 
+                    }
+                }
+            });
+        });
+
+        app.render({ force: true });
     });
 }
 
-/**
- * Standard Yes/No confirmation dialog.
- * AUDIT FIX B7: Standardized with try/finally to prevent ghosting.
- */
 export async function reignConfirm(title, content) {
-    return await DialogV2.wait({
+    return await DialogV2.confirm({
         classes: ["reign-dialog-window"],
         window: { title },
+        position: { height: "auto" },
         content: `<div class="reign-dialog-form">${content}</div>`,
-        rejectClose: false,
-        render: reignRender,
-        buttons: [
-            { 
-                action: "yes", 
-                label: "Yes", 
-                default: true, 
-                callback: (e, b, d) => { 
-                    try {
-                        return true; 
-                    } finally {
-                        reignClose(d); 
-                    }
-                } 
-            },
-            { 
-                action: "no", 
-                label: "No", 
-                callback: (e, b, d) => { 
-                    try {
-                        return false; 
-                    } finally {
-                        reignClose(d); 
-                    }
-                } 
-            }
-        ]
+        rejectClose: false
     });
 }
 
-/**
- * Standard Alert dialog (OK button only).
- * AUDIT FIX B7: Standardized with try/finally for safe DOM cleanup.
- */
 export async function reignAlert(title, content) {
-    return await DialogV2.wait({
+    return await DialogV2.prompt({
         classes: ["reign-dialog-window"],
         window: { title },
+        position: { height: "auto" },
         content: `<div class="reign-dialog-form">${content}</div>`,
         rejectClose: false,
-        render: reignRender,
-        buttons: [
-            { 
-                action: "ok", 
-                label: "OK", 
-                default: true, 
-                callback: (e, b, d) => { 
-                    try {
-                        return true; 
-                    } finally {
-                        reignClose(d); 
-                    }
-                } 
-            }
-        ]
+        ok: { label: "OK", callback: () => true }
     });
 }

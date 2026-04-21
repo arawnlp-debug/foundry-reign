@@ -14,7 +14,8 @@
       "discipline": "Esoteric Discipline",
       "gear": "Gear",
       "advantage": "Advantage",
-      "problem": "Problem"
+      "problem": "Problem",
+      "asset": "Company Asset"
     }
   },
   "REIGN": {
@@ -151,6 +152,12 @@
     "EffectsNoneOnItem": "No active effects attached to this item.",
     "Equipped": "Equipped?",
     "ErrorActionFailed": "Action failed",
+    "ErrorBothSpecialDice": "Reign rules forbid using both Expert and Master dice simultaneously.",
+    "ErrorDead": "Character is dead and cannot act.",
+    "ErrorHeavyArmorSwim": "Swimming in Heavy Armor is impossible. You sink immediately.",
+    "ErrorMassiveWeapon": "Cannot wield {weapon}. Massive weapons require a Body attribute of 4 or higher.",
+    "ErrorProneDodge": "You cannot Dodge while Prone. The action auto-fails.",
+    "ErrorUnconscious": "Character is unconscious and cannot act.",
     "EsotericDisciplines": "Esoteric Disciplines",
     "ExecuteCompanyAction": "Execute Company Action",
     "ExpertDie": "Expert Die",

@@ -99,7 +99,7 @@ export async function migrateWorld() {
 
 /**
  * Route Actor data to specific migration functions based on type.
- * AUDIT FIX B19: Passes raw source data to migration functions to avoid 
+ * Passes raw source data to migration functions to avoid 
  * conflicts with V13 TypeDataModel getters.
  */
 function migrateActorData(actor) {
@@ -154,9 +154,23 @@ function migrateCharacter(source) {
   }
 
   const modifiers = system.modifiers || {};
-  if (!Number.isInteger(modifiers.pool)) updateData["system.modifiers.pool"] = Number(modifiers.pool) || 0;
-  if (!Number.isInteger(modifiers.armor)) updateData["system.modifiers.armor"] = Number(modifiers.armor) || 0;
-  if (!Number.isInteger(modifiers.speed)) updateData["system.modifiers.speed"] = Number(modifiers.speed) || 0;
+  
+  // P0 MIGRATION FIX: Route legacy v1.x fields to v2.0.0 paths to prevent data loss
+  if ("pool" in modifiers) {
+      updateData["system.modifiers.globalPool"] = Number(modifiers.pool) || 0;
+      updateData["system.modifiers.-=pool"] = null;
+  }
+  if ("speed" in modifiers) {
+      updateData["system.modifiers.globalSpeed"] = Number(modifiers.speed) || 0;
+      updateData["system.modifiers.-=speed"] = null;
+  }
+  if ("armor" in modifiers) {
+      const legacyArmor = Number(modifiers.armor) || 0;
+      ["head", "torso", "armL", "armR", "legL", "legR"].forEach(loc => {
+          updateData[`system.modifiers.naturalArmor.${loc}`] = legacyArmor;
+      });
+      updateData["system.modifiers.-=armor"] = null;
+  }
 
   const esoterica = system.esoterica || {};
   if (esoterica.attunement === null || esoterica.attunement === undefined) {
@@ -178,10 +192,7 @@ function migrateCharacter(source) {
     if (!Number.isInteger(current.shock)) updateData[`system.health.${loc}.shock`] = Number(current.shock) || 0;
     if (!Number.isInteger(current.killing)) updateData[`system.health.${loc}.killing`] = Number(current.killing) || 0;
     
-    // AUDIT FIX B19: Explicitly delete deprecated schema fields ONLY if they exist in source.
-    // Since 'max' and 'armor' are now TypeDataModel getters, checking 'actor.system' would 
-    // result in 'current.max !== undefined' being true for every location, leading to 
-    // constant unnecessary database writes. Using source data prevents this.
+    // Explicitly delete deprecated schema fields ONLY if they exist in source.
     if ("max" in current) updateData[`system.health.${loc}.-=max`] = null;
     if ("armor" in current) updateData[`system.health.${loc}.-=armor`] = null;
   }
@@ -197,13 +208,23 @@ function migrateCompany(source) {
   for (const key of ["might", "treasure", "influence", "territory", "sovereignty"]) {
     const quality = qualities[key] || {};
 
-    // PHASE 3.2 FIX: Clamp permanent quality to max 5 per RAW
-    const perm = Math.min(5, Number(quality.permanent) || 0);
-    if (quality.permanent !== perm) updateData[`system.qualities.${key}.permanent`] = perm;
+    const val = Math.min(5, Number(quality.value ?? quality.permanent) || 0);
+    if (quality.value !== val) updateData[`system.qualities.${key}.value`] = val;
+    
+    if (!Number.isInteger(quality.damage)) updateData[`system.qualities.${key}.damage`] = Number(quality.damage) || 0;
+    if (!Number.isInteger(quality.uses)) updateData[`system.qualities.${key}.uses`] = 0;
+    
+    // Clean up old fields if they exist
+    if ("permanent" in quality) updateData[`system.qualities.${key}.-=permanent`] = null;
+    if ("current" in quality) updateData[`system.qualities.${key}.-=current`] = null;
 
-    if (!Number.isInteger(quality.current)) updateData[`system.qualities.${key}.current`] = Number(quality.current) || 0;
     if (quality.notes === null || quality.notes === undefined) updateData[`system.qualities.${key}.notes`] = "";
   }
+
+  const pledges = system.pledges || {};
+  if (!Number.isInteger(pledges.bonus)) updateData["system.pledges.bonus"] = 0;
+  if (!Number.isInteger(pledges.ed)) updateData["system.pledges.ed"] = 0;
+  if (!Number.isInteger(pledges.md)) updateData["system.pledges.md"] = 0;
 
   const biography = system.biography || {};
   if (biography.description === null || biography.description === undefined) updateData["system.biography.description"] = "";

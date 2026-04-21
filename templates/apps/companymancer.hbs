@@ -1,0 +1,103 @@
+<div class="companymancer-wrapper cp-wrapper">
+    
+    {{#if (not pathSelected)}}
+        <div class="cp-landing">
+            <div class="cp-landing-box">
+                <h1 class="cp-landing-title">Forge Your Faction</h1>
+                <p class="cp-landing-subtitle">How did your Company rise to power?</p>
+                
+                <div class="cp-path-cards">
+                    <div class="cp-card">
+                        <h3 class="cp-color-blood">One-Roll Kingdom</h3>
+                        <p class="cp-card-desc">Roll a fistful of dice to instantly generate a company's history, assets, and qualities.</p>
+                        
+                        <div style="margin-top:15px; text-align: left;">
+                            <label style="font-weight: bold; color: #555;">Exact Dice to Roll:</label>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                                <input type="number" id="company-dice-input" value="15" min="3" style="width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; font-family: inherit;">
+                                <div style="font-size: 0.8em; color: #666; line-height: 1.3;">
+                                    <strong>3-4:</strong> Local gang &nbsp;|&nbsp; <strong>5-6:</strong> Local guild<br>
+                                    <strong>7-9:</strong> Regional &nbsp;|&nbsp; <strong>10-12:</strong> Tiny nation<br>
+                                    <strong>13-15:</strong> Small country &nbsp;|&nbsp; <strong>16-19:</strong> Big country<br>
+                                    <strong>20+:</strong> Empire
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" data-action="selectPath" data-path="oneroll" class="cp-btn-oneroll" style="margin-top:15px;">Roll the Bones</button>
+                    </div>
+                    
+                    <div class="cp-card">
+                        <h3 class="cp-color-muted">Manual Entry</h3>
+                        <p class="cp-card-desc">Skip the generator and fill out a blank Faction Sheet manually.</p>
+                        <button type="button" data-action="selectPath" data-path="manual" class="cp-btn-manual" style="margin-top: 15px;">Skip Wizard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{else}}
+
+        {{#if (eq pathSelected 'oneroll')}}
+            <div class="cp-oneroll-workspace">
+                <div class="cp-results-left">
+                    <h2 style="font-family: 'Cinzel', serif; color: #8b1f1f; border-bottom: 2px solid #ccc; margin-top: 0;">Company History & Sets</h2>
+                    {{#if draftCompany.history.length}}
+                        <ul style="list-style-type: square; padding-left: 20px;">
+                        {{#each draftCompany.history}}
+                            <li style="margin-bottom: 6px;">{{this}}</li>
+                        {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted">No sets rolled. A truly chaotic genesis.</p>
+                    {{/if}}
+
+                    <h2 style="font-family: 'Cinzel', serif; color: #8b1f1f; border-bottom: 2px solid #ccc; margin-top: 20px;">Singular Events (Waste Dice)</h2>
+                    {{#if draftCompany.waste.length}}
+                        <ul style="list-style-type: square; padding-left: 20px;">
+                        {{#each draftCompany.waste}}
+                            <li style="margin-bottom: 6px;">{{this}}</li>
+                        {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted">No singular events triggered.</p>
+                    {{/if}}
+                </div>
+
+                <div class="cp-summary-right">
+                    <h3 class="cp-summary-title">Final Qualities</h3>
+                    <ul class="cp-summary-list" style="margin-bottom: 15px;">
+                        <li class="cp-summary-row"><strong>Might:</strong> <span class="cp-summary-val">{{draftCompany.qualities.might}}</span></li>
+                        <li class="cp-summary-row"><strong>Treasure:</strong> <span class="cp-summary-val">{{draftCompany.qualities.treasure}}</span></li>
+                        <li class="cp-summary-row"><strong>Influence:</strong> <span class="cp-summary-val">{{draftCompany.qualities.influence}}</span></li>
+                        <li class="cp-summary-row"><strong>Territory:</strong> <span class="cp-summary-val">{{draftCompany.qualities.territory}}</span></li>
+                        <li class="cp-summary-row" style="border-bottom: none;"><strong>Sovereignty:</strong> <span class="cp-summary-val">{{draftCompany.qualities.sovereignty}}</span></li>
+                    </ul>
+
+                    <h3 class="cp-summary-title">Assets Generated</h3>
+                    {{#if draftCompany.items.length}}
+                        <ul style="padding-left: 15px; font-size: 0.9em; color: #333; max-height: 150px; overflow-y: auto;">
+                            {{#each draftCompany.items}}
+                                <li style="margin-bottom: 5px;"><strong>{{this.name}}</strong></li>
+                            {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted" style="text-align: center;">No assets gained.</p>
+                    {{/if}}
+
+                    <button type="button" data-action="finishCompany" class="cp-btn-forge" style="margin-top: 15px;">
+                        <i class="fas fa-hammer"></i> Finalize Company
+                    </button>
+                    
+                    <div style="margin-top: 15px; text-align: center; background: rgba(0,0,0,0.03); border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                        <label style="font-weight: bold; color: #555; font-size: 0.9em;">Dice to Roll:</label>
+                        <input type="number" id="company-dice-reroll-input" value="{{companyDice}}" min="3" style="width: 50px; text-align: center; margin-left: 5px;">
+                        <button type="button" data-action="rollTheBones" class="cp-btn-manual" style="margin-top: 10px; width: 100%;">
+                            <i class="fas fa-dice"></i> Re-roll Faction
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {{/if}}
+
+    {{/if}}
+</div>

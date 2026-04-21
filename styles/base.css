@@ -140,3 +140,13 @@
     box-shadow: var(--reign-shadow-inset); 
     color: var(--reign-text-dark); 
 }
+
+/* -----------------------------------------
+    V14 BLANK GHOST WINDOW FIX
+----------------------------------------- */
+/* Instantly hide ApplicationV2 windows on close to prevent the blank background fade-out bug */
+.app-v2.closing {
+    display: none !important;
+    opacity: 0 !important;
+    animation: none !important;
+    transition: none !important;

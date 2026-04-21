@@ -1,19 +1,21 @@
-// scripts/reign.mjs
-
 /**
  * Reign: Realities of Lords and Leaders
- * Targeted for Foundry VTT v13+ (ApplicationV2)
+ * Targeted for Foundry VTT v14+ (ApplicationV2)
  */
 
 import { ReignActorSheet } from "./sheets/character-sheet.js";
 import { ReignCompanySheet } from "./sheets/company-sheet.js";
 import { ReignThreatSheet } from "./sheets/threat-sheet.js";
 import { ReignItemSheet } from "./sheets/item-sheet.js";
-import { generateOREChatHTML } from "./helpers/chat.js";
-import { applyDamageToTarget, applyCompanyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget, consumeGobbleDie } from "./combat/damage.js";
+import { generateOREChatHTML, applyItemEffectsToTargets, assignGobbleSet, postOREChat } from "./helpers/chat.js";
+import { applyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget } from "./combat/damage.js";
+import { applyCompanyDamageToTarget } from "./combat/company-damage.js";
+import { consumeGobbleDie } from "./combat/defense.js";
 import { ReignCombat } from "./combat/ore-combat.js";
 import { parseORE, calculateInitiative } from "./helpers/ore-engine.js";
 import { ReignCharactermancer } from "./generators/charactermancer.js";
+import { ReignCompanymancer } from "./generators/companymancer.js";
+import { FactionDashboard } from "./apps/faction-dashboard.js";
 
 import { migrateWorld } from "./system/migration.js";
 import * as models from "./system/models.js";
@@ -24,7 +26,7 @@ Hooks.once("init", async () => {
   CONFIG.Combat.documentClass = ReignCombat;
   CONFIG.Combat.initiative = { formula: "0", decimals: 2 };
 
-  // AUDIT FIX P4: Corrected to point to valid {value, max} objects for token bars
+  // AUDIT FIX: Point to valid {value} objects for token bars based on the v1.5.1 schema
   CONFIG.Actor.trackableAttributes = {
       character: {
           bar: [], // Characters use modular locations, not a single max pool
@@ -35,8 +37,8 @@ Hooks.once("init", async () => {
           value: ["threatLevel"]
       },
       company: {
-          bar: [], // Companies use current/permanent, not value/max
-          value: ["qualities.might.current", "qualities.treasure.current", "qualities.influence.current", "qualities.territory.current", "qualities.sovereignty.current"]
+          bar: [], // Companies use value/damage, effective is computed
+          value: ["qualities.might.value", "qualities.treasure.value", "qualities.influence.value", "qualities.territory.value", "qualities.sovereignty.value"]
       }
   };
 
@@ -68,15 +70,23 @@ Hooks.once("init", async () => {
   const reignStatuses = [
     { id: "dead", name: "REIGN.StatusDead", img: "icons/svg/skull.svg", _id: "dead000000000000" },
     { id: "unconscious", name: "REIGN.StatusUnconscious", img: "icons/svg/unconscious.svg", _id: "unconscious00000" },
-    { id: "dazed", name: "REIGN.StatusDazed", img: "icons/svg/daze.svg", _id: "dazed00000000000", changes: [{ key: "system.modifiers.pool", mode: 2, value: "-1" }] },
+    // V14 Catch-Basin Fix: Point to the new globalPool modifier
+    { id: "dazed", name: "REIGN.StatusDazed", img: "icons/svg/daze.svg", _id: "dazed00000000000", changes: [{ key: "system.modifiers.globalPool", mode: 2, value: "-1" }] },
     { id: "maimed", name: "REIGN.StatusMaimed", img: "icons/svg/sword.svg", _id: "maimed0000000000" },
     { id: "prone", name: "REIGN.StatusProne", img: "icons/svg/falling.svg", _id: "prone00000000000" },
     { id: "bleeding", name: "REIGN.StatusBleeding", img: "icons/svg/blood.svg", _id: "bleeding00000000" },
     { id: "blind", name: "REIGN.StatusBlind", img: "icons/svg/blind.svg", _id: "blind00000000000" } 
   ];
 
-  CONFIG.statusEffects = CONFIG.statusEffects.filter(e => !["dead", "unconscious"].includes(e.id));
-  CONFIG.statusEffects.push(...reignStatuses);
+  // V14 COMPLIANCE: Proxy-safe array mutation
+  for (const status of reignStatuses) {
+    const existing = CONFIG.statusEffects.find(e => e.id === status.id);
+    if (existing) {
+      Object.assign(existing, status);
+    } else {
+      CONFIG.statusEffects.push(status);
+    }
+  }
 
   CONFIG.Actor.dataModels = {
     character: models.ReignCharacterData,
@@ -93,11 +103,26 @@ Hooks.once("init", async () => {
     spell: models.ReignSpellData,
     gear: models.ReignGearData,
     advantage: models.ReignAdvantageData,
-    problem: models.ReignProblemData
+    problem: models.ReignProblemData,
+    asset: models.ReignAssetData
   };
 
   const templatePaths = [
-    "systems/reign/templates/parts/damage-silhouette.hbs"
+    // Existing global partials
+    "systems/reign/templates/parts/damage-silhouette.hbs",
+    
+    // NEW: V14 Character Sheet Partials
+    "systems/reign/templates/actor/parts/header.hbs",
+    "systems/reign/templates/actor/parts/tabs.hbs",
+    "systems/reign/templates/actor/parts/tab-stats.hbs",
+    "systems/reign/templates/actor/parts/tab-combat.hbs",
+    "systems/reign/templates/actor/parts/combat-health.hbs",
+    "systems/reign/templates/actor/parts/combat-moves.hbs",
+    "systems/reign/templates/actor/parts/combat-inventory.hbs",
+    "systems/reign/templates/actor/parts/tab-esoterica.hbs",
+    "systems/reign/templates/actor/parts/tab-biography.hbs",
+    "systems/reign/templates/actor/parts/tab-effects.hbs",
+    "systems/reign/templates/apps/companymancer.hbs"
   ];
   await foundry.applications.handlebars.loadTemplates(templatePaths);
 
@@ -121,7 +146,10 @@ Hooks.once("init", async () => {
     applyHealingToTarget,
     applyFirstAidToTarget,
     consumeGobbleDie,
-    ReignCharactermancer
+    applyItemEffectsToTargets, // Phase 4: Export Magic Transfer Macro
+    assignGobbleSet, // Export P1 Gobble Logic
+    ReignCharactermancer,
+    ReignCompanymancer
   };
 });
 
@@ -143,25 +171,40 @@ Hooks.once("ready", async () => {
 });
 
 /**
- * Intercept Character Creation
- * Triggers the Charactermancer if a new, blank character is created.
+ * Intercept Actor Creation (Before it saves to the database)
+ * Automatically links unique entities (Characters & Companies) to their tokens
+ * so their names and stats perfectly sync on the canvas.
+ */
+Hooks.on("preCreateActor", (actor, data, options, userId) => {
+  if (actor.type === "character" || actor.type === "company") {
+    actor.updateSource({
+      "prototypeToken.actorLink": true,
+      "prototypeToken.name": data.name // Forces the token to inherit the chosen name
+    });
+  }
+});
+
+/**
+ * Intercept Character and Company Creation
+ * Triggers the Charactermancer or Companymancer if a new, blank entity is created.
  */
 Hooks.on("createActor", async (actor, options, userId) => {
-  // Only the user who clicked "Create" should launch the app
   if (game.user.id !== userId) return;
-  if (actor.type !== "character") return;
-  
-  // Don't trigger if the actor is being duplicated, imported from a compendium, etc.
   if (actor.flags?.core?.sourceId || options.fromCompendium) return;
 
-  // Launch the Charactermancer and lock the underlying sheet
-  await actor.update({ "system.creationMode": true });
-  
-  // Close the default sheet that Foundry auto-opens, then open our Wizard
-  setTimeout(() => {
-    actor.sheet.close();
-    new ReignCharactermancer({ document: actor }).render(true);
-  }, 50); 
+  if (actor.type === "character") {
+    await actor.update({ "system.creationMode": true });
+    setTimeout(() => {
+      actor.sheet.close();
+      new ReignCharactermancer({ document: actor }).render(true);
+    }, 50); 
+  } else if (actor.type === "company") {
+    await actor.update({ "system.creationMode": true });
+    setTimeout(() => {
+      actor.sheet.close();
+      new ReignCompanymancer({ document: actor }).render(true);
+    }, 50); 
+  }
 });
 
 Hooks.on("preUpdateActor", (actor, changes, options, userId) => {
@@ -268,7 +311,6 @@ Hooks.on("updateItem", async (item, changes, options, userId) => {
   }
 });
 
-// P2 FIX: Delete Orphaned Effects when Item is deleted
 Hooks.on("deleteItem", async (item, options, userId) => {
     if (game.user.id !== userId) return;
     if (!item.parent || item.parent.type !== "character") return;
@@ -276,7 +318,7 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     const actor = item.parent;
     const itemUuid = item.uuid;
     
-    // Find any effects on the actor that originated from this deleted item
+    // DEBUG: Clean up legacy hard-copied effects when deleting the origin item
     const effectIdsToTrash = actor.effects.filter(e => e.origin === itemUuid).map(e => e.id);
     
     if (effectIdsToTrash.length > 0) {
@@ -323,6 +365,20 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
   const msgId = message.id || element.dataset?.messageId;
   const msg = game.messages.get(msgId);
 
+  // --- P1 RAW FIX: Gobble Set Selection ---
+  element.querySelectorAll(".select-gobble-set-btn").forEach(btn => {
+      btn.addEventListener("click", async (event) => {
+          event.preventDefault();
+          if (!msg) return;
+          if (!msg.isAuthor && !game.user.isGM) return ui.notifications.warn("Only the GM or the rolling player can select the Gobble Dice.");
+
+          const width = parseInt(btn.dataset.width);
+          const height = parseInt(btn.dataset.height);
+
+          await assignGobbleSet(msg, width, height);
+      });
+  });
+
   element.querySelectorAll(".set-init-btn").forEach(btn => {
       btn.addEventListener("click", async (event) => {
           event.preventDefault();
@@ -340,7 +396,6 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
                   const isDefense = flags.isDefense || /dodge|parry|counterspell/i.test(reignFlags.label);
                   const range = reignFlags.itemData?.type === "weapon" ? (reignFlags.itemData.system.range || "0") : "0";
                   
-                  // AUDIT FIX B12 / ISSUE 7: Use shared ORE initiative engine calculator
                   const newInit = calculateInitiative([{width, height}], isDefense, flags.isAttack, flags.isMinion, range);
 
                   await combatant.update({ initiative: newInit });
@@ -354,7 +409,6 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       });
   });
 
-  // AUDIT FIX UX: Use exported consumeGobbleDie to sync defense cards
   element.querySelectorAll(".gobble-dmg-btn").forEach(btn => {
     btn.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -377,7 +431,10 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const isMassive = btn.dataset.massive === "true";
       const areaDice = parseInt(btn.dataset.areaDice) || 0;
       
-      await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice);
+      // ✅ Retrieve serialized advanced mods directly from the chat card flags
+      const advancedMods = msg.flags?.reign?.rollFlags?.advancedMods || {};
+
+      await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice, null, advancedMods);
     });
   });
 
@@ -388,7 +445,10 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const type = btn.dataset.type;
       const ap = parseInt(btn.dataset.ap) || 0;
       
-      await applyScatteredDamageToTarget(faces, type, ap);
+      // ✅ Retrieve serialized advanced mods directly from the chat card flags
+      const advancedMods = msg.flags?.reign?.rollFlags?.advancedMods || {};
+
+      await applyScatteredDamageToTarget(faces, type, ap, null, advancedMods);
     });
   });
 
@@ -396,9 +456,11 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     btn.addEventListener("click", async (event) => {
       event.preventDefault();
       const width = parseInt(btn.dataset.width);
-      const qualityKey = btn.dataset.quality;
       
-      await applyCompanyDamageToTarget(width, qualityKey);
+      const qualityKey = String(btn.dataset.quality || "").toLowerCase(); 
+      const attackerActor = msg?.speaker?.actor ? game.actors.get(msg.speaker.actor) : null;
+
+      await applyCompanyDamageToTarget(width, qualityKey, attackerActor);
     });
   });
 
@@ -422,6 +484,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     });
   });
 
+  // PHASE 4: MAGIC TRANSFER TRIGGER
   element.querySelectorAll(".apply-condition-btn").forEach(btn => {
     btn.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -434,40 +497,8 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const itemUuid = btn.dataset.itemUuid;
       if (!itemUuid) return ui.notifications.error("Could not locate original spell UUID.");
       
-      const item = await fromUuid(itemUuid);
-      if (!item || !item.effects || item.effects.size === 0) return ui.notifications.warn("No active effects found on this spell.");
-
-      const targets = game.user.targets;
-      if (targets.size === 0) return ui.notifications.warn("You must target at least one token to apply the condition.");
-
-      const effectData = [];
-      for (let e of item.effects) {
-          let data = e.toObject();
-          
-          delete data._id;       
-          data.disabled = false; 
-          data.transfer = false; 
-          data.origin = itemUuid;
-          
-          if (data.name) {
-              const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              data.statuses = Array.from(new Set([...(data.statuses || []), slug]));
-          }
-          
-          effectData.push(data);
-      }
-
-      for (let t of targets) {
-          if (!t.actor) continue;
-
-          const existingEffectIds = t.actor.effects.filter(e => e.origin === itemUuid).map(e => e.id);
-          if (existingEffectIds.length > 0) {
-              await t.actor.deleteEmbeddedDocuments("ActiveEffect", existingEffectIds);
-          }
-
-          await t.actor.createEmbeddedDocuments("ActiveEffect", effectData);
-      }
-      ui.notifications.info(`Applied ${item.name} effect(s) to ${targets.size} targeted token(s).`);
+      // Execute the unified transfer function mapped from chat.js
+      await applyItemEffectsToTargets(itemUuid);
     });
   });
 });
@@ -508,7 +539,8 @@ Hooks.on("preCreateItem", (item, data, options, userId) => {
   }
 });
 
-const resetCombatRound = async (combat) => {
+Hooks.on("combatStart", async (combat, context) => {
+  if (!game.user.isGM) return;
   if (!game.combats.has(combat.id)) return;
   await combat.setFlag("reign", "phase", "declaration");
   const updates = combat.combatants.map(c => ({
@@ -518,18 +550,6 @@ const resetCombatRound = async (combat) => {
   }));
   if (updates.length > 0) {
     await combat.updateEmbeddedDocuments("Combatant", updates);
-  }
-};
-
-Hooks.on("combatStart", async (combat, context) => {
-  if (game.user.isGM) await resetCombatRound(combat);
-});
-
-Hooks.on("updateCombat", async (combat, changes, context, userId) => {
-  if (!game.user.isGM) return;
-  if (!game.combats.has(combat.id)) return;
-  if (foundry.utils.hasProperty(changes, "round") && combat.started) {
-      await resetCombatRound(combat);
   }
 });
 
@@ -547,60 +567,68 @@ Hooks.on("updateCombatant", async (combatant, changes, context, userId) => {
   }
 });
 
-// Robust jQuery-based UI Injection for the Combat Tracker
-Hooks.on("renderCombatTracker", (app, html, data) => {
+Hooks.on("renderCombatTracker", (app, html, context, options) => {
   const combat = game.combat;
   if (!combat) return;
 
-  const $html = html instanceof jQuery ? html : $(html[0] || html);
+  const element = html instanceof HTMLElement ? html : html[0];
+  if (!element) return;
+
   const phase = combat.getFlag("reign", "phase") || "declaration";
   const isDeclaring = phase === "declaration";
   const isGM = game.user.isGM;
 
-  // REFACTORED PHASE TOGGLE BUTTONS
+  // CLEANED UI: Styles removed, classes added
   const btnHtml = `
-    <div class="reign-combat-phase-control flexrow" style="margin: 4px 8px; text-align: center; border-radius: 4px; display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 2px;">
-      <button class="phase-btn cm-declare-btn" data-phase="declaration" style="flex:1; border: 1px solid transparent; border-radius: 3px 0 0 3px; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: #aaa; transition: all 0.2s ease;">
+    <div class="reign-combat-phase-control">
+      <button class="reign-phase-btn cm-declare-btn" data-phase="declaration">
         <i class="fas fa-eye"></i> Declare
       </button>
-      <button class="phase-btn cm-resolve-btn" data-phase="resolution" style="flex:1; border: 1px solid transparent; border-radius: 0 3px 3px 0; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: #aaa; transition: all 0.2s ease;">
+      <button class="reign-phase-btn cm-resolve-btn" data-phase="resolution">
         <i class="fas fa-bolt"></i> Resolve
       </button>
     </div>
   `;
 
-  if (!$html.find(".reign-combat-phase-control").length) {
-      $html.find(".combat-tracker-header").after(btnHtml);
+  let header = element.querySelector(".combat-tracker-header");
+  if (header && !element.querySelector(".reign-combat-phase-control")) {
+      header.insertAdjacentHTML('afterend', btnHtml);
+      const phaseBtns = element.querySelectorAll(".reign-phase-btn");
       if (isGM) {
-          $html.find(".phase-btn").off("click").on("click", async (ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
-              const activeCombat = game.combats.get(combat.id);
-              if (!activeCombat) return;
-              const newPhase = ev.currentTarget.dataset.phase;
-              if (phase !== newPhase) {
-                  await activeCombat.setFlag("reign", "phase", newPhase);
-                  activeCombat.setupTurns();
-              }
+          phaseBtns.forEach(btn => {
+              btn.addEventListener("click", async (ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  const activeCombat = game.combats.get(combat.id);
+                  if (!activeCombat) return;
+                  const newPhase = ev.currentTarget.dataset.phase;
+                  if (phase !== newPhase) {
+                      await activeCombat.setFlag("reign", "phase", newPhase);
+                      activeCombat.setupTurns();
+                  }
+              });
           });
       } else {
-          $html.find(".phase-btn").css("cursor", "default").prop("disabled", true);
+          phaseBtns.forEach(btn => {
+              btn.style.cursor = "default";
+              btn.disabled = true;
+          });
       }
   }
 
-  // FORCE DYNAMIC HIGHLIGHTS (Bypasses CSS caching)
-  const $decBtn = $html.find(".cm-declare-btn");
-  const $resBtn = $html.find(".cm-resolve-btn");
+  const decBtn = element.querySelector(".cm-declare-btn");
+  const resBtn = element.querySelector(".cm-resolve-btn");
 
-  if (isDeclaring) {
-      $decBtn.css({"background": "#2e7d32", "color": "white", "border": "1px solid #4caf50", "box-shadow": "0 0 8px #4caf50", "font-weight": "bold", "text-shadow": "1px 1px 2px black"});
-      $resBtn.css({"background": "transparent", "color": "#888", "border": "1px solid transparent", "box-shadow": "none", "font-weight": "normal"});
-  } else {
-      $resBtn.css({"background": "#b71c1c", "color": "white", "border": "1px solid #e53935", "box-shadow": "0 0 8px #e53935", "font-weight": "bold", "text-shadow": "1px 1px 2px black"});
-      $decBtn.css({"background": "transparent", "color": "#888", "border": "1px solid transparent", "box-shadow": "none", "font-weight": "normal"});
+  if (decBtn && resBtn) {
+      if (isDeclaring) {
+          decBtn.classList.add("active-declare");
+          resBtn.classList.remove("active-resolve");
+      } else {
+          resBtn.classList.add("active-resolve");
+          decBtn.classList.remove("active-declare");
+      }
   }
 
-  // PENALTY BANNER
   const currentTurn = combat.combatant;
   if (currentTurn && currentTurn.actor) {
       const statuses = Array.from(currentTurn.actor.statuses);
@@ -609,50 +637,56 @@ Hooks.on("renderCombatTracker", (app, html, data) => {
       if (statuses.includes("prone")) penalties.push("PRONE (−1d)");
       if (statuses.includes("blind")) penalties.push("BLIND (−2d Ranged / Diff 4 Melee)");
       
-      if (penalties.length > 0 && !$html.find(".reign-wound-banner").length) {
+      const phaseControl = element.querySelector(".reign-combat-phase-control");
+      if (penalties.length > 0 && !element.querySelector(".reign-wound-banner") && phaseControl) {
+          // CLEANED UI: Styles removed, classes added
           const bannerHtml = `
-            <div class="reign-wound-banner" style="background: #ffcdd2; color: #b71c1c; border: 1px solid #d32f2f; text-align: center; padding: 6px; margin: 4px 8px 8px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.2); flex: 0 0 auto;">
+            <div class="reign-wound-banner">
                 <i class="fas fa-exclamation-triangle"></i> Current Turn Penalties:<br>
-                <span style="font-weight: normal; font-size: 0.95em; color: #8b0000;">${penalties.join(" | ")}</span>
+                <span>${penalties.join(" | ")}</span>
             </div>
           `;
-          $html.find(".reign-combat-phase-control").after(bannerHtml);
+          phaseControl.insertAdjacentHTML('afterend', bannerHtml);
       }
   }
 
-  // INITIATIVE LIST
-  const combatants = $html.find(".combatant");
-  combatants.each((idx, li) => {
+  const combatants = element.querySelectorAll(".combatant");
+  combatants.forEach(li => {
       const cid = li.dataset.combatantId;
       const c = combat.combatants.get(cid);
       if (!c) return;
 
       const isDeclared = c.getFlag("reign", "declared") || false;
-      const $initDiv = $(li).find(".token-initiative");
+      const initDiv = li.querySelector(".token-initiative");
       
-      if ($initDiv.length) {
-          $initDiv.find(".roll").hide();
+      if (initDiv) {
+          const rollBtn = initDiv.querySelector(".roll");
+          if (rollBtn) rollBtn.style.display = "none";
 
           if (isDeclaring) {
-              $initDiv.html(`
-                <a class="combatant-control reign-declare-btn" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}" style="color: ${isDeclared ? '#4caf50' : '#888'}; font-size: 1.4em; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; transition: color 0.2s ease;">
+              // CLEANED UI: Styles removed, classes added
+              initDiv.innerHTML = `
+                <a class="combatant-control reign-declare-btn ${isDeclared ? 'confirmed' : 'pending'}" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}">
                     <i class="${isDeclared ? 'fas fa-check-circle' : 'far fa-circle'}"></i>
                 </a>
-              `);
+              `;
               
-              $initDiv.find(".reign-declare-btn").off("click").on("click", async (ev) => {
-                  ev.preventDefault();
-                  ev.stopPropagation();
-                  const activeCombat = game.combats.get(combat.id);
-                  if (!activeCombat) return;
-                  const activeCombatant = activeCombat.combatants.get(cid);
-                  if (!activeCombatant) return;
-                  if (!isGM && !activeCombatant.isOwner) return ui.notifications.warn("You do not have permission to confirm this combatant's declaration.");
-                  await activeCombatant.setFlag("reign", "declared", !isDeclared);
-              });
+              const declareBtn = initDiv.querySelector(".reign-declare-btn");
+              if (declareBtn) {
+                  declareBtn.addEventListener("click", async (ev) => {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      const activeCombat = game.combats.get(combat.id);
+                      if (!activeCombat) return;
+                      const activeCombatant = activeCombat.combatants.get(cid);
+                      if (!activeCombatant) return;
+                      if (!isGM && !activeCombatant.isOwner) return ui.notifications.warn("You do not have permission to confirm this combatant's declaration.");
+                      await activeCombatant.setFlag("reign", "declared", !isDeclared);
+                  });
+              }
           } else {
-              if (!Number.isNumeric(c.initiative) && !$initDiv.find(".reign-waiting").length) {
-                  $initDiv.append(`<span class="reign-waiting" style="color: #999; font-weight: bold; font-size: 1.2em;" title="Waiting for action...">--</span>`);
+              if (!Number.isNumeric(c.initiative) && !initDiv.querySelector(".reign-waiting")) {
+                  initDiv.insertAdjacentHTML('beforeend', `<span class="reign-waiting" title="Waiting for action...">--</span>`);
               }
           }
       }
@@ -671,4 +705,32 @@ Hooks.once("diceSoNiceReady", (dice3d) => {
         texture: "marble",
         material: "metal"
     }, "preferred"); 
+});
+
+Hooks.on("renderActorDirectory", (app, html, data) => {
+  if (!game.user.isGM) return;
+
+  const element = html instanceof HTMLElement ? html : html[0];
+  if (!element) return;
+
+  const dashboardBtn = `
+    <div class="header-actions action-buttons flexrow" style="margin-bottom: 5px;">
+        <button class="reign-faction-dashboard-btn" style="background: #8b1f1f; color: white; border: 1px solid #4a0e0e;">
+            <i class="fas fa-globe"></i> Faction Dashboard
+        </button>
+    </div>
+  `;
+
+  const header = element.querySelector(".directory-header");
+  if (header && !element.querySelector(".reign-faction-dashboard-btn")) {
+      header.insertAdjacentHTML('beforeend', dashboardBtn);
+      
+      const btn = element.querySelector(".reign-faction-dashboard-btn");
+      if (btn) {
+          btn.addEventListener("click", (ev) => {
+              ev.preventDefault();
+              new FactionDashboard().render(true);
+          });
+      }
+  }
 });

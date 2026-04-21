@@ -15,6 +15,19 @@
   --reign-color-emerald: #2d5a27;      /* Success, Healing, Gobble Dice */
   --reign-color-brass: #d97706;        /* Sovereignty, Armor, Shields */
   
+  /* Semantic Colors for V14 Chat/Dialogs */
+  --reign-red: #8b1f1f;
+  --reign-green: #2d5a27;
+  --reign-blue: #0277bd;
+  --reign-orange: #d97706;
+  --reign-critical: #c62828;
+  --reign-purple: #ab47bc;
+  
+  /* Status Banners */
+  --reign-dark-red: #4a0000;
+  --reign-navy: #1a237e;
+  --reign-burnt-orange: #e65100;
+  
   --reign-text-dark: #111111;          /* Standard reading text */
   --reign-text-muted: #555555;         /* Helper text and hints */
   --reign-text-light: #ffffff;         /* Text on iron/blood backgrounds */
@@ -49,6 +62,17 @@
   --reign-color-blood-dark: #cc4444;
   --reign-color-emerald: #3a8a33;
   --reign-color-brass: #e68a00;
+  
+  --reign-red: #ff5252;
+  --reign-green: #4caf50;
+  --reign-blue: #42a5f5;
+  --reign-orange: #ffb300;
+  --reign-critical: #ff1744;
+  --reign-purple: #ce93d8;
+  
+  --reign-dark-red: #660000;
+  --reign-navy: #3949ab;
+  --reign-burnt-orange: #f57c00;
   
   --reign-text-dark: #e0e0e0;
   --reign-text-muted: #999999;
