@@ -1,0 +1,387 @@
+<div class="charactermancer-wrapper cm-wrapper">
+    
+    {{#if (not pathSelected)}}
+    <div class="cm-landing">
+        <div class="cm-landing-box">
+            <h1 class="cm-landing-title">{{localize 'REIGN.CM.ForgeLegendTitle'}}</h1>
+            <p class="cm-landing-subtitle">{{localize 'REIGN.CM.ForgeLegendSubtitle'}}</p>
+            
+            <div class="cm-path-cards">
+                <div class="cm-card">
+                    <h3 class="cm-color-blood">{{localize 'REIGN.CM.OneRollTitle'}}</h3>
+                    <p class="cm-card-desc">{{localize 'REIGN.CM.OneRollDesc'}}</p>
+                    <button type="button" data-action="selectPath" data-path="oneroll" class="cm-btn-oneroll">{{localize 'REIGN.CM.RollBonesBtn'}}</button>
+                </div>
+                
+                <div class="cm-card">
+                    <h3 class="cm-color-dark">{{localize 'REIGN.CM.PointBuyTitle'}}</h3>
+                    <p class="cm-card-desc">{{localize 'REIGN.CM.PointBuyDesc'}}</p>
+                    <button type="button" data-action="selectPath" data-path="pointbuy" class="cm-btn-pointbuy">{{localize 'REIGN.CM.SpendPointsBtn'}}</button>
+                </div>
+
+                <div class="cm-card">
+                    <h3 class="cm-color-muted">{{localize 'REIGN.CM.ManualEntryTitle'}}</h3>
+                    <p class="cm-card-desc">{{localize 'REIGN.CM.ManualEntryDesc'}}</p>
+                    <button type="button" data-action="selectPath" data-path="manual" class="cm-btn-manual">{{localize 'REIGN.CM.SkipWizardBtn'}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if isOneRoll}}
+    <div class="cm-oneroll-workspace">
+        <div class="cm-oneroll-header">
+            <h2>{{localize 'REIGN.CM.BonesFateTitle'}}</h2>
+            <p>{{localize 'REIGN.CM.BonesFateDesc'}}</p>
+        </div>
+
+        {{#if (not oneRoll.rolled)}}
+        <div class="cm-flex-center-gap30">
+            
+            <div class="cm-origin-box">
+                <label for="oneroll-table-select">
+                    <i class="fas fa-globe"></i> {{localize 'REIGN.CM.SelectOrigin'}}
+                </label>
+                <select id="oneroll-table-select" data-action="changeTable" class="cm-select-origin">
+                    {{selectOptions availableTables selected=selectedTable}}
+                </select>
+            </div>
+
+            <button type="button" data-action="rollTheBones" class="cm-btn-roll">
+                <i class="fas fa-dice"></i> {{localize 'REIGN.CM.RollBonesBtn'}}
+            </button>
+        </div>
+        {{else}}
+        <div class="oneroll-results">
+            <div class="cm-results-left">
+                
+                <h3 class="cm-section-title">{{localize 'REIGN.CM.LifePaths'}}</h3>
+                {{#if oneRollDisplay.sets.length}}
+                    <ul class="cm-list-unstyled">
+                    {{#each oneRollDisplay.sets}}
+                        <li class="cm-set-item">
+                            <div class="cm-set-label"><i class="fas fa-check"></i> {{this.label}}</div>
+                            {{#if this.details.length}}
+                                <div class="cm-set-details">
+                                    {{#each this.details}}
+                                    <div class="cm-set-detail-row">{{{this}}}</div>
+                                    {{/each}}
+                                </div>
+                            {{/if}}
+                        </li>
+                    {{/each}}
+                    </ul>
+                {{else}}
+                    <p class="cm-empty-msg">{{localize 'REIGN.CM.NoSets'}}</p>
+                {{/if}}
+
+                <h3 class="cm-section-title">{{localize 'REIGN.CM.WasteDiceTitle'}}</h3>
+                {{#if oneRollDisplay.waste.length}}
+                    <p class="cm-waste-desc">{{localize 'REIGN.CM.WasteDiceDesc'}}</p>
+                    <div class="cm-flex-col-gap12">
+                    {{#each oneRollDisplay.waste}}
+                        <div class="cm-waste-box">
+                            <div class="cm-waste-title">
+                                <span><i class="fas fa-dice-d10"></i> {{localize 'REIGN.CM.DieResult'}}: {{this.die}}</span>
+                            </div>
+                            <div class="cm-waste-btn-group">
+                                {{#each this.options}}
+                                <button type="button" data-action="selectWasteChart" data-die="{{../die}}" data-chart="{{this.chart}}" 
+                                    class="cm-waste-btn {{#if this.active}}active{{/if}}"
+                                    title="{{localize 'REIGN.CM.Chart'}} {{this.chart}}">
+                                    {{this.chart}}
+                                </button>
+                                {{/each}}
+                            </div>
+                            <div class="cm-waste-label">
+                                {{#each this.options}}{{#if this.active}}{{this.label}}{{/if}}{{/each}}
+                            </div>
+                            {{#if this.details}}
+                            <div class="cm-waste-details">
+                                {{this.details}}
+                            </div>
+                            {{/if}}
+                        </div>
+                    {{/each}}
+                    </div>
+                {{else}}
+                    <p class="cm-empty-msg">{{localize 'REIGN.CM.NoWaste'}}</p>
+                {{/if}}
+            </div>
+
+            <div class="cm-flex-col-gap15">
+                <div class="cm-biography">
+                    <h3 class="cm-section-title cm-color-blood cm-text-uppercase">{{localize 'REIGN.CM.TaleOfYears'}}</h3>
+                    {{#if oneRoll.biography.length}}
+                        {{#each oneRoll.biography}}
+                            <p class="cm-bio-entry">{{{this}}}</p>
+                        {{/each}}
+                    {{else}}
+                        <p class="cm-bio-prompt">{{localize 'REIGN.CM.BiographyPrompt'}}</p>
+                    {{/if}}
+                </div>
+
+                <div class="cm-action-bar">
+                    <button type="button" data-action="rollTheBones" class="cm-btn-reroll">
+                        <i class="fas fa-undo"></i> {{localize 'REIGN.CM.Reroll'}}
+                    </button>
+                    <button type="button" data-action="acceptFate" class="cm-btn-accept">
+                        <i class="fas fa-check-circle"></i> {{localize 'REIGN.CM.AcceptFate'}}
+                    </button>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+    {{/if}}
+
+    {{#if isPointBuy}}
+    <div class="cm-workspace">
+        
+        <div class="cm-editor">
+            
+            <div class="cm-editor-header">
+                <h2>{{localize 'REIGN.CM.AttributesAndSkills'}}</h2>
+                <div class="cm-editor-costs">{{localize 'REIGN.CM.Costs.Att'}}: {{costs.attribute}}pts | {{localize 'REIGN.CM.Costs.Skill'}}: {{costs.skill}}pt | {{localize 'REIGN.CM.Costs.ED'}}: {{costs.ed}}pt | {{localize 'REIGN.CM.Costs.MD'}}: {{costs.md}}pts</div>
+            </div>
+
+            <div class="cm-stats-grid">
+                {{#each skillGroups as |skills attrKey|}}
+                <div class="cm-stat-group">
+                    
+                    <div class="cm-stat-header">
+                        <span>{{attrKey}}</span>
+                        <div class="cm-adjust-group">
+                            <a data-action="adjustStat" data-type="attribute" data-key="{{attrKey}}" data-dir="down" class="cm-color-red-muted cm-cursor-pointer cm-icon-btn"><i class="fas fa-minus-circle"></i></a>
+                            <span class="cm-attr-val">{{lookup ../draft.attributes attrKey}}</span>
+                            <a data-action="adjustStat" data-type="attribute" data-key="{{attrKey}}" data-dir="up" class="cm-color-white-muted cm-cursor-pointer cm-icon-btn"><i class="fas fa-plus-circle"></i></a>
+                        </div>
+                    </div>
+
+                    {{#each skills}}
+                    <div class="cm-skill-row {{#if this.isCustom}}is-custom{{/if}}">
+                        
+                        <div class="cm-skill-name-group">
+                            {{#if this.isCustom}}
+                            <a data-action="removeCustomSkill" data-key="{{this.key}}" class="cm-color-danger cm-cursor-pointer" title="{{localize 'REIGN.CM.RemoveCustomSkill'}}"><i class="fas fa-trash"></i></a>
+                            {{/if}}
+                            <span class="cm-skill-name {{#if this.isCustom}}is-custom{{/if}}">{{this.label}}</span>
+                        </div>
+                        
+                        <div class="cm-skill-controls">
+                            <div class="cm-upgrade-group">
+                                <button type="button" data-action="toggleUpgrade" data-type="{{this.type}}" data-key="{{this.key}}" data-upgrade="expert" title="{{localize 'REIGN.CM.ExpertDie'}} (+{{../costs.ed}} pt)"
+                                    class="cm-upgrade-btn {{#if this.isNative}}disabled{{/if}} {{#if this.data.expert}}expert-active{{/if}}">
+                                    ED
+                                </button>
+                                <button type="button" data-action="toggleUpgrade" data-type="{{this.type}}" data-key="{{this.key}}" data-upgrade="master" title="{{localize 'REIGN.CM.MasterDie'}} (+{{../costs.md}} pts)"
+                                    class="cm-upgrade-btn {{#if this.isNative}}disabled{{/if}} {{#if this.data.master}}master-active{{/if}}">
+                                    MD
+                                </button>
+                            </div>
+
+                            <div class="cm-skill-adjust">
+                                <a data-action="adjustStat" data-type="{{this.type}}" data-key="{{this.key}}" data-dir="down" class="cm-color-danger cm-cursor-pointer cm-icon-btn"><i class="fas fa-minus"></i></a>
+                                <span class="cm-skill-val">{{this.data.value}}</span>
+                                <a data-action="adjustStat" data-type="{{this.type}}" data-key="{{this.key}}" data-dir="up" class="cm-color-dark cm-cursor-pointer cm-icon-btn"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+
+                    <div class="cm-custom-add-group">
+                        <input type="text" id="new-skill-{{attrKey}}" placeholder="{{localize 'REIGN.CM.AddCustomSkillPlaceholder'}}" class="cm-custom-add-input">
+                        <button type="button" data-action="addCustomSkill" data-attr="{{attrKey}}" class="cm-custom-add-btn">
+                            <i class="fas fa-plus"></i> {{localize 'REIGN.Add'}}
+                        </button>
+                    </div>
+
+                </div>
+                {{/each}}
+            </div>
+
+            <div class="cm-sorcery-box">
+                <div class="cm-sorcery-header">
+                    <div>
+                        <h3 class="cm-sorcery-title">
+                            <i class="fas fa-book-dead"></i> {{localize 'REIGN.CM.Sorcery'}}
+                        </h3>
+                        <p class="cm-sorcery-desc">{{localize 'REIGN.CM.SorceryDesc'}}</p>
+                    </div>
+                    <div class="cm-flex-align-gap15">
+                        <div class="cm-upgrade-group">
+                            <button type="button" data-action="toggleUpgrade" data-type="sorcery" data-upgrade="expert" title="{{localize 'REIGN.CM.ExpertDie'}} (+{{costs.ed}} pt)"
+                                class="cm-upgrade-btn cm-btn-upgrade-sorcery {{#if draft.sorcery.expert}}sorcery-expert-active{{/if}}">
+                                ED
+                            </button>
+                            <button type="button" data-action="toggleUpgrade" data-type="sorcery" data-upgrade="master" title="{{localize 'REIGN.CM.MasterDie'}} (+{{costs.md}} pts)"
+                                class="cm-upgrade-btn cm-btn-upgrade-sorcery {{#if draft.sorcery.master}}sorcery-master-active{{/if}}">
+                                MD
+                            </button>
+                        </div>
+                        <div class="cm-skill-adjust" style="width: 70px;">
+                            <a data-action="adjustStat" data-type="sorcery" data-dir="down" class="cm-color-danger cm-cursor-pointer cm-text-lg cm-icon-btn"><i class="fas fa-minus"></i></a>
+                            <span class="cm-skill-val cm-text-lg" style="width: 16px;">{{draft.sorcery.value}}</span>
+                            <a data-action="adjustStat" data-type="sorcery" data-dir="up" class="cm-color-sorcery cm-cursor-pointer cm-text-lg cm-icon-btn"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cm-drop-zone">
+                <div class="cm-cart-header">
+                    <h3 class="cm-cart-title"><i class="fas fa-parachute-box"></i> {{localize 'REIGN.CM.ShoppingCart'}}</h3>
+                    <p class="cm-cart-desc">{{localize 'REIGN.CM.ShoppingCartDesc'}}</p>
+                </div>
+
+                {{#if draft.advantages.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Advantages'}}</h4>
+                    {{#each draft.advantages}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-star cm-cart-icon cm-icon-adv"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: {{this.system.cost}})</span></span>
+                        <a data-action="removeItem" data-list="advantages" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.martialPaths.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.MartialPaths'}}</h4>
+                    {{#each draft.martialPaths}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-fist-raised cm-cart-icon cm-icon-martial"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Rank'}}: {{this.system.rank}})</span></span>
+                        <a data-action="removeItem" data-list="martialPaths" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.esoterica.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.EsotericDisciplines'}}</h4>
+                    {{#each draft.esoterica}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-magic cm-cart-icon cm-icon-eso"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Rank'}}: {{this.system.rank}})</span></span>
+                        <a data-action="removeItem" data-list="esoterica" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.spells.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Spells'}}</h4>
+                    {{#each draft.spells}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-scroll cm-cart-icon cm-icon-spell"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: 1)</span></span>
+                        <a data-action="removeItem" data-list="spells" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.problems.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Problems'}}</h4>
+                    {{#each draft.problems}}
+                    <div class="cm-cart-item problem">
+                        <span class="cm-cart-label problem"><i class="fas fa-exclamation-circle cm-cart-icon"></i> {{this.name}} <span class="cm-cart-meta problem">({{localize 'REIGN.CM.XPTrigger'}})</span></span>
+                        <a data-action="removeItem" data-list="problems" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.weapons.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Weapons'}}</h4>
+                    {{#each draft.weapons}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-khanda cm-cart-icon cm-icon-weapon"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: {{this.system.wealthCost}})</span></span>
+                        <a data-action="removeItem" data-list="weapons" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.armor.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Armor'}}</h4>
+                    {{#each draft.armor}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-tshirt cm-cart-icon cm-icon-armor"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: {{this.system.wealthCost}})</span></span>
+                        <a data-action="removeItem" data-list="armor" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.shields.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Shields'}}</h4>
+                    {{#each draft.shields}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-shield-alt cm-cart-icon cm-icon-armor"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: {{this.system.wealthCost}})</span></span>
+                        <a data-action="removeItem" data-list="shields" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+                {{#if draft.gear.length}}
+                <div class="cm-mb-12">
+                    <h4 class="cm-cart-category-title">{{localize 'REIGN.Gear'}}</h4>
+                    {{#each draft.gear}}
+                    <div class="cm-cart-item">
+                        <span class="cm-cart-label"><i class="fas fa-box cm-cart-icon cm-icon-gear"></i> {{this.name}} <span class="cm-cart-meta">({{localize 'REIGN.CM.Cost'}}: {{this.system.wealthCost}})</span></span>
+                        <a data-action="removeItem" data-list="gear" data-id="{{this._draftId}}" class="cm-color-danger cm-cursor-pointer"><i class="fas fa-trash"></i></a>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/if}}
+
+            </div>
+
+            <div class="cm-wealth-box">
+                <span class="cm-wealth-title"><i class="fas fa-coins" style="color: #fbc02d;"></i> {{localize 'REIGN.CM.StartingWealth'}}</span>
+                <div class="cm-flex-align-gap15">
+                    <a data-action="adjustStat" data-type="wealth" data-dir="down" class="cm-color-danger cm-cursor-pointer cm-text-xl cm-icon-btn"><i class="fas fa-minus-circle"></i></a>
+                    <span class="cm-wealth-val">{{draft.wealth}}</span>
+                    <a data-action="adjustStat" data-type="wealth" data-dir="up" class="cm-color-dark cm-cursor-pointer cm-text-xl cm-icon-btn"><i class="fas fa-plus-circle"></i></a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="cm-sidebar">
+
+            <div class="cm-points-box">
+                <h3 class="cm-points-title">{{localize 'REIGN.CM.PointsRemaining'}}</h3>
+                <div class="cm-points-val {{#if (eq pointsRemaining 0)}}cm-text-red{{else}}cm-text-dark{{/if}}">
+                    {{pointsRemaining}}
+                </div>
+                <div class="cm-points-desc">{{localize 'REIGN.CM.CampaignBudget'}} ({{draft.pointsMax}})</div>
+            </div>
+
+            <h3 class="cm-summary-title">{{localize 'REIGN.CM.AttributeSummary'}}</h3>
+            <ul class="cm-summary-list">
+                <li class="cm-summary-row"><strong>{{localize 'REIGN.AttrBody'}}:</strong> <span class="cm-summary-val">{{draft.attributes.body}}</span></li>
+                <li class="cm-summary-row"><strong>{{localize 'REIGN.AttrCoordination'}}:</strong> <span class="cm-summary-val">{{draft.attributes.coordination}}</span></li>
+                <li class="cm-summary-row"><strong>{{localize 'REIGN.AttrSense'}}:</strong> <span class="cm-summary-val">{{draft.attributes.sense}}</span></li>
+                <li class="cm-summary-row"><strong>{{localize 'REIGN.AttrKnowledge'}}:</strong> <span class="cm-summary-val">{{draft.attributes.knowledge}}</span></li>
+                <li class="cm-summary-row"><strong>{{localize 'REIGN.AttrCommand'}}:</strong> <span class="cm-summary-val">{{draft.attributes.command}}</span></li>
+                <li class="cm-summary-row" style="border-bottom: none;"><strong>{{localize 'REIGN.AttrCharm'}}:</strong> <span class="cm-summary-val">{{draft.attributes.charm}}</span></li>
+            </ul>
+
+            <button type="button" data-action="finishCharacter" class="cm-btn-forge">
+                <i class="fas fa-hammer"></i> {{localize 'REIGN.CM.ForgeSheet'}}
+            </button>
+        </div>
+
+    </div>
+    {{/if}}
+
+</div>

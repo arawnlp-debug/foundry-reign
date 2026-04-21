@@ -1,0 +1,118 @@
+<div class="tab biography {{tabs.biography}}" data-tab="biography">
+  <div class="stat-grid">
+    <div class="reign-bio-left">
+      <div class="stat-block reign-mb20">
+        <div class="stat-header reign-flex-between align-center" style="padding-right: 15px;">
+            <h2>{{localize 'REIGN.HistorySecrets'}}</h2>
+            <button type="button" data-action="pledgeEffort" style="background: #2e7d32; color: white; border: 1px solid #1b5e20; border-radius: 3px; padding: 4px 10px; font-size: 0.9em; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                <i class="fas fa-handshake"></i> Pledge Effort to Company
+            </button>
+        </div>
+        <textarea name="system.biography.history" class="reign-textarea-120">{{system.biography.history}}</textarea>
+      </div>
+
+      <div class="item-list-container reign-mb20">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-3">{{localize 'REIGN.Advantage'}}</h3>
+          <span class="reign-col-1">{{localize 'REIGN.CostXP'}}</span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="advantage" title="Add Advantage"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each advantages as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-3 reign-bold">{{item.name}}</span>
+          <span class="reign-col-1">{{item.system.cost}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="item-list-container">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-3">{{localize 'REIGN.Problem'}}</h3>
+          <span class="reign-col-1">{{localize 'REIGN.BonusXP'}}</span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="problem" title="Add Problem"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each problems as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-3 reign-bold">{{item.name}}</span>
+          <span class="reign-col-1">{{item.system.bonus}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+
+    <div class="reign-bio-right">
+      <div class="stat-block reign-mb20">
+        <div class="stat-header reign-flex-between reign-p8-15">
+          <h2 class="reign-m0 reign-border-none">{{localize 'REIGN.Wealth'}}</h2>
+          <div class="reign-flex-gap5">
+            <button type="button" data-action="acquireLoot" class="reign-control-btn" title="Acquire new treasure and evaluate it against your Wealth">
+              <i class="fas fa-coins"></i> Acquire Loot
+            </button>
+            <button type="button" data-action="purchaseHelper" class="reign-control-btn" title="{{localize 'REIGN.PurchaseHelperDesc'}}">
+              <i class="fas fa-coins"></i> {{localize 'REIGN.PurchaseHelper'}}
+            </button>
+          </div>
+        </div>
+        <div class="quality-stats flexrow reign-bg-white reign-p10">
+          <div class="q-stat reign-flex-center reign-flex1">
+            <input type="number" name="system.wealth.value" value="{{system.wealth.value}}" class="current-rating reign-wealth-input" min="0" max="10"/>
+          </div>
+        </div>
+      </div>
+      
+      <div class="item-list-container reign-mb20">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-2">{{localize 'REIGN.Armor'}}</h3>
+          <span class="reign-col-1 reign-text-center" title="{{localize 'REIGN.Equipped'}}"><i class="fas fa-tshirt"></i></span>
+          <span class="reign-col-1 reign-text-center">Weight</span>
+          <span class="reign-col-4"></span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="armor" title="Add Armor"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each armors as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-2 reign-bold">{{item.name}}</span>
+          <span class="reign-col-1 reign-flex-center">
+            <input type="checkbox" data-action="toggleEquip" data-item-id="{{item.id}}" {{checked item.system.equipped}} class="reign-checkbox" title="{{localize 'REIGN.Equipped'}}"/>
+          </span>
+          <span class="reign-col-1 reign-item-subtext reign-text-center reign-capitalize">{{item.system.armorWeight}}</span>
+          <span class="reign-col-4"></span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="item-list-container">
+        <div class="list-header flexrow">
+          <h3 class="reign-col-3">{{localize 'REIGN.GearCarried'}}</h3>
+          <span class="reign-col-1">{{localize 'REIGN.Qty'}}</span>
+          <a class="item-create control-btn" data-action="itemCreate" data-type="gear"><i class="fas fa-plus"></i></a>
+        </div>
+        {{#each gear as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-3">{{item.name}}</span>
+          <span class="reign-col-1">{{item.system.quantity}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,330 @@
+/* ====================================================
+   REIGN: REALITIES OF LORDS AND LEADERS 
+   Chat Cards & 3D CSS Dice
+==================================================== */
+
+.reign-chat-card {
+  background: var(--reign-bg-parchment);
+  border: var(--reign-border-iron);
+  border-radius: 4px;
+  box-shadow: var(--reign-shadow-drop);
+  padding: 12px;
+  color: var(--reign-text-dark);
+  font-family: var(--reign-font-flavor);
+}
+
+.reign-chat-card .reign-roll-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--reign-color-blood);
+  font-weight: bold;
+  font-size: 1.3em;
+  border-bottom: 2px solid var(--reign-bg-iron);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* -----------------------------------------
+    TYPOGRAPHY & UTILITIES
+----------------------------------------- */
+.reign-text-danger { color: var(--reign-red) !important; }
+.reign-text-success { color: var(--reign-green) !important; }
+.reign-text-info { color: var(--reign-blue) !important; }
+.reign-text-warning { color: var(--reign-orange) !important; }
+.reign-text-critical { color: var(--reign-critical) !important; }
+.reign-text-magic { color: var(--reign-purple) !important; }
+.reign-text-muted { color: var(--reign-text-muted) !important; }
+
+.reign-text-bold { font-weight: bold; }
+.reign-text-small { font-size: 0.85em; }
+.reign-text-large { font-size: 1.1em; }
+.reign-text-center { text-align: center; }
+
+.reign-mb-0 { margin-bottom: 0 !important; }
+.reign-mb-small { margin-bottom: 5px; }
+.reign-mb-medium { margin-bottom: 10px; }
+.reign-mt-small { margin-top: 2px; }
+
+/* -----------------------------------------
+    BANNERS & ALERTS
+----------------------------------------- */
+.reign-banner { 
+    padding: 6px; 
+    font-weight: bold; 
+    text-align: center; 
+    margin-bottom: 8px; 
+    border-radius: 4px; 
+    font-size: 0.9em; 
+}
+.reign-banner small { font-weight: normal; font-size: 0.85em; }
+.reign-banner-warning { background: #fff3e0; color: #e65100; border: 1px solid #ffb74d; }
+.reign-banner-info { background: #e0f2f1; color: #00695c; border: 1px solid #4db6ac; }
+.reign-banner-fail { background: rgba(139,31,31,0.05); color: var(--reign-color-blood); font-size: 1.1em; padding: 10px; }
+.reign-banner-deflect { background: #e8f5e9; border: 2px solid #2e7d32; color: #1b5e20; padding: 8px; box-shadow: var(--reign-shadow-drop); margin-bottom: 10px; }
+
+/* Status Banners */
+.reign-status-banner {
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-top: 8px;
+    border-radius: 4px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.reign-status-banner.dead { background: var(--reign-dark-red); font-size: 1.2em; }
+.reign-status-banner.unconscious { background: var(--reign-navy); }
+.reign-status-banner.dazed { background: var(--reign-burnt-orange); font-size: 0.95em; padding: 6px; }
+.reign-status-banner.maimed { background: var(--reign-red); font-size: 0.95em; padding: 6px; }
+.reign-status-banner.gobbled { 
+    background: #e0f2f1; 
+    border: 2px solid #00897b; 
+    color: #00695c; 
+    margin-bottom: 10px;
+}
+.reign-status-banner.spoiled {
+    background: #ffebee; 
+    border: 2px solid #ef5350; 
+    color: #c62828; 
+    margin-bottom: 10px;
+}
+
+/* Custom Chat Card Borders */
+.reign-card-danger { border-color: var(--reign-red) !important; }
+.reign-card-magic { border-color: var(--reign-navy) !important; }
+.reign-card-critical { 
+    border: 2px solid var(--reign-red) !important; 
+    background: rgba(139, 31, 31, 0.05); 
+}
+.reign-header-fancy {
+    font-family: 'Cinzel', serif; 
+    border-bottom: 1px solid var(--reign-red);
+}
+
+/* Callout Boxes */
+.reign-callout {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 5px;
+}
+.reign-callout-danger { border-left: 3px solid var(--reign-red); }
+.reign-callout-success { border-left: 3px solid var(--reign-green); }
+.reign-callout-info { 
+    background: #e3f2fd; 
+    border-left: 3px solid var(--reign-blue); 
+}
+.reign-callout-critical { border-left: 3px solid var(--reign-critical); }
+
+/* Dark Mode Banners */
+.theme-dark .reign-chat-card .reign-banner-warning { background: #3e2723; border-color: #d84315; color: #ffcc80; }
+.theme-dark .reign-chat-card .reign-banner-info { background: #004d40; border-color: #00897b; color: #b2dfdb; }
+.theme-dark .reign-chat-card .reign-banner-deflect { background: #1b5e20; border-color: #4caf50; color: #c8e6c9; }
+.theme-dark .reign-callout-info { background: #012235; }
+
+/* -----------------------------------------
+    COLLAPSIBLE POOL BREAKDOWN
+----------------------------------------- */
+.reign-pool-breakdown { 
+    margin-bottom: 12px; 
+    font-size: 0.85em; 
+    background: rgba(0,0,0,0.03); 
+    padding: 5px 8px; 
+    border-radius: 3px; 
+    border: 1px solid var(--reign-border-light); 
+}
+.reign-pool-breakdown summary { cursor: pointer; color: var(--reign-text-muted); font-weight: bold; }
+.reign-pool-breakdown ul { margin: 5px 0 0 0; padding-left: 20px; color: var(--reign-text-dark); }
+
+/* -----------------------------------------
+    GOBBLE DICE UI
+----------------------------------------- */
+.reign-gobble-tracker { 
+    margin-bottom: 12px; 
+    background: rgba(46, 125, 50, 0.1); 
+    border: 1px solid var(--reign-color-emerald); 
+    padding: 8px; 
+    text-align: center; 
+    color: var(--reign-color-emerald); 
+    border-radius: 4px; 
+    box-shadow: var(--reign-shadow-inset); 
+}
+.reign-gobble-tracker strong { display: block; margin-bottom: 6px; font-size: 1.1em; }
+.gobble-list { justify-content: center; gap: 5px; }
+.gobble-badge { background: var(--reign-color-emerald); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 1em; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* -----------------------------------------
+    SETS & DICE TRAYS
+----------------------------------------- */
+.reign-section-title { 
+    border-bottom: 1px solid var(--reign-text-muted); 
+    padding-bottom: 3px; 
+    margin-bottom: 8px; 
+    color: var(--reign-text-muted); 
+    font-size: 0.9em; 
+    text-transform: uppercase; 
+}
+
+.ore-set { 
+    background: rgba(0,0,0,0.03); 
+    border: 1px solid var(--reign-border-light); 
+    border-left: 4px solid var(--reign-color-blood); 
+    border-radius: 4px; 
+    padding: 8px; 
+    margin-bottom: 8px; 
+}
+.set-text { font-size: 1.2em; color: var(--reign-color-blood); }
+.set-location { font-size: 0.9em; font-weight: bold; color: var(--reign-text-muted); }
+
+/* -----------------------------------------
+    3D CSS DICE (THE KITES)
+----------------------------------------- */
+.dice-tray { gap: 4px; display: flex; }
+.dice-tray.wrap { flex-wrap: wrap; }
+
+.reign-die { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: bold; 
+    font-family: var(--reign-font-data); 
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); 
+    position: relative; 
+    user-select: none; 
+    transition: transform 0.1s ease; 
+}
+
+.ore-set .reign-die { width: 32px; height: 32px; font-size: 1.1em; }
+
+.reign-die.matched { 
+    background: radial-gradient(circle at 30% 30%, #b32d2d, #6a1616); 
+    color: #ffffff; 
+    border: none; 
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 
+    filter: drop-shadow(0px 3px 2px rgba(0,0,0,0.3)); 
+}
+
+.reign-die.waste { 
+    width: 24px;
+    height: 24px;
+    font-size: 0.9em;
+    background: radial-gradient(circle at 30% 30%, #fdfdfc, #bbaaa0); 
+    color: #444; 
+    text-shadow: 0px 1px 0px rgba(255,255,255,0.5); 
+    filter: drop-shadow(0px 2px 1px rgba(0,0,0,0.2)); 
+    opacity: 0.9; 
+}
+.theme-dark .reign-die.waste { background: radial-gradient(circle at 30% 30%, #555, #333); color: #ccc; text-shadow: 1px 1px 1px #000; }
+.reign-die:hover { transform: scale(1.1) rotate(5deg); }
+
+/* -----------------------------------------
+    TAGS & DETAILS
+----------------------------------------- */
+.set-details { font-size: 0.95em; color: var(--reign-text-dark); }
+.reign-tag { background: var(--reign-bg-iron); color: var(--reign-text-light); padding: 2px 6px; border-radius: 3px; font-size: 0.85em; font-weight: bold; margin-left: 5px; }
+
+.ap-tag { color: #0277bd; background: transparent; padding: 0;}
+.massive-tag { color: #d84315; background: transparent; padding: 0;}
+.area-tag { color: #6a1b9a; background: transparent; padding: 0;}
+
+/* Dark Mode Tags */
+.theme-dark .ap-tag { color: #4fc3f7; }
+.theme-dark .massive-tag { color: #ff8a65; }
+.theme-dark .area-tag { color: #ce93d8; }
+
+/* -----------------------------------------
+    ACTION BUTTONS
+----------------------------------------- */
+.reign-chat-card button { 
+    flex: 1; 
+    cursor: pointer; 
+    font-weight: bold; 
+    border-radius: 3px; 
+    transition: background 0.2s; 
+    padding: 4px; 
+    line-height: normal; 
+}
+
+/* Damage Button */
+.reign-btn-damage { background: rgba(229, 115, 115, 0.1); border: 1px solid #ef5350; color: var(--reign-color-blood); }
+.reign-btn-damage:hover { background: rgba(229, 115, 115, 0.3); }
+
+/* Gobble Button */
+.reign-btn-gobble { background: transparent; border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); margin-top: 6px; width: 100%; }
+.reign-btn-gobble:hover { background: rgba(46, 125, 50, 0.1); }
+
+/* Magic Button */
+.reign-btn-magic { background: rgba(66, 165, 245, 0.1); border: 1px solid #42a5f5; color: #1565c0; }
+.reign-btn-magic:hover { background: rgba(66, 165, 245, 0.3); }
+.theme-dark .reign-btn-magic { color: #90caf9; }
+
+/* Small Utility Buttons */
+.reign-btn-small { flex: 0 0 32px !important; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center;}
+
+/* Heal Button */
+.reign-btn-heal { background: rgba(46, 125, 50, 0.1); border: 1px solid #2e7d32; color: #1b5e20; }
+.reign-btn-heal:hover { background: rgba(46, 125, 50, 0.3); }
+.theme-dark .reign-btn-heal { color: #a5d6a7; }
+
+/* -----------------------------------------
+    COMBAT TRACKER UI
+----------------------------------------- */
+.reign-combat-phase-control { margin: 4px 8px; display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 2px; border-radius: 4px; }
+.reign-phase-btn { flex: 1; border: 1px solid transparent; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: #aaa; transition: all 0.2s ease; background: transparent; }
+.reign-phase-btn:first-child { border-radius: 3px 0 0 3px; }
+.reign-phase-btn:last-child { border-radius: 0 3px 3px 0; }
+.reign-phase-btn.active-declare { background: var(--reign-green); color: white; border-color: #4caf50; box-shadow: 0 0 8px #4caf50; font-weight: bold; text-shadow: 1px 1px 2px black; }
+.reign-phase-btn.active-resolve { background: var(--reign-critical); color: white; border-color: #e53935; box-shadow: 0 0 8px #e53935; font-weight: bold; text-shadow: 1px 1px 2px black; }
+
+.reign-wound-banner { background: #ffcdd2; color: #b71c1c; border: 1px solid #d32f2f; text-align: center; padding: 6px; margin: 4px 8px 8px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: var(--reign-shadow-drop); }
+.reign-wound-banner span { font-weight: normal; font-size: 0.95em; color: #8b0000; }
+.theme-dark .reign-wound-banner { background: #3e1111; color: #ff8a80; border-color: #c62828; }
+.theme-dark .reign-wound-banner span { color: #ffcdd2; }
+
+.reign-waiting { color: var(--reign-text-muted); font-weight: bold; font-size: 1.2em; }
+.reign-declare-btn { font-size: 1.4em; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; transition: color 0.2s ease; }
+.reign-declare-btn.confirmed { color: var(--reign-green); }
+.reign-declare-btn.pending { color: var(--reign-text-muted); }
+
+/* -----------------------------------------
+    CHAT CARD: SETS & GOBBLE UI
+----------------------------------------- */
+.reign-set-success { border-left: 5px solid var(--reign-green); }
+.reign-set-fail { border-left: 5px solid var(--reign-red); }
+
+.reign-gobble-gen { font-size: 0.9em; color: #0d47a1; margin-top: 6px; text-align: center; padding: 6px; border-top: 1px dashed #90caf9; background: #e3f2fd; border-radius: 3px; width: 100%; }
+.reign-gobble-gen-defense { font-size: 0.85em; font-style: italic; color: #1565c0; }
+.theme-dark .reign-gobble-gen { background: #001e36; border-color: #0d47a1; color: #64b5f6; }
+.theme-dark .reign-gobble-gen-defense { color: #90caf9; }
+
+.reign-dmg-tags { font-size: 0.85em; color: var(--reign-text-dark); margin-top: 6px; display: flex; flex-direction: column; gap: 4px; padding-top: 4px; border-top: var(--reign-border-dashed); width: 100%; }
+.reign-heal-tags { font-size: 0.85em; color: var(--reign-green); margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: var(--reign-border-dashed); width: 100%; }
+
+.reign-action-buttons { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; width: 100%; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px; }
+
+/* Micro Action Buttons */
+.reign-btn-init { background: #fff8e1; border: 1px solid #f57f17; color: #f57f17; }
+.reign-btn-init:hover { background: #ffecb3; }
+.theme-dark .reign-btn-init { background: rgba(245, 127, 23, 0.1); color: #ffd54f; }
+
+.reign-btn-company { background: #fff3e0; border: 1px solid #ff9800; color: #e65100; }
+.reign-btn-company:hover { background: #ffe0b2; }
+.theme-dark .reign-btn-company { background: rgba(255, 152, 0, 0.1); color: #ffb74d; }
+
+.reign-btn-condition { background: #f3e5f5; border: 1px solid #7b1fa2; color: #4a148c; }
+.reign-btn-condition:hover { background: #e1bee7; }
+.theme-dark .reign-btn-condition { background: rgba(123, 31, 162, 0.1); color: #ce93d8; }
+
+.reign-btn-first-aid { background: #e3f2fd; border: 1px solid #0277bd; color: #01579b; }
+.reign-btn-first-aid:hover { background: #bbdefb; }
+.theme-dark .reign-btn-first-aid { background: rgba(2, 119, 189, 0.1); color: #81d4fa; }
+
+.reign-btn-waste-dmg { background: #ffebee; border: 1px solid #ef5350; color: #c62828; }
+.reign-btn-waste-dmg:hover { background: #ffcdd2; }
+.theme-dark .reign-btn-waste-dmg { background: rgba(239, 83, 80, 0.1); color: #ef9a9a; }
+
+.reign-ed-result { margin-top: 10px; border-top: var(--reign-border-dashed); padding-top: 8px; font-size: 0.9em; color: var(--reign-text-dark); }
+.reign-ed-badge { background: var(--reign-green); color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold; margin-left: 5px; }
+.reign-md-result { margin-top: 6px; font-size: 0.9em; color: var(--reign-green); }

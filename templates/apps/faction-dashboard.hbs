@@ -1,0 +1,65 @@
+<div class="faction-dashboard-wrapper" style="height: 100%; display: flex; flex-direction: column; background: #f4e8d1; padding: 15px; font-family: var(--reign-font-primary, 'Georgia', serif); color: #222; box-sizing: border-box; overflow: hidden;">
+    
+    <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #8b1f1f; padding-bottom: 10px; margin-bottom: 15px; flex-shrink: 0;">
+        <h2 style="margin: 0; font-family: 'Cinzel', serif; color: #8b1f1f; font-size: 2em; border: none;">Geopolitical Landscape</h2>
+        
+        {{#if isGM}}
+        <button type="button" data-action="advanceMonth" style="background: #2e7d32; color: white; border: 2px solid #1b5e20; border-radius: 4px; padding: 8px 15px; font-weight: bold; cursor: pointer; font-family: 'Cinzel', serif; font-size: 1.1em; transition: all 0.2s;">
+            <i class="fas fa-forward"></i> Advance Month
+        </button>
+        {{/if}}
+    </header>
+
+    <div style="flex: 1; overflow-y: auto; border: 1px solid #ccc; background: rgba(255,255,255,0.7); border-radius: 4px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead style="background: #333; color: white; position: sticky; top: 0; z-index: 1;">
+                <tr>
+                    <th style="padding: 10px; text-align: left; font-family: 'Cinzel', serif;">Company Name</th>
+                    <th style="padding: 10px;" title="Might"><i class="fas fa-fist-raised"></i> M</th>
+                    <th style="padding: 10px;" title="Treasure"><i class="fas fa-coins"></i> Tr</th>
+                    <th style="padding: 10px;" title="Influence"><i class="fas fa-eye"></i> I</th>
+                    <th style="padding: 10px;" title="Territory"><i class="fas fa-chess-rook"></i> Te</th>
+                    <th style="padding: 10px;" title="Sovereignty"><i class="fas fa-crown"></i> S</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each companies}}
+                <tr style="border-bottom: 1px solid #ddd; transition: background 0.2s;">
+                    <td style="padding: 10px; text-align: left;">
+                        <a data-action="openSheet" data-id="{{this.id}}" style="font-weight: bold; color: #8b1f1f; cursor: pointer; text-decoration: none;">
+                            <i class="fas fa-users"></i> {{this.name}}
+                        </a>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="font-weight: bold; font-size: 1.2em; {{#if this.might.isDamaged}}color: #d32f2f;{{/if}}">{{this.might.current}}</span>
+                        <span style="color: #888; font-size: 0.8em;">/ {{this.might.value}}</span>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="font-weight: bold; font-size: 1.2em; {{#if this.treasure.isDamaged}}color: #d32f2f;{{/if}}">{{this.treasure.current}}</span>
+                        <span style="color: #888; font-size: 0.8em;">/ {{this.treasure.value}}</span>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="font-weight: bold; font-size: 1.2em; {{#if this.influence.isDamaged}}color: #d32f2f;{{/if}}">{{this.influence.current}}</span>
+                        <span style="color: #888; font-size: 0.8em;">/ {{this.influence.value}}</span>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="font-weight: bold; font-size: 1.2em; {{#if this.territory.isDamaged}}color: #d32f2f;{{/if}}">{{this.territory.current}}</span>
+                        <span style="color: #888; font-size: 0.8em;">/ {{this.territory.value}}</span>
+                    </td>
+                    <td style="padding: 10px; background: rgba(0,0,0,0.03);">
+                        <span style="font-weight: bold; font-size: 1.2em; {{#if this.sovereignty.isDamaged}}color: #d32f2f;{{/if}}">{{this.sovereignty.current}}</span>
+                        <span style="color: #888; font-size: 0.8em;">/ {{this.sovereignty.value}}</span>
+                        {{#if this.isCollapsed}}
+                            <br><span style="font-size: 0.7em; color: white; background: #b71c1c; padding: 2px 4px; border-radius: 3px; display: inline-block; margin-top: 4px;">COLLAPSED</span>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" style="padding: 30px; color: #777; font-style: italic;">No companies currently exist in the world.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
