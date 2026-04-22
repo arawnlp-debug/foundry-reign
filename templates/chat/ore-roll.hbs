@@ -91,6 +91,46 @@
                             </div>
                         {{/if}}
 
+                        {{!-- Ch7 Maneuver Outcome Block --}}
+                        {{#if set.maneuverOutcome}}
+                            <div class="reign-maneuver-outcome" style="margin-top: 6px; padding: 6px 8px; border-left: 3px solid {{#if set.maneuverOutcome.isTier1}}var(--reign-blue){{else}}var(--reign-burnt-orange){{/if}}; background: rgba(0,0,0,0.04); border-radius: 0 3px 3px 0; font-size: 0.9em;">
+                                <div style="font-weight: bold; margin-bottom: 3px;">
+                                    <i class="fas fa-{{#if set.maneuverOutcome.isTier1}}bolt{{else}}scroll{{/if}}"></i>
+                                    {{localize set.maneuverOutcome.maneuverLabel}} — {{set.maneuverOutcome.tierLabel}} Success
+                                </div>
+                                {{#if set.maneuverOutcome.description}}
+                                    <div>{{localize set.maneuverOutcome.description}}</div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.requiresKill}}
+                                    <div class="reign-text-danger reign-text-small" style="margin-top: 3px;">
+                                        <i class="fas fa-skull"></i> Must kill the target to trigger this effect.
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.bonusShock}}
+                                    <div class="reign-text-small" style="margin-top: 3px;">
+                                        <strong>Bonus Damage:</strong>
+                                        {{#if set.maneuverOutcome.bonusKilling}}+{{set.maneuverOutcome.bonusShock}} Shock, +{{set.maneuverOutcome.bonusKilling}} Killing{{else}}+{{set.maneuverOutcome.bonusShock}} Shock{{/if}}
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.convertKillingToShock}}
+                                    <div class="reign-text-small" style="margin-top: 3px; color: var(--reign-blue);">
+                                        <i class="fas fa-exchange-alt"></i> All Killing damage converted to Shock.
+                                        {{#if set.maneuverOutcome.discardOverflow}} Overflow Shock discarded (non-lethal).{{/if}}
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.isTier2}}
+                                    <details style="margin-top: 4px;">
+                                        <summary class="reign-text-muted reign-text-small" style="cursor: pointer;">
+                                            <i class="fas fa-book"></i> {{localize 'REIGN.ManeuverTier2Notice'}}
+                                        </summary>
+                                        <div class="reign-text-small reign-text-muted" style="margin-top: 4px; padding: 4px; background: rgba(0,0,0,0.03);">
+                                            {{localize set.maneuverOutcome.rulesText}}
+                                        </div>
+                                    </details>
+                                {{/if}}
+                            </div>
+                        {{/if}}
+
                         <div class="reign-action-buttons">
                             {{#if set.initBtn}}
                                 <button class="reign-btn-small reign-btn-init set-init-btn" data-width="{{set.width}}" data-height="{{set.height}}" title="Use this set's speed for Combat Initiative">
@@ -138,6 +178,13 @@
                             {{#if ../hasEffects}}
                                 <button class="reign-btn-small reign-btn-condition apply-condition-btn" data-item-uuid="{{../itemUuid}}" title="Apply Condition to Targets" {{#unless set.isSuccess}}disabled{{/unless}}>
                                     <i class="fas fa-bolt"></i>
+                                </button>
+                            {{/if}}
+
+                            {{!-- Ch7: Morale Attack button for Display Kill / Threaten --}}
+                            {{#if set.maneuverOutcome.hasMoraleAttack}}
+                                <button class="reign-btn-small reign-btn-morale apply-morale-btn" data-morale-value="{{set.maneuverOutcome.moraleAttack}}" data-source="{{localize set.maneuverOutcome.maneuverLabel}}" title="Apply Morale Attack {{set.maneuverOutcome.moraleAttack}} to targeted threat groups" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                    <i class="fas fa-skull-crossbones"></i> MA {{set.maneuverOutcome.moraleAttack}}
                                 </button>
                             {{/if}}
                         </div>

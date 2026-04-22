@@ -549,6 +549,17 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       await applyItemEffectsToTargets(itemUuid);
     });
   });
+
+  // Ch7: MANEUVER MORALE ATTACK BUTTON (Display Kill, Threaten)
+  element.querySelectorAll(".apply-morale-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const moraleValue = parseInt(btn.dataset.moraleValue) || 0;
+      const sourceDesc = btn.dataset.source || "Maneuver";
+      
+      await applyOffensiveMoraleAttack(moraleValue, sourceDesc);
+    });
+  });
 });
 
 Hooks.on("preCreateItem", (item, data, options, userId) => {
@@ -565,26 +576,66 @@ Hooks.on("preCreateItem", (item, data, options, userId) => {
 
   if (item.type !== "technique" && item.type !== "discipline") return;
 
+  // RAW Ch2 p.21: No character can know more than 15 Martial Techniques or 15 Esoteric Disciplines.
+  const MAX_PER_TYPE = 15;
+  const currentCount = item.parent.items.filter(i => i.type === item.type).length;
+  const typeLabel = item.type === "technique" ? "Martial Techniques" : "Esoteric Disciplines";
+  if (currentCount >= MAX_PER_TYPE) {
+      ui.notifications.error(`Cannot add — already at the maximum of ${MAX_PER_TYPE} ${typeLabel} (RAW Ch 2).`);
+      return false;
+  }
+
   const sys = data.system || item.system;
   const pathName = sys?.path?.trim();
   const rank = parseInt(sys?.rank) || 1;
   const itemName = data.name || item.name || "Unnamed Item";
 
-  if (!pathName || rank <= 1) return;
+  // Prerequisite validation: must know all lower ranks in the same path
+  if (pathName && rank > 1) {
+    const existingItems = item.parent.items.filter(i => 
+      i.type === item.type && 
+      i.system.path?.trim().toLowerCase() === pathName.toLowerCase()
+    );
 
-  const existingItems = item.parent.items.filter(i => 
-    i.type === item.type && 
-    i.system.path?.trim().toLowerCase() === pathName.toLowerCase()
-  );
-
-  for (let requiredRank = 1; requiredRank < rank; requiredRank++) {
-    const hasRequiredRank = existingItems.some(i => parseInt(i.system.rank) === requiredRank);
-    
-    if (!hasRequiredRank) {
-      ui.notifications.error(`Cannot add "${itemName}". You are missing Rank ${requiredRank} of the "${pathName}" path. Prerequisites not met.`);
-      return false; 
+    for (let requiredRank = 1; requiredRank < rank; requiredRank++) {
+      const hasRequiredRank = existingItems.some(i => parseInt(i.system.rank) === requiredRank);
+      
+      if (!hasRequiredRank) {
+        ui.notifications.error(`Cannot add "${itemName}". You are missing Rank ${requiredRank} of the "${pathName}" path. Prerequisites not met.`);
+        return false; 
+      }
     }
   }
+
+  // RAW Ch3 p.38: XP cost = rank. Only enforce outside of character creation mode.
+  if (!item.parent.system.creationMode && !options.reignSkipXP) {
+      const xpCost = rank;
+      const unspent = item.parent.system.xp?.value || 0;
+      if (unspent < xpCost) {
+          ui.notifications.error(`Insufficient XP to learn "${itemName}". Rank ${rank} costs ${xpCost} XP (you have ${unspent}).`);
+          return false;
+      }
+      // Flag for the createItem hook to deduct XP after successful creation
+      options.reignXPCost = xpCost;
+  }
+});
+
+/**
+ * Post-creation XP deduction for Techniques & Disciplines added outside creation mode.
+ */
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!options.reignXPCost || !item.parent) return;
+  
+  const xpCost = options.reignXPCost;
+  const actor = item.parent;
+  const unspent = actor.system.xp?.value || 0;
+  
+  await actor.update({
+      "system.xp.value": unspent - xpCost,
+      "system.xp.spent": (actor.system.xp?.spent || 0) + xpCost
+  });
+  ui.notifications.info(`Spent ${xpCost} XP to learn ${item.name} (Rank ${item.system.rank || 1}).`);
 });
 
 Hooks.on("combatStart", async (combat, context) => {

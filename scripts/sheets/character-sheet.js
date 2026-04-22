@@ -402,7 +402,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
           if (!item) return;
           const safeName = foundry.utils.escapeHTML(item.name);
           let rawDesc = String(item.system.notes || item.system.effect || "").replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<img[\s\S]*?>/gi, "").replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "").replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, "").replace(/<embed[\s\S]*?>/gi, "");
-          const safeDesc = await TextEditor.enrichHTML(rawDesc, { async: true, secrets: this.document.isOwner, relativeTo: this.document });
+          const safeDesc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(rawDesc, { async: true, secrets: this.document.isOwner, relativeTo: this.document });
           await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3>${safeName}</h3><p>${item.type.toUpperCase()}</p><hr><div>${safeDesc}</div></div>` });
       } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
   }
@@ -905,7 +905,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
         });
 
         // PACKAGE C: Shield indicator reads from per-round shieldCoverage flag (set by Combat Actions button).
-        // Falls back to static effectiveLocations if no round assignment exists.
+        // When no round assignment exists, defaults to the carrying arm only.
         let isShielded = false;
         if (equippedShields.length > 0) {
             const roundCoverage = this.document.getFlag("reign", "shieldCoverage") || {};
@@ -914,7 +914,12 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
             if (hasRoundAssignment) {
                 isShielded = equippedShields.some(shield => !!roundCoverage[shield.id]?.[k]);
             } else {
-                isShielded = equippedShields.some(shield => !!(shield.system.effectiveLocations || shield.system.protectedLocations || {})[k]);
+                // No round assignment — default to carrying arm only.
+                // The Shield Coverage button is the proper way to assign additional locations.
+                isShielded = equippedShields.some(shield => {
+                    const shieldArm = shield.system.shieldArm || "armL";
+                    return k === shieldArm;
+                });
             }
         }
 

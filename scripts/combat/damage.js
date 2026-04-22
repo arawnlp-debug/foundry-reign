@@ -4,6 +4,7 @@ import { computeLocationDamage, getHitLocation, getHitLocationLabel, parseORE, c
 import { generateOREChatHTML } from "../helpers/chat.js";
 import { reignDialog, reignAlert, reignClose } from "../helpers/dialog-util.js";
 import { HIT_LOCATIONS } from "../helpers/config.js";
+import { resolveWidthTier } from "../helpers/maneuvers.js";
 
 /**
  * Compares a localHealth object to the actor's current system.health and writes only deltas.
@@ -285,6 +286,38 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
   baseKilling += (combatMods.bonusDamageKilling || 0);
   const ignoreAr = combatMods.ignoreArmorTarget || 0;
 
+  // ==========================================
+  // Ch7: MANEUVER DAMAGE MODIFICATIONS
+  // Resolve Width tier and apply Charge bonus damage or Knockout conversion.
+  // ==========================================
+  let maneuverDiscardOverflow = false;
+  const maneuverDef = combatMods.maneuver || null;
+  
+  if (maneuverDef?.widthTiers) {
+      const tierResult = resolveWidthTier(maneuverDef, width);
+      if (tierResult) {
+          // CHARGE: Add bonus Shock/Killing from the Run/Ride tier
+          if (tierResult.bonusShock && !tierResult.convertKillingToShock) {
+              baseShock += tierResult.bonusShock;
+          }
+          if (tierResult.bonusKilling && !tierResult.convertKillingToShock) {
+              baseKilling += tierResult.bonusKilling;
+          }
+
+          // KNOCKOUT: Convert all Killing damage to Shock, then add bonus Shock
+          if (tierResult.convertKillingToShock) {
+              baseShock += baseKilling;   // Move all Killing into Shock
+              baseKilling = 0;            // Zero out Killing
+              baseShock += (tierResult.bonusShock || 0);  // Add tier bonus Shock
+          }
+
+          // KNOCKOUT 4×+: Track overflow discard flag for the damage application below
+          if (tierResult.discardOverflow) {
+              maneuverDiscardOverflow = true;
+          }
+      }
+  }
+
   if (baseShock <= 0 && baseKilling <= 0 && areaDice <= 0) {
       ui.notifications.info(`The attack evaluated to 0 damage. The attack has no physical effect.`);
       return;
@@ -510,6 +543,21 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
 
       const effectiveMax = targetActor.system.effectiveMax?.[mainLocKey] || 5;
       const result = computeLocationDamage(loc.shock || 0, loc.killing || 0, finalShock, finalKilling, effectiveMax);
+
+      // Ch7 KNOCKOUT 4×+: When discardOverflow is active and hitting the head,
+      // excess Shock is discarded instead of converting to Killing.
+      // RAW: "once the head is filled with Shock, extra damage is discarded
+      //        instead of being converted to Killing."
+      if (maneuverDiscardOverflow && mainLocKey === "head") {
+          const preKilling = loc.killing || 0;
+          // Revert any Shock→Killing conversion: no new Killing from this hit
+          result.newKilling = preKilling;
+          result.overflowKilling = 0;
+          result.convertedShock = 0;
+          // Fill remaining head Shock boxes up to capacity, discard the rest
+          const shockCapacity = Math.max(0, effectiveMax - preKilling);
+          result.newShock = Math.min(shockCapacity, (loc.shock || 0) + finalShock);
+      }
 
       loc.shock = result.newShock;
       loc.killing = result.newKilling;

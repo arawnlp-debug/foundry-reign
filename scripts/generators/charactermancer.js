@@ -615,7 +615,7 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
 
   async _handleItemDrop(event) {
       let data;
-      try { data = TextEditor.getDragEventData(event); } 
+      try { data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event); } 
       catch(err) { data = JSON.parse(event.dataTransfer.getData("text/plain")); }
       
       if (data.type !== "Item") return;

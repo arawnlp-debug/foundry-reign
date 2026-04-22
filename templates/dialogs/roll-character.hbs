@@ -44,6 +44,36 @@
   </div>
   {{/if}}
 
+  {{#if isCombatRoll}}
+  <div class="form-group" style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 10px;">
+      <label>{{localize 'REIGN.ManeuverLabel'}}:</label>
+      <select name="maneuver">
+          <option value="none">{{localize 'REIGN.ManeuverNone'}}</option>
+          {{#if maneuverOptions.simple.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategorySimple'}}">
+              {{#each maneuverOptions.simple as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+          {{#if maneuverOptions.advanced.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategoryAdvanced'}}">
+              {{#each maneuverOptions.advanced as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+          {{#if maneuverOptions.expert.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategoryExpert'}}">
+              {{#each maneuverOptions.expert as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+      </select>
+  </div>
+  {{/if}}
+
   <div class="dialog-grid dialog-grid-3">
     <div class="form-group"><label>Total Actions:</label><input type="number" name="multiActions" value="1" min="1" title="Penalty: -1d per extra action"/></div>
     <div class="form-group"><label>Bonus Dice (+d):</label><input type="number" name="bonus" value="{{autoBonus}}"/></div>

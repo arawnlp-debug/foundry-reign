@@ -150,3 +150,69 @@
 .reign-weapon-chk input[type="checkbox"] { 
     accent-color: var(--reign-color-blood); 
 }
+
+/* -----------------------------------------
+    ACTIVE EFFECTS (Item Sheet)
+----------------------------------------- */
+.reign .item-effect-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border: var(--reign-border-light);
+    border-left: 4px solid var(--reign-color-blood);
+    background: var(--reign-bg-paper);
+    border-radius: 4px;
+    box-shadow: var(--reign-shadow-drop);
+}
+
+.reign .item-effect-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.reign .item-effect-info.item-effect-disabled {
+    opacity: 0.5;
+}
+
+.reign .item-effect-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    border: 1px solid var(--reign-bg-iron);
+    object-fit: contain;
+}
+
+.reign .item-effect-name {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--reign-text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reign .item-effect-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.reign .item-effect-controls a {
+    cursor: pointer;
+    color: var(--reign-text-muted);
+    transition: color 0.2s;
+}
+
+.reign .item-effect-controls a:hover {
+    color: var(--reign-color-blood);
+}
+
+.reign .item-control-btn-delete:hover {
+    color: #c62828;
+}

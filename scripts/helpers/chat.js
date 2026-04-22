@@ -1,5 +1,6 @@
 // scripts/helpers/chat.js
 import { parseORE, getHitLocation, getHitLocationLabel, calculateInitiative } from "./ore-engine.js";
+import { resolveWidthTier, calculateManeuverMorale } from "./maneuvers.js";
 
 /**
  * Generates data for visual 10-sided dice icons.
@@ -88,6 +89,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
 
   const isAttack = (!!flags.isAttack || (isSpell && rawDmgStr.trim() !== "")) && !isHealingSpell && !isDefense;
 
+  // Ch7: Extract maneuver definition from advancedMods (serialized at roll time)
+  const maneuverDef = flags.advancedMods?.maneuver || null;
+
   let wasteData = null;
   if (wasteType && parsed.waste.length > 0 && !isDefense) {
       const wasteFaces = parsed.waste.map(f => parseInt(f, 10));
@@ -105,6 +109,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
   // Check if at least one set actually succeeded to reveal the Apply Effect button
   let hasSuccessfulSet = false;
 
+  // Equipment Width Bonus (RAW Ch6 p.114): Items can grant +Width to successful sets
+  const bonusWidth = flags.advancedMods?.bonusWidth || 0;
+
   const setsData = [];
   parsed.sets.forEach((s, index) => {
     let locKey = getHitLocation(s.height);
@@ -121,10 +128,14 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
 
     if (isSuccess) hasSuccessfulSet = true;
 
+    // Apply equipment Width bonus to successful sets only
+    const effectiveWidth = isSuccess ? s.width + bonusWidth : s.width;
+    const widthBonusText = (isSuccess && bonusWidth > 0) ? ` (+${bonusWidth}W)` : "";
+
     const setObj = {
-      width: s.width,
+      width: effectiveWidth,
       height: s.height,
-      text: foundry.utils.escapeHTML(s.text),
+      text: foundry.utils.escapeHTML(`${effectiveWidth}×${s.height}${widthBonusText}`),
       location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid) && !isDefense) ? foundry.utils.escapeHTML(getHitLocationLabel(locKey)) : null,
       isSuccess,
       failReason: foundry.utils.escapeHTML(failReason),
@@ -132,7 +143,8 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
       dmg: null,
       heal: null,
       companyDmg: null,
-      initBtn: parsed.sets.length > 1
+      initBtn: parsed.sets.length > 1,
+      maneuverOutcome: null
     };
 
     if ((isAttack || isHealingSpell) && rawDmgStr.trim() !== "") {
@@ -157,6 +169,42 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
             };
         }
       }
+    }
+
+    // Ch7: Resolve maneuver Width tier and build outcome data for the template
+    if (maneuverDef && isSuccess) {
+        const tierResult = resolveWidthTier(maneuverDef, s.width);
+        if (tierResult) {
+            const outcome = {
+                maneuverLabel: maneuverDef.label,
+                tier: tierResult.tier,
+                tierLabel: tierResult.tier >= 4 ? "Master" : tierResult.tier === 3 ? "Expert" : "Standard",
+                description: tierResult.description || "",
+                isTier1: maneuverDef.tier === 1,
+                isTier2: maneuverDef.tier === 2,
+                rulesText: maneuverDef.rulesText || "",
+                requiresKill: !!maneuverDef.requiresKill,
+                noDamage: !!maneuverDef.noDamage,
+                moraleAttack: 0,
+                hasMoraleAttack: false,
+                bonusShock: tierResult.bonusShock || 0,
+                bonusKilling: tierResult.bonusKilling || 0,
+                convertKillingToShock: !!tierResult.convertKillingToShock,
+                discardOverflow: !!tierResult.discardOverflow
+            };
+
+            // Morale Attack calculation for Threaten and Display Kill
+            if (tierResult.moraleAttack) {
+                const fakeSystem = {
+                    attributes: { command: { value: maneuverDef.attackerCommand || 0 } },
+                    skills: { intimidate: { value: maneuverDef.attackerIntimidate || 0 } }
+                };
+                outcome.moraleAttack = calculateManeuverMorale(tierResult, s.width, s.height, fakeSystem);
+                outcome.hasMoraleAttack = outcome.moraleAttack > 0;
+            }
+
+            setObj.maneuverOutcome = outcome;
+        }
     }
 
     if (actorType === "company" && flags.targetQuality && flags.targetQuality !== "none") {

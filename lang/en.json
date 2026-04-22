@@ -302,6 +302,121 @@
     "Weapon": "Weapon",
     "WeaponQualities": "Weapon Qualities",
     "XP": "Unspent XP",
-    "XPSpent": "Total XP Earned"
+    "XPSpent": "Total XP Earned",
+
+    "ManeuverLabel": "Maneuver",
+    "ManeuverNone": "— Standard Attack —",
+    "ManeuverCategorySimple": "Simple Maneuvers",
+    "ManeuverCategoryAdvanced": "Advanced Maneuvers",
+    "ManeuverCategoryExpert": "Expert Maneuvers",
+    "ManeuverOutcome": "Maneuver Outcome",
+    "ManeuverTier2Notice": "GM resolves this maneuver manually using the rules below.",
+
+    "ManeuverDisplayMove": "Display Move",
+    "ManeuverDisplayMoveResult": "+1d on next attack against witnesses.",
+    "ManeuverDisplayMoveRules": "No penalty. Roll attack pool. Success gives +1d (or offsets -1d) on next attack against anyone who saw. First round only. No damage.",
+
+    "ManeuverDraw": "Draw Weapon",
+    "ManeuverDrawRules": "No roll needed. If attacking same round, sets timed as if Width was 1 lower. No penalty to Dodge while drawing.",
+
+    "ManeuverFeint": "Feint",
+    "ManeuverFeintResult": "Target loses a die from a set. +1d on next attack vs that target (max +2d, doesn't stack with Aim).",
+    "ManeuverFeintRules": "No penalty. Roll attack pool against one opponent. Success: target loses a die from a set AND you get +1d on next attack (stackable to +2d, can't stack with Aim). Cannot be dodged or parried.",
+
+    "ManeuverPin": "Pin",
+    "ManeuverPinResult": "Both combatants immobilized until pin is broken or released.",
+    "ManeuverPinRules": "Body + Fight or Coordination + Grapple. -1d if standing. Target escapes with Body + Fight or Coord + Grapple vs Difficulty equal to your Body or Grapple (whichever higher). ED in Grapple: -1d to escape. MD in Grapple: -2d to escape.",
+
+    "ManeuverRestrain": "Restrain",
+    "ManeuverRestrainResult": "Successes become Gobble Dice against the restrained target's actions.",
+    "ManeuverRestrainRules": "Body + Fight or Coordination + Grapple. No penalty. Grab arms (prevents arm actions) or legs (prevents movement/kicks). Your successes work as Gobble Dice against that character only. Must re-roll each round.",
+
+    "ManeuverShove": "Shove",
+    "ManeuverShoveResult": "No damage. Target pushed back ~5 feet, loses 1 die from a set. +1d to Trip or Slam next round.",
+    "ManeuverShoveRules": "Attack pool, no penalty. No damage. Target moved back ~5 feet, loses 1 die from a set. You get +1d to Trip or Slam next round. Opponents trying to Trip or Slam you get +1d.",
+
+    "ManeuverStand": "Stand Up",
+    "ManeuverStandRules": "No roll if only standing. If combined with another action, -1d penalty. Stand happens automatically during Declare if no other action taken.",
+
+    "ManeuverTackle": "Tackle",
+    "ManeuverTackleResult": "Normal damage dealt. Both combatants downed.",
+    "ManeuverTackleRules": "Body + Fight or Coordination + Grapple at -1d. Does rolled damage, both you and target are downed. Opponents trying to Trip or Slam you get +1d.",
+
+    "ManeuverThreaten": "Threaten",
+    "ManeuverThreatenResult2": "Morale Attack equal to the Width of your success.",
+    "ManeuverThreatenRules": "Command + Intimidation, first round only. Only one person per side can Threaten. Produces a Morale Attack equal to the Width of the success.",
+
+    "ManeuverWait": "Wait / Hold Action",
+    "ManeuverWaitRules": "Delay your declared action to resolve simultaneously with any later set. If no one else acts, the held action is lost.",
+
+    "ManeuverCharge": "Charge",
+    "ManeuverChargeResult2": "+1 Shock added to attack damage.",
+    "ManeuverChargeResult3": "+2 Shock, +1 Killing added to attack damage.",
+    "ManeuverChargeResult4": "+3 Shock, +2 Killing added to attack damage.",
+    "ManeuverChargeRules": "Multiple action with Run or Ride. Hand-to-hand weapon only. Bonus damage based on the Width of the Run/Ride set.",
+
+    "ManeuverDisarm": "Disarm",
+    "ManeuverDisarmResult2": "No damage. Weapon flies away (Height feet).",
+    "ManeuverDisarmResult3": "Weapon flies away. +1 Shock to target's hand.",
+    "ManeuverDisarmResult4": "+2 Shock to hand. You catch the weapon if you have a free hand.",
+    "ManeuverDisarmRules": "Called shot to the arm holding the weapon. If seizing an edged weapon bare-handed, multiple action with Dodge or accept 1 Killing to an arm.",
+
+    "ManeuverDisfiguringStrike": "Disfiguring Strike",
+    "ManeuverDisfiguringStrikeResult2": "1 Killing damage. 5pt Beauty drops to 3, 3pt to 1, 1pt lost. No Beauty = gain Gruesome Problem.",
+    "ManeuverDisfiguringStrikeResult3": "As 2×, but 5pt Beauty drops to 1, 3pt lost entirely.",
+    "ManeuverDisfiguringStrikeResult4": "All Beauty lost. Gain Gruesome Problem.",
+    "ManeuverDisfiguringStrikeRules": "Called shot to the head. Must use a weapon that does Killing damage. Width determines severity of scarring.",
+
+    "ManeuverDisplayKill": "Display Kill",
+    "ManeuverDisplayKillResult2": "Morale Attack = max(Height, Width).",
+    "ManeuverDisplayKillResult3": "Morale Attack = max(Height, Width) + Command stat.",
+    "ManeuverDisplayKillResult4": "Morale Attack = max(Height, Width) + Command + Intimidation.",
+    "ManeuverDisplayKillRules": "Normal attack at -1d. Must kill the target to trigger the Morale Attack. Easier against unworthy opponents.",
+
+    "ManeuverKnockout": "Knockout",
+    "ManeuverKnockoutResult2": "All Killing damage from the weapon is converted to Shock.",
+    "ManeuverKnockoutResult3": "All Killing converted to Shock, plus +1 extra Shock.",
+    "ManeuverKnockoutResult4": "All Killing converted to Shock, +3 extra Shock. Overflow Shock discarded instead of converting to Killing.",
+    "ManeuverKnockoutRules": "Called shot to the head. All Killing damage converted to Shock. Higher Width tiers add bonus Shock and prevent lethal overflow.",
+
+    "ManeuverSlam": "Slam",
+    "ManeuverSlamResult2": "Target downed. 1 Shock to locations 3 and 5 (arms).",
+    "ManeuverSlamResult3": "Target downed. 1 Shock to both arms, both legs, and torso.",
+    "ManeuverSlamResult4": "Target downed. 1 Shock to every location. Extra 1 Shock to the Height location.",
+    "ManeuverSlamRules": "Body + Fight or Coordination + Grapple at Difficulty 3. Target must be within 100 lbs of your weight. Cannot slam someone already downed.",
+
+    "ManeuverStrangle": "Strangle",
+    "ManeuverStrangleResult2": "2 Shock to head. Next round auto 2×10 for 2 more Shock if undisturbed.",
+    "ManeuverStrangleResult3": "3 Shock to head. Auto 3 Shock next round unless target successfully defends this round.",
+    "ManeuverStrangleResult4": "Width+1 Shock to head. Auto 4 Shock next round if undisturbed.",
+    "ManeuverStrangleRules": "Called shot to the head. No edged weapons. No -1d penalty if target already pinned. While strangling: no other attacks, no dodge/parry, limited movement.",
+
+    "ManeuverTrip": "Trip",
+    "ManeuverTripResult2": "No damage. Target loses a die from a set. -1d penalty on all actions next round.",
+    "ManeuverTripResult3": "As 2×, plus target is downed.",
+    "ManeuverTripResult4": "As 3×, plus 1 Shock to each arm from awkward landing.",
+    "ManeuverTripRules": "Called shot to leg (location 1 or 2). No called-shot penalty. +1d if target is using Shove, Tackle, or foot Charge.",
+
+    "ManeuverIronKiss": "Iron Kiss",
+    "ManeuverIronKissResult2": "No damage. Next round: auto 2×10 attack to head without rolling.",
+    "ManeuverIronKissResult3": "No damage. Next round: auto 4×10 attack to head without rolling.",
+    "ManeuverIronKissResult4": "No damage. Next round: auto 6×10 attack to head without rolling.",
+    "ManeuverIronKissRules": "Called shot to the head at -2d (replaces standard -1d). Requires edged or pointed weapon. Places blade against throat — next round can deliver guaranteed lethal strike.",
+
+    "ManeuverRedirect": "Redirect",
+    "ManeuverRedirectResult2": "Ruined attacks (reduced to Width 1) redirect to a target of your choice at Width-1.",
+    "ManeuverRedirectResult3": "Ruined attacks redirect at full Width.",
+    "ManeuverRedirectResult4": "All attacks can be redirected, even if not fully ruined. You take reduced damage, chosen enemy takes full.",
+    "ManeuverRedirectRules": "Dodge at -2d. Use Gobble Dice to reduce enemy sets, then redirect the spoiled attack to another enemy. Only works with multiple opponents.",
+
+    "ManeuverSubmissionHold": "Submission Hold",
+    "ManeuverSubmissionHoldResult2": "1 Shock to limb. Target can wrench free (2 Killing to limb) or stay pinned next round.",
+    "ManeuverSubmissionHoldResult3": "3 Shock to limb. Wrenching free does 3 Killing.",
+    "ManeuverSubmissionHoldResult4": "5 Shock to limb. Wrenching free does 4 Killing.",
+    "ManeuverSubmissionHoldRules": "Body + Fight or Coord + Grapple at -1d (no penalty if already pinned). Target chooses: stay held (auto-pinned next round) or wrench free (takes Killing damage).",
+
+    "ManeuverFormationCharge": "Formation Charge",
+    "ManeuverFormationChargeResult": "Choose: Evasion (impose Difficulty to ranged attacks), Superior Position (+1d next attack), or Clash and Chaos (Gobble Dice vs other vehicles).",
+    "ManeuverFormationChargeRules": "Ride skill. Requires 5+ mounts/vehicles. Multiple sets give multiple effects. Cannot be used on watercraft."
   }
 }

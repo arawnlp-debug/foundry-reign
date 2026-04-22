@@ -317,7 +317,7 @@ export class ReignCompanySheet extends ScrollPreserveMixin(HandlebarsApplication
         .replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, "")
         .replace(/<embed[\s\S]*?>/gi, "");
         
-      const safeDesc = await TextEditor.enrichHTML(rawDesc, {
+      const safeDesc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(rawDesc, {
         async: true,
         secrets: this.document.isOwner,
         relativeTo: this.document

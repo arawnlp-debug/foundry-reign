@@ -4,6 +4,7 @@ const { renderTemplate } = foundry.applications.handlebars;
 import { parseORE } from "./ore-engine.js";
 import { postOREChat } from "./chat.js";
 import { skillAttrMap } from "./config.js";
+import { MANEUVERS, getManeuverOptions, resolveWidthTier } from "./maneuvers.js";
 
 import { reignDialog } from "./dialog-util.js";
 
@@ -41,7 +42,7 @@ export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShot
             finalCalledShot = 0; // MD makes CS unnecessary
         } else if (actualEd > 0) {
             finalEdFace = finalCalledShot; // Force ED to the CS height
-            appliedCsPenalty = 1;
+            // RAW: "If you have an ED you're always making a called shot with no penalty."
         } else {
             actualCs = 1; // Dedicate one normal die to be the CS die
             appliedCsPenalty = 1;
@@ -383,7 +384,8 @@ export class CharacterRoller {
 
         const templateData = {
             defaultAttr, attrOptions, showSkillSelect, defaultSkill, skillOptions, isCombatRoll, calledShotOptions,
-            difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue
+            difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue,
+            maneuverOptions: isCombatRoll ? getManeuverOptions() : null
         };
 
         console.log("Reign Roller | Rendering HTML Template...");
@@ -403,7 +405,8 @@ export class CharacterRoller {
               bonus: parseInt(f.querySelector('[name="bonus"]')?.value) || 0, penalty: parseInt(f.querySelector('[name="penalty"]')?.value) || 0, 
               passionBonus: (parseInt(f.querySelector('[name="pMiss"]')?.value) || 0) + (parseInt(f.querySelector('[name="pDuty"]')?.value) || 0) + (parseInt(f.querySelector('[name="pCrav"]')?.value) || 0),
               ed: parseInt(f.querySelector('[name="ed"]')?.value) || 0, 
-              md: f.querySelector('[name="md"]')?.checked ? Math.max(1, initialMdValue) : 0 
+              md: f.querySelector('[name="md"]')?.checked ? Math.max(1, initialMdValue) : 0,
+              maneuver: f.querySelector('[name="maneuver"]')?.value || "none"
             }; 
           },
           {
@@ -495,6 +498,94 @@ export class CharacterRoller {
               const enforceExclusivity = () => {
                 updatePool();
               };
+
+              // Ch7 MANEUVER WIRING: When the maneuver dropdown changes,
+              // auto-apply pool modifications from the maneuver definition.
+              const maneuverSelect = f.querySelector('[name="maneuver"]');
+              const calledShotSelect = f.querySelector('[name="calledShot"]');
+              const difficultyInput = f.querySelector('[name="difficulty"]');
+              const penaltyInput = f.querySelector('[name="penalty"]');
+              const multiActionsInput = f.querySelector('[name="multiActions"]');
+              const bonusInput = f.querySelector('[name="bonus"]');
+
+              if (maneuverSelect) {
+                  // Store the user's original values so we can restore them when switching back to "none"
+                  let userCalledShot = calledShotSelect?.value || "0";
+                  let userDifficulty = difficultyInput?.value || "0";
+                  let userPenalty = penaltyInput?.value || String(autoPenalty);
+                  let userMultiActions = multiActionsInput?.value || "1";
+                  let userBonus = bonusInput?.value || String(autoBonus);
+                  let lastManeuver = "none";
+
+                  maneuverSelect.addEventListener("change", () => {
+                      const mId = maneuverSelect.value;
+
+                      // Restore user values when leaving a maneuver
+                      if (lastManeuver !== "none") {
+                          if (calledShotSelect) calledShotSelect.value = userCalledShot;
+                          if (difficultyInput) difficultyInput.value = userDifficulty;
+                          if (penaltyInput) penaltyInput.value = userPenalty;
+                          if (multiActionsInput) multiActionsInput.value = userMultiActions;
+                          if (bonusInput) bonusInput.value = userBonus;
+                      }
+
+                      if (mId === "none") {
+                          lastManeuver = "none";
+                          updatePool();
+                          return;
+                      }
+
+                      // Snapshot the current user values before we overwrite
+                      if (lastManeuver === "none") {
+                          userCalledShot = calledShotSelect?.value || "0";
+                          userDifficulty = difficultyInput?.value || "0";
+                          userPenalty = penaltyInput?.value || String(autoPenalty);
+                          userMultiActions = multiActionsInput?.value || "1";
+                          userBonus = bonusInput?.value || String(autoBonus);
+                      }
+
+                      const mDef = MANEUVERS[mId];
+                      if (!mDef) { lastManeuver = mId; updatePool(); return; }
+
+                      // Auto-set called shot
+                      if (mDef.calledShot && calledShotSelect) {
+                          if (mDef.calledShot === "head") calledShotSelect.value = "10";
+                          else if (mDef.calledShot === "arm") calledShotSelect.value = "6"; // Default right arm high
+                          else if (mDef.calledShot === "leg") calledShotSelect.value = "2"; // Default right leg
+                      }
+
+                      // Auto-set difficulty
+                      if (mDef.difficulty > 0 && difficultyInput) {
+                          difficultyInput.value = String(Math.max(parseInt(difficultyInput.value) || 0, mDef.difficulty));
+                      }
+
+                      // Auto-set penalty (additive with existing)
+                      if (mDef.poolPenalty < 0 && penaltyInput) {
+                          const currentBase = parseInt(userPenalty) || 0;
+                          penaltyInput.value = String(currentBase + Math.abs(mDef.poolPenalty));
+                      }
+
+                      // Trip special: no called-shot penalty even though it has a called shot
+                      // Iron Kiss special: -2d is its own penalty (already in poolPenalty), no standard CS penalty
+                      // These are handled by calledShotPenalty: false in the definition.
+                      // The pool math already handles the -1d for called shots; we need to OFFSET it
+                      // for maneuvers where calledShotPenalty is false but a called shot is set.
+                      if (mDef.calledShot && !mDef.calledShotPenalty && bonusInput) {
+                          // Add +1d to bonus to cancel out the automatic called-shot penalty
+                          const currentBonus = parseInt(bonusInput.value) || 0;
+                          bonusInput.value = String(currentBonus + 1);
+                      }
+
+                      // Auto-set multiple actions if the maneuver requires it
+                      if (mDef.isMultiAction && multiActionsInput) {
+                          const current = parseInt(multiActionsInput.value) || 1;
+                          if (current < 2) multiActionsInput.value = "2";
+                      }
+
+                      lastManeuver = mId;
+                      updatePool();
+                  });
+              }
      
               edInput.addEventListener("input", enforceExclusivity); 
               mdInput.addEventListener("change", enforceExclusivity); 
@@ -591,8 +682,36 @@ export class CharacterRoller {
             shiftHitLocationUp: combatMods.shiftHitLocationUp || 0,
             combineGobbleDice: combatMods.combineGobbleDice || false,
             crossBlockActive: combatMods.crossBlockActive || false,
-            appendManeuvers: combatMods.appendManeuvers || []
+            appendManeuvers: combatMods.appendManeuvers || [],
+            maneuver: null
         };
+
+        // Ch7: Serialize the selected maneuver definition for the chat engine
+        if (rollData.maneuver && rollData.maneuver !== "none" && MANEUVERS[rollData.maneuver]) {
+            const mDef = MANEUVERS[rollData.maneuver];
+            advancedMods.maneuver = {
+                id: mDef.id,
+                label: mDef.label,
+                category: mDef.category,
+                tier: mDef.tier,
+                requiresKill: mDef.requiresKill,
+                noDamage: mDef.noDamage,
+                firstRoundOnly: mDef.firstRoundOnly,
+                widthTiers: mDef.widthTiers,
+                rulesText: mDef.rulesText,
+                // Snapshot attacker stats needed for Display Kill / Threaten morale math
+                attackerCommand: parseInt(system.attributes?.command?.value) || 0,
+                attackerIntimidate: parseInt(system.skills?.intimidate?.value) || 0
+            };
+
+            // Add maneuver to pool breakdown for visibility
+            const mLabel = game.i18n.localize(mDef.label);
+            if (mDef.poolPenalty < 0) {
+                poolBreakdown.push({ label: `Maneuver: ${mLabel}`, value: `${mDef.poolPenalty}`, isPenalty: true });
+            } else {
+                poolBreakdown.push({ label: `Maneuver: ${mLabel}`, value: `+0`, isPenalty: false });
+            }
+        }
 
         let results = [];
         let actualRoll = null;

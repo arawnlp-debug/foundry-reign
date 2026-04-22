@@ -58,6 +58,7 @@ export function getEffectDictionary() {
   for (const s of Object.keys(skillAttrMap)) {
     const sName = s.charAt(0).toUpperCase() + s.slice(1);
     dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.pool`, label: `Bonus Dice Pool`, mode: 2 });
+    dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.bonusWidth`, label: `Bonus Width (Equipment)`, mode: 2 });
   }
 
   // Immunities
