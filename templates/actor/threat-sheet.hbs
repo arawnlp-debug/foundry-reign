@@ -1,0 +1,158 @@
+<div class="reign-sheet-root threat-sheet">
+  <header class="sheet-header">
+    <div class="header-top cm-flex-gap15 cm-align-end cm-p10">
+      <img src="{{actor.img}}" 
+           data-action="editImage" 
+           title="{{actor.name}}" 
+           class="profile-img reign-circle threat-profile-img" 
+           alt="{{actor.name}}"/>
+           
+      <div class="header-fields cm-flex-col cm-gap5">
+        <input name="name" 
+               type="text" 
+               value="{{actor.name}}" 
+               placeholder="{{localize 'REIGN.ThreatName'}}" 
+               class="reign-threat-header-input"/>
+               
+        <div class="reign-threat-type-label">
+          {{localize 'REIGN.UnworthyOpponent'}}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="sheet-body">
+    <div class="threat-stat-grid">
+      
+      <div class="stat-block bg-white threat-main-border">
+        <div class="stat-header reign-flex-center threat-header-black">
+          <h2 class="rollable" 
+              data-action="rollThreat" 
+              title="{{localize 'REIGN.RollThreatAction'}}">
+            <i class="fas fa-dice reign-mr10"></i> {{localize 'REIGN.RollThreatAction'}}
+          </h2>
+        </div>
+
+        <div class="threat-input-row cm-p15 cm-flex-around cm-align-center cm-gap20">
+          {{!-- PACKAGE A: Threat Rating (1-4) — elimination threshold, NOT the pool --}}
+          <div class="reign-text-center">
+            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+              {{localize 'REIGN.ThreatRating'}}
+            </label>
+            <input type="number" 
+                   name="system.threatLevel" 
+                   value="{{system.threatLevel}}" 
+                   min="1"
+                   max="4"
+                   class="reign-threat-number-input"
+                   title="{{localize 'REIGN.ThreatRatingDesc'}}"/>
+          </div>
+          
+          <div class="reign-text-center cm-flex-50">
+            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+              {{localize 'REIGN.ParentCompany'}}
+            </label>
+            <select name="system.parentCompany" class="reign-threat-select">
+              <option value="">{{localize 'REIGN.ParentCompanyNone'}}</option>
+              {{selectOptions companies selected=system.parentCompany}}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="threat-sub-grid">
+        
+        {{!-- PACKAGE A: FIGHTERS (was Magnitude) — group size = dice pool --}}
+        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+          <div class="stat-header bg-crimson reign-flex-center threat-header-red">
+            <h2>{{localize 'REIGN.Fighters'}}</h2>
+          </div>
+          <div class="reign-desc-text threat-desc-italics">
+            {{localize 'REIGN.FightersDesc'}}
+          </div>
+          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+            <input type="number" 
+                   name="system.magnitude.value" 
+                   value="{{system.magnitude.value}}" 
+                   min="0"
+                   class="reign-fraction-val threat-mag-input"
+                   title="{{localize 'REIGN.CurrentFighters'}}"/>
+            <span class="threat-fraction-separator">/</span>
+            <input type="number" 
+                   name="system.magnitude.max" 
+                   value="{{system.magnitude.max}}" 
+                   min="1"
+                   class="reign-fraction-max threat-max-input"
+                   title="{{localize 'REIGN.MaxFighters'}}"/>
+          </div>
+          {{!-- PACKAGE A: Manual fighter removal button --}}
+          <div class="cm-flex-center cm-pb5">
+            <a class="reign-text-small rollable" 
+               data-action="eliminateMinions" 
+               title="{{localize 'REIGN.EliminateMinions'}}">
+              <i class="fas fa-user-minus"></i> {{localize 'REIGN.EliminateMinions'}}
+            </a>
+          </div>
+        </div>
+
+        {{!-- MORALE --}}
+        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+          <div class="stat-header bg-teal reign-flex-center threat-header-teal">
+            <h2 class="rollable" 
+                data-action="rollMorale" 
+                title="{{localize 'REIGN.RollMorale'}}">
+              <i class="fas fa-dice reign-mr10"></i> {{localize 'REIGN.Morale'}}
+            </h2>
+          </div>
+          <div class="reign-desc-text threat-desc-italics">
+            {{localize 'REIGN.MoraleDesc'}}
+          </div>
+          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+            <input type="number" 
+                   name="system.morale.value" 
+                   value="{{system.morale.value}}" 
+                   min="0"
+                   class="reign-fraction-val threat-mor-input"
+                   title="{{localize 'REIGN.CurrentMorale'}}"/>
+            <span class="threat-fraction-separator">/</span>
+            <input type="number" 
+                   name="system.morale.max" 
+                   value="{{system.morale.max}}" 
+                   min="1"
+                   class="reign-fraction-max threat-max-input"
+                   title="{{localize 'REIGN.MaxMorale'}}"/>
+          </div>
+          {{!-- PACKAGE A: Receive Morale Attack button --}}
+          <div class="cm-flex-center cm-pb5">
+            <a class="reign-text-small rollable"
+               data-action="receiveMoraleAttack" 
+               title="{{localize 'REIGN.ReceiveMoraleAttack'}}">
+              <i class="fas fa-bolt"></i> {{localize 'REIGN.ReceiveMoraleAttack'}}
+            </a>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="stat-block bg-white cm-mt10 threat-main-border">
+        <div class="stat-header reign-flex-center threat-header-black">
+          <h2>{{localize 'REIGN.DescriptionTactics'}}</h2>
+        </div>
+        <div class="cm-p15 threat-damage-formula-row">
+          <label class="reign-bold cm-mb5 cm-block">
+            {{localize 'REIGN.DamageFormula'}}
+          </label>
+          <input type="text" 
+                 name="system.damageFormula" 
+                 value="{{system.damageFormula}}" 
+                 class="reign-threat-weapon cm-mb10" 
+                 placeholder="{{localize 'REIGN.DamagePlaceholder'}}"/>
+        </div>
+        <textarea name="system.description" 
+                  class="reign-textarea-120 threat-description-area"
+                  placeholder="{{localize 'REIGN.TacticsPlaceholder'}}">{{system.description}}</textarea>
+      </div>
+
+    </div>
+  </section>
+</div>

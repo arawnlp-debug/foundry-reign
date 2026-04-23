@@ -1,0 +1,103 @@
+<div class="companymancer-wrapper cp-wrapper">
+    
+    {{#if (not pathSelected)}}
+        <div class="cp-landing">
+            <div class="cp-landing-box">
+                <h1 class="cp-landing-title">Forge Your Faction</h1>
+                <p class="cp-landing-subtitle">How did your Company rise to power?</p>
+                
+                <div class="cp-path-cards">
+                    <div class="cp-card">
+                        <h3 class="cp-color-blood">One-Roll Kingdom</h3>
+                        <p class="cp-card-desc">Roll a fistful of dice to instantly generate a company's history, assets, and qualities.</p>
+                        
+                        <div class="cp-dice-config">
+                            <label class="cp-dice-label">Exact Dice to Roll:</label>
+                            <div class="cp-dice-row">
+                                <input type="number" id="company-dice-input" value="15" min="3" class="cp-dice-input">
+                                <div class="cp-dice-guide">
+                                    <strong>3-4:</strong> Local gang &nbsp;|&nbsp; <strong>5-6:</strong> Local guild<br>
+                                    <strong>7-9:</strong> Regional &nbsp;|&nbsp; <strong>10-12:</strong> Tiny nation<br>
+                                    <strong>13-15:</strong> Small country &nbsp;|&nbsp; <strong>16-19:</strong> Big country<br>
+                                    <strong>20+:</strong> Empire
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" data-action="selectPath" data-path="oneroll" class="cp-btn-oneroll cp-mt15">Roll the Bones</button>
+                    </div>
+                    
+                    <div class="cp-card">
+                        <h3 class="cp-color-muted">Manual Entry</h3>
+                        <p class="cp-card-desc">Skip the generator and fill out a blank Faction Sheet manually.</p>
+                        <button type="button" data-action="selectPath" data-path="manual" class="cp-btn-manual cp-mt15">Skip Wizard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{else}}
+
+        {{#if (eq pathSelected 'oneroll')}}
+            <div class="cp-oneroll-workspace">
+                <div class="cp-results-left">
+                    <h2 class="cp-section-title">Company History & Sets</h2>
+                    {{#if draftCompany.history.length}}
+                        <ul class="cp-history-list">
+                        {{#each draftCompany.history}}
+                            <li class="cp-history-item">{{this}}</li>
+                        {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted">No sets rolled. A truly chaotic genesis.</p>
+                    {{/if}}
+
+                    <h2 class="cp-section-title cp-section-title-mt">Singular Events (Waste Dice)</h2>
+                    {{#if draftCompany.waste.length}}
+                        <ul class="cp-history-list">
+                        {{#each draftCompany.waste}}
+                            <li class="cp-history-item">{{this}}</li>
+                        {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted">No singular events triggered.</p>
+                    {{/if}}
+                </div>
+
+                <div class="cp-summary-right">
+                    <h3 class="cp-summary-title">Final Qualities</h3>
+                    <ul class="cp-summary-list cp-mb15">
+                        <li class="cp-summary-row"><strong>Might:</strong> <span class="cp-summary-val">{{draftCompany.qualities.might}}</span></li>
+                        <li class="cp-summary-row"><strong>Treasure:</strong> <span class="cp-summary-val">{{draftCompany.qualities.treasure}}</span></li>
+                        <li class="cp-summary-row"><strong>Influence:</strong> <span class="cp-summary-val">{{draftCompany.qualities.influence}}</span></li>
+                        <li class="cp-summary-row"><strong>Territory:</strong> <span class="cp-summary-val">{{draftCompany.qualities.territory}}</span></li>
+                        <li class="cp-summary-row cp-row-last"><strong>Sovereignty:</strong> <span class="cp-summary-val">{{draftCompany.qualities.sovereignty}}</span></li>
+                    </ul>
+
+                    <h3 class="cp-summary-title">Assets Generated</h3>
+                    {{#if draftCompany.items.length}}
+                        <ul class="cp-asset-list">
+                            {{#each draftCompany.items}}
+                                <li class="cp-asset-item"><strong>{{this.name}}</strong></li>
+                            {{/each}}
+                        </ul>
+                    {{else}}
+                        <p class="cp-text-italic cp-color-muted cp-text-center">No assets gained.</p>
+                    {{/if}}
+
+                    <button type="button" data-action="finishCompany" class="cp-btn-forge cp-mt15">
+                        <i class="fas fa-hammer"></i> Finalize Company
+                    </button>
+                    
+                    <div class="cp-reroll-panel">
+                        <label class="cp-reroll-label">Dice to Roll:</label>
+                        <input type="number" id="company-dice-reroll-input" value="{{companyDice}}" min="3" class="cp-reroll-input">
+                        <button type="button" data-action="rollTheBones" class="cp-btn-manual cp-btn-full">
+                            <i class="fas fa-dice"></i> Re-roll Faction
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {{/if}}
+
+    {{/if}}
+</div>

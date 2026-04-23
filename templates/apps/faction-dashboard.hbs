@@ -1,0 +1,65 @@
+<div class="faction-dashboard-wrapper">
+    
+    <header class="fd-header">
+        <h2 class="fd-title">Geopolitical Landscape</h2>
+        
+        {{#if isGM}}
+        <button type="button" data-action="advanceMonth" class="fd-advance-btn">
+            <i class="fas fa-forward"></i> Advance Month
+        </button>
+        {{/if}}
+    </header>
+
+    <div class="fd-table-container">
+        <table class="fd-table">
+            <thead class="fd-thead">
+                <tr>
+                    <th class="fd-th-name">Company Name</th>
+                    <th class="fd-th" title="Might"><i class="fas fa-fist-raised"></i> M</th>
+                    <th class="fd-th" title="Treasure"><i class="fas fa-coins"></i> Tr</th>
+                    <th class="fd-th" title="Influence"><i class="fas fa-eye"></i> I</th>
+                    <th class="fd-th" title="Territory"><i class="fas fa-chess-rook"></i> Te</th>
+                    <th class="fd-th" title="Sovereignty"><i class="fas fa-crown"></i> S</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each companies}}
+                <tr class="fd-tr">
+                    <td class="fd-td-name">
+                        <a data-action="openSheet" data-id="{{this.id}}" class="fd-company-link">
+                            <i class="fas fa-users"></i> {{this.name}}
+                        </a>
+                    </td>
+                    <td class="fd-td">
+                        <span class="fd-quality-current {{#if this.might.isDamaged}}damaged{{/if}}">{{this.might.current}}</span>
+                        <span class="fd-quality-max">/ {{this.might.value}}</span>
+                    </td>
+                    <td class="fd-td">
+                        <span class="fd-quality-current {{#if this.treasure.isDamaged}}damaged{{/if}}">{{this.treasure.current}}</span>
+                        <span class="fd-quality-max">/ {{this.treasure.value}}</span>
+                    </td>
+                    <td class="fd-td">
+                        <span class="fd-quality-current {{#if this.influence.isDamaged}}damaged{{/if}}">{{this.influence.current}}</span>
+                        <span class="fd-quality-max">/ {{this.influence.value}}</span>
+                    </td>
+                    <td class="fd-td">
+                        <span class="fd-quality-current {{#if this.territory.isDamaged}}damaged{{/if}}">{{this.territory.current}}</span>
+                        <span class="fd-quality-max">/ {{this.territory.value}}</span>
+                    </td>
+                    <td class="fd-td-sov">
+                        <span class="fd-quality-current {{#if this.sovereignty.isDamaged}}damaged{{/if}}">{{this.sovereignty.current}}</span>
+                        <span class="fd-quality-max">/ {{this.sovereignty.value}}</span>
+                        {{#if this.isCollapsed}}
+                            <br><span class="fd-collapsed-badge">COLLAPSED</span>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" class="fd-empty-msg">No companies currently exist in the world.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

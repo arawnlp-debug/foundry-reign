@@ -1,0 +1,209 @@
+<div class="reign-sheet-root company-sheet">
+  <header class="sheet-header">
+    <div class="header-top">
+      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img"/>
+      <div class="header-fields">
+        <div class="title-row">
+          <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'REIGN.CompanyNamePlaceholder'}}" class="reign-company-title"/>
+        </div>
+        <div class="narrative-row reign-company-narrative">
+          <div class="narrative-box"><label>{{localize 'REIGN.Goals'}}</label><input type="text" name="system.biography.goals" value="{{system.biography.goals}}"/></div>
+          <div class="narrative-box"><label>{{localize 'REIGN.Leaders'}}</label><input type="text" name="system.biography.leaders" value="{{system.biography.leaders}}"/></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="sheet-tabs tabs reign-sheet-tabs">
+    <a class="item {{tabs.details}}" data-action="changeTab" data-tab="details">Company Details</a>
+    <a class="item {{tabs.effects}}" data-action="changeTab" data-tab="effects">Active Effects</a>
+  </nav>
+
+  <section class="sheet-body">
+    
+    {{!-- DETAILS TAB --}}
+    <div class="tab details {{tabs.details}}" data-tab="details">
+      <div class="reign-company-action-bar">
+        <button type="button" data-action="rollCompanyStat" class="reign-btn-execute">
+          <i class="fas fa-chess-knight"></i> {{localize 'REIGN.ExecuteCompanyAction'}}
+        </button>
+
+        <div class="reign-stat-panel">
+            <h4>Company XP</h4>
+            <div class="panel-content">
+                <div class="reign-stat-column" title="Unspent Experience">
+                    <span class="reign-stat-label">UNSPENT</span>
+                    <input type="number" name="system.xp.value" value="{{system.xp.value}}" class="reign-stat-input success" min="0"/>
+                </div>
+                <div class="reign-stat-column" title="Total Spent XP">
+                    <span class="reign-stat-label">SPENT</span>
+                    <input type="number" name="system.xp.spent" value="{{system.xp.spent}}" class="reign-stat-input" min="0"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="reign-stat-panel">
+            <h4>War Chest (Pledged Dice)</h4>
+            <div class="panel-content">
+                <div class="reign-stat-column" title="Pledged Standard Dice (+1d)">
+                    <span class="reign-stat-label">DICE</span>
+                    <div class="reign-pledge-controls">
+                        <a data-action="adjustPledge" data-type="bonus" data-dir="down" class="reign-color-bad"><i class="fas fa-minus-square"></i></a>
+                        <span class="reign-pledge-val">{{system.pledges.bonus}}</span>
+                        <a data-action="adjustPledge" data-type="bonus" data-dir="up" class="reign-color-good"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+                <div class="reign-stat-column" title="Pledged Expert Dice (+ED)">
+                    <span class="reign-stat-label reign-color-ed">ED</span>
+                    <div class="reign-pledge-controls">
+                        <a data-action="adjustPledge" data-type="ed" data-dir="down" class="reign-color-bad"><i class="fas fa-minus-square"></i></a>
+                        <span class="reign-pledge-val reign-color-ed">{{system.pledges.ed}}</span>
+                        <a data-action="adjustPledge" data-type="ed" data-dir="up" class="reign-color-good"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+                <div class="reign-stat-column" title="Pledged Master Dice (+MD)">
+                    <span class="reign-stat-label reign-color-md">MD</span>
+                    <div class="reign-pledge-controls">
+                        <a data-action="adjustPledge" data-type="md" data-dir="down" class="reign-color-bad"><i class="fas fa-minus-square"></i></a>
+                        <span class="reign-pledge-val reign-color-md">{{system.pledges.md}}</span>
+                        <a data-action="adjustPledge" data-type="md" data-dir="up" class="reign-color-good"><i class="fas fa-plus-square"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="reign-qualities-grid">
+        {{#each qualities as |q|}}
+        <div class="reign-quality-block">
+          <div class="reign-quality-header flexrow">
+            <h2 class="rollable" data-action="rollQuality" data-key="{{q.key}}" data-label="{{q.label}}" title="Roll {{q.label}} (Effective: {{q.effective}})">
+              <i class="fas fa-dice reign-mr10"></i>{{q.label}}
+            </h2>
+            <button type="button" class="improve-btn" data-action="rollImprovement" data-key="{{q.key}}" title="Permanently improve {{q.label}} via Action Roll (RAW Ch10)">
+              <i class="fas fa-arrow-up"></i>
+            </button>
+          </div>
+          
+          <div class="reign-quality-stats">
+            <div class="reign-quality-effective {{#if q.damage}}damaged{{else}}healthy{{/if}}">
+                {{q.effective}}
+            </div>
+
+            <div class="reign-quality-substats">
+                <div class="reign-substat-col" title="Permanent Rating">
+                    <span class="reign-substat-label perm">Perm</span>
+                    <input type="number" name="system.qualities.{{q.key}}.value" value="{{q.value}}" class="reign-substat-input" min="0" max="6"/>
+                    <a data-action="upgradeQualityXP" data-key="{{q.key}}" title="Upgrade with XP (Cost: 10 x New Level)" class="reign-upgrade-btn"><i class="fas fa-arrow-circle-up"></i> BUY</a>
+                </div>
+                
+                <div class="reign-substat-col" title="Temporary Damage">
+                    <span class="reign-substat-label dmg">Dmg</span>
+                    <div class="reign-dmg-controls">
+                        <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="down" class="reign-color-good" title="Recover Damage"><i class="fas fa-minus-circle fa-lg"></i></a>
+                        <span class="reign-pledge-val">{{q.damage}}</span>
+                        <a data-action="adjustQualityDamage" data-key="{{q.key}}" data-dir="up" class="reign-color-bad" title="Take Damage"><i class="fas fa-plus-circle fa-lg"></i></a>
+                    </div>
+                </div>
+
+                <div class="reign-substat-col" title="Uses this Month (Action Penalty / Splitting the Pot)">
+                    <span class="reign-substat-label uses">Uses</span>
+                    <input type="number" name="system.qualities.{{q.key}}.uses" value="{{q.uses}}" class="reign-substat-input uses" min="0"/>
+                </div>
+            </div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      
+      <div class="reign-grid-2col">
+        <div class="item-list-container">
+          <div class="list-header flexrow">
+            <h3 class="reign-col-3">{{localize 'REIGN.CompanyAssetsTitle'}}</h3>
+            <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+            <a class="item-create control-btn" data-action="itemCreate" data-type="asset" title="{{localize 'REIGN.AddAsset'}}"><i class="fas fa-plus"></i></a>
+          </div>
+          {{#each assets as |item|}}
+          <div class="item-row flexrow" data-item-id="{{item.id}}">
+            <span class="reign-col-3 reign-bold">{{item.name}}</span>
+            <span class="reign-col-1">{{item.system.cost}}</span>
+            <div class="item-controls">
+              <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+              <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+              <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+          <div class="reign-mt10 reign-p10">
+            <label class="reign-bold">{{localize 'REIGN.GeneralAssetsDescription'}}</label>
+            <textarea name="system.biography.assets" class="reign-asset-text">{{system.biography.assets}}</textarea>
+          </div>
+        </div>
+
+        <div class="item-list-container">
+          <div class="list-header flexrow">
+            <h3 class="reign-col-3">{{localize 'REIGN.CompanyLiabilitiesTitle'}}</h3>
+            <span class="reign-col-1">{{localize 'REIGN.Value'}}</span>
+            <a class="item-create control-btn" data-action="itemCreate" data-type="problem" title="{{localize 'REIGN.AddLiability'}}"><i class="fas fa-plus"></i></a>
+          </div>
+          {{#each problems as |item|}}
+          <div class="item-row flexrow" data-item-id="{{item.id}}">
+            <span class="reign-col-3 reign-bold">{{item.name}}</span>
+            <span class="reign-col-1">{{item.system.bonus}}</span>
+            <div class="item-controls">
+              <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+              <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+              <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+          <div class="reign-mt10 reign-p10">
+            <label class="reign-bold">{{localize 'REIGN.GeneralLiabilitiesNotes'}}</label>
+            <textarea name="system.biography.description" class="reign-asset-text">{{system.biography.description}}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- EFFECTS TAB --}}
+    <div class="tab effects {{tabs.effects}}" data-tab="effects">
+      <div class="reign-effects-tab-container">
+        <h3 class="reign-effects-header">
+          <span>Active Company Effects (Assets / Problems)</span>
+          <a data-action="createEffect" title="Add Effect" class="reign-create-effect-btn">
+            <i class="fas fa-plus"></i> Create Effect
+          </a>
+        </h3>
+
+        {{#if effects.length}}
+          <div class="reign-effects-list">
+            {{#each effects as |effect|}}
+              <div class="reign-effect-item" data-effect-id="{{effect.id}}">
+                <div class="reign-effect-info {{#if effect.disabled}}reign-opacity-50{{/if}}">
+                  <img src="{{effect.img}}" class="reign-effect-img"/>
+                  <div class="reign-effect-details">
+                    <span class="reign-effect-name">{{effect.name}}</span>
+                    {{#if effect.disabled}}
+                      <span class="reign-effect-disabled-text">(Disabled)</span>
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="reign-effect-controls">
+                  <a data-action="toggleEffect" title="{{#if effect.disabled}}Enable{{else}}Disable{{/if}}" class="item-control-btn">
+                    <i class="fas {{#if effect.disabled}}fa-check-circle{{else}}fa-times-circle{{/if}}"></i>
+                  </a>
+                  <a data-action="editEffect" title="Quick Builder" class="item-control-btn"><i class="fas fa-edit"></i></a>
+                  <a data-action="advancedEditEffect" title="Advanced Editor" class="item-control-btn"><i class="fas fa-cogs"></i></a>
+                  <a data-action="deleteEffect" title="Delete" class="item-control-btn-delete"><i class="fas fa-trash"></i></a>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <p class="reign-empty-msg">No Active Effects modifying this Company's Qualities.</p>
+        {{/if}}
+      </div>
+    </div>
+
+  </section>
+</div>

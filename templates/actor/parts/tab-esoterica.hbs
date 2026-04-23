@@ -1,0 +1,102 @@
+<div class="tab esoterica {{tabs.esoterica}}" data-tab="esoterica">
+  <div class="item-list-container reign-mb20">
+    <div class="list-header flexrow">
+      <h3 class="reign-col-2">{{localize 'REIGN.EsotericDisciplines'}}</h3>
+      <span class="reign-col-1">{{localize 'REIGN.Rank'}}</span>
+      <span class="reign-col-1">{{localize 'REIGN.Page'}}</span>
+      <span class="reign-col-3">{{localize 'REIGN.Effect'}}</span>
+      <a class="item-create control-btn" data-action="itemCreate" data-type="discipline"><i class="fas fa-plus"></i></a>
+    </div>
+    {{#each disciplines as |item|}}
+    <div class="item-row flexrow">
+      <span class="reign-col-2 reign-bold">{{item.name}}</span>
+      <span class="reign-col-1">{{item.system.rank}}</span>
+      <span class="reign-col-1 reign-item-subtext">{{item.system.page}}</span>
+      <span class="reign-col-3 reign-item-subtext">{{item.system.effect}}</span>
+      <div class="item-controls">
+        <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+        <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+        <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="reign-esoterica-split">
+    <div class="reign-magic-stats">
+      <div class="stat-block">
+        <div class="stat-header reign-flex-between reign-p5-15">
+          {{#if @root.progressionMode}}
+            <h2 class="upgrade-btn reign-m0 reign-border-none" data-action="upgradeStat" data-type="esoterica" data-key="sorcery" data-label="Sorcery">{{localize 'REIGN.Sorcery'}} <i class="fas fa-arrow-up"></i></h2>
+          {{else}}
+            <h2 class="rollable reign-m0 reign-border-none" data-action="rollStat" data-type="esoterica" data-key="sorcery" data-label="Sorcery">{{localize 'REIGN.Sorcery'}} <i class="fas fa-dice"></i></h2>
+          {{/if}}
+          
+          <div class="em-toggles reign-text-light reign-gap12">
+            {{#if @root.progressionMode}}
+              <a class="em-label {{#unless system.esoterica.expert}}upgrade-btn{{/unless}} reign-text-light" title="Upgrade to Expert Die"
+                 {{#unless system.esoterica.expert}}data-action="upgradeStat" data-type="ed" data-key="sorcery" data-label="Sorcery" data-isesoterica="true"{{/unless}}>
+                E {{#if system.esoterica.expert}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+              <a class="em-label {{#unless system.esoterica.master}}upgrade-btn{{/unless}} reign-text-light" title="Upgrade to Master Die"
+                 {{#unless system.esoterica.master}}data-action="upgradeStat" data-type="md" data-key="sorcery" data-label="Sorcery" data-isesoterica="true" data-hased="{{system.esoterica.expert}}"{{/unless}}>
+                M {{#if system.esoterica.master}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+            {{else}}
+              <label class="em-label reign-text-light reign-cursor-pointer reign-flex-center-gap4" title="{{localize 'REIGN.ExpertDie'}}">E <input type="checkbox" name="system.esoterica.expert" {{checked system.esoterica.expert}}/></label>
+              <label class="em-label reign-text-light reign-cursor-pointer reign-flex-center-gap4" title="{{localize 'REIGN.MasterDie'}}">M <input type="checkbox" name="system.esoterica.master" {{checked system.esoterica.master}}/></label>
+            {{/if}}
+          </div>
+        </div>
+        
+        <div class="reign-sorcery-box reign-p10 reign-flex-center">
+          <input type="number" name="system.esoterica.sorcery" value="{{system.esoterica.sorcery}}" class="reign-sorcery-val reign-h40 reign-text-xl reign-border-thick"/>
+        </div>
+        <div class="reign-quick-attrs">
+          <div class="reign-quick-attrs-title">{{localize 'REIGN.CastingAttributes'}}</div>
+          <div class="quick-attr-row"><span>Body:</span> <strong>{{system.attributes.body.value}}</strong></div>
+          <div class="quick-attr-row"><span>Coordination:</span> <strong>{{system.attributes.coordination.value}}</strong></div>
+          <div class="quick-attr-row"><span>Sense:</span> <strong>{{system.attributes.sense.value}}</strong></div>
+          <div class="quick-attr-row"><span>Knowledge:</span> <strong>{{system.attributes.knowledge.value}}</strong></div>
+          <div class="quick-attr-row"><span>Command:</span> <strong>{{system.attributes.command.value}}</strong></div>
+          <div class="quick-attr-row"><span>Charm:</span> <strong>{{system.attributes.charm.value}}</strong></div>
+        </div>
+      </div>
+
+      <div class="stat-block reign-attunement-box">
+        <div class="stat-header reign-flex-center"><h2 class="reign-text-sm">{{localize 'REIGN.AttunementEffects'}}</h2></div>
+        <textarea name="system.esoterica.attunement" placeholder="{{localize 'REIGN.AttunementPlaceholder'}}" class="reign-textarea">{{system.esoterica.attunement}}</textarea>
+      </div>
+    </div>
+
+    <div class="item-list-container reign-spell-list">
+      <div class="list-header flexrow">
+        <h3 class="reign-col-2">{{localize 'REIGN.Spells'}}</h3>
+        <span class="reign-col-1">{{localize 'REIGN.Pool'}}</span>
+        <span class="reign-col-1">{{localize 'REIGN.Intensity'}}</span>
+        <span class="reign-col-1">{{localize 'REIGN.Page'}}</span>
+        <span class="reign-col-3">{{localize 'REIGN.Effect'}}</span>
+        <a class="item-create control-btn" data-action="itemCreate" data-type="spell"><i class="fas fa-plus"></i></a>
+      </div>
+      <div class="reign-spell-scroll">
+        {{#each spells as |item|}}
+        <div class="item-row flexrow">
+          <span class="reign-col-2 reign-bold">
+            <label class="rollable" data-action="rollStat" data-type="item" data-key="{{item.id}}" data-label="{{item.name}}"><i class="fas fa-dice reign-mr10"></i></label>
+            {{item.name}}
+          </span>
+          <span class="reign-col-1">{{item.system.pool}}</span>
+          <span class="reign-col-1 reign-intensity-val">{{item.system.intensity}}</span>
+          <span class="reign-col-1 reign-item-subtext">{{item.system.page}}</span>
+          <span class="reign-col-3 reign-item-subtext">{{item.system.effect}}</span>
+          <div class="item-controls">
+            <a data-action="itemToChat" data-item-id="{{item.id}}"><i class="fas fa-comment"></i></a>
+            <a data-action="itemEdit" data-item-id="{{item.id}}"><i class="fas fa-edit"></i></a>
+            <a data-action="itemDelete" data-item-id="{{item.id}}"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+</div>
