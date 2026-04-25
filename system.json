@@ -1,0 +1,158 @@
+{
+  "id": "reign",
+  "title": "Reign: Realities of Lords and Leaders",
+  "description": "An unofficial fan-made system for playing Reign (2nd Edition) on Foundry VTT, fully automating the One-Roll Engine (ORE).",
+  "version": "2.3.0",
+  "authors": [
+    {
+      "name": "Llew ap Hywel",
+      "discord": "Llew ap Hywel",
+      "url": "https://github.com/arawnlp-debug"
+    }
+  ],
+  "url": "https://github.com/arawnlp-debug/foundry-reign",
+  "manifest": "https://raw.githubusercontent.com/arawnlp-debug/foundry-reign/main/system.json",
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v2.3.0/reign.zip",
+  "license": "MIT",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "esmodules": [
+    "scripts/reign.mjs"
+  ],
+  "styles": [
+    "styles/variables.css",
+    "styles/base.css",
+    "styles/actor-sheet.css",
+    "styles/item-sheet.css",
+    "styles/chat.css",
+    "styles/dialogs.css",
+    "styles/charactermancer.css",
+    "styles/companymancer.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "background": "systems/reign/assets/reign-splash.webp",
+  "media": [
+    {
+      "type": "setup",
+      "url": "systems/reign/assets/reign-splash.webp"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": {
+        "htmlFields": [
+          "system.biography.history",
+          "system.esoterica.attunement"
+        ]
+      },
+      "company": {
+        "htmlFields": [
+          "system.biography.description",
+          "system.biography.assets"
+        ]
+      },
+      "threat": {
+        "htmlFields": [
+          "system.description"
+        ]
+      }
+    },
+    "Item": {
+      "weapon": {
+        "htmlFields": [
+          "system.notes"
+        ]
+      },
+      "armor": {
+        "htmlFields": [
+          "system.notes"
+        ]
+      },
+      "shield": {
+        "htmlFields": [
+          "system.notes"
+        ]
+      },
+      "technique": {
+        "htmlFields": [
+          "system.effect"
+        ]
+      },
+      "spell": {
+        "htmlFields": [
+          "system.effect"
+        ]
+      },
+      "discipline": {
+        "htmlFields": [
+          "system.effect"
+        ]
+      },
+      "gear": {
+        "htmlFields": [
+          "system.notes"
+        ]
+      },
+      "advantage": {
+        "htmlFields": [
+          "system.effect"
+        ]
+      },
+      "problem": {
+        "htmlFields": [
+          "system.effect"
+        ]
+      },
+      "asset": {
+        "htmlFields": [
+          "system.description"
+        ]
+      }
+    }
+  },
+  "packs": [
+    {
+      "name": "weapons",
+      "label": "Weapons & Armor",
+      "path": "packs/weapons.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "gear",
+      "label": "Gear & Equipment",
+      "path": "packs/gear.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "martial-paths",
+      "label": "Martial Techniques",
+      "path": "packs/martial-paths.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "esoterica",
+      "label": "Spells & Esoteric Disciplines",
+      "path": "packs/esoterica.db",
+      "type": "Item",
+      "system": "reign"
+    },
+    {
+      "name": "company-assets",
+      "label": "Company Assets",
+      "path": "packs/company-assets.db",
+      "type": "Item",
+      "system": "reign"
+    }
+  ]
+}

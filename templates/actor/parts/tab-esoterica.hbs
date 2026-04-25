@@ -1,0 +1,254 @@
+<div class="tab esoterica {{tabs.esoterica}}" data-tab="esoterica">
+
+  {{!-- ═══════════════════════════════════════════════════════════════
+       ESOTERIC DISCIPLINES LIST
+  ════════════════════════════════════════════════════════════════════ --}}
+  <div class="item-list-container reign-mb20">
+    <div class="list-header flexrow">
+      <h3 class="reign-col-2">{{localize 'REIGN.EsotericDisciplines'}}</h3>
+      <span class="reign-col-1">{{localize 'REIGN.Rank'}}</span>
+      <span class="reign-col-1">{{localize 'REIGN.Page'}}</span>
+      <span class="reign-col-3">{{localize 'REIGN.Effect'}}</span>
+      <a class="item-create control-btn" data-action="itemCreate" data-type="discipline" title="Add Discipline"><i class="fas fa-plus"></i></a>
+    </div>
+    {{#each disciplines as |item|}}
+    <div class="item-row flexrow">
+      <span class="reign-col-2 reign-bold">{{item.name}}</span>
+      <span class="reign-col-1">{{item.system.rank}}</span>
+      <span class="reign-col-1 reign-item-subtext">{{item.system.page}}</span>
+      <span class="reign-col-3 reign-item-subtext">{{item.system.effect}}</span>
+      <div class="item-controls">
+        <a data-action="itemToChat" data-item-id="{{item.id}}" title="Post to Chat"><i class="fas fa-comment"></i></a>
+        <a data-action="itemEdit" data-item-id="{{item.id}}" title="Edit"><i class="fas fa-edit"></i></a>
+        <a data-action="itemDelete" data-item-id="{{item.id}}" title="Delete"><i class="fas fa-trash"></i></a>
+      </div>
+    </div>
+    {{else}}
+    <div class="reign-empty-list reign-text-muted">No esoteric disciplines known.</div>
+    {{/each}}
+  </div>
+
+  {{!-- ═══════════════════════════════════════════════════════════════
+       MAIN SPLIT: SIDEBAR + SPELL LIST
+  ════════════════════════════════════════════════════════════════════ --}}
+  <div class="reign-esoterica-split">
+
+    {{!-- ── LEFT SIDEBAR ──────────────────────────────────────────── --}}
+    <div class="reign-magic-stats">
+
+      {{!-- SORCERY SKILL BLOCK --}}
+      <div class="stat-block">
+        <div class="stat-header reign-flex-between reign-p5-15">
+          {{#if @root.progressionMode}}
+            <h2 class="upgrade-btn reign-m0 reign-border-none" data-action="upgradeStat" data-type="esoterica" data-key="sorcery" data-label="Sorcery">
+              {{localize 'REIGN.Sorcery'}} <i class="fas fa-arrow-up"></i>
+            </h2>
+          {{else}}
+            <h2 class="rollable reign-m0 reign-border-none" data-action="rollStat" data-type="esoterica" data-key="sorcery" data-label="Sorcery">
+              {{localize 'REIGN.Sorcery'}} <i class="fas fa-dice"></i>
+            </h2>
+          {{/if}}
+
+          <div class="em-toggles reign-text-light reign-gap12">
+            {{#if @root.progressionMode}}
+              <a class="em-label {{#unless system.esoterica.expert}}upgrade-btn{{/unless}} reign-text-light" title="Upgrade to Expert Die"
+                 {{#unless system.esoterica.expert}}data-action="upgradeStat" data-type="ed" data-key="sorcery" data-label="Sorcery" data-isesoterica="true"{{/unless}}>
+                E {{#if system.esoterica.expert}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+              <a class="em-label {{#unless system.esoterica.master}}upgrade-btn{{/unless}} reign-text-light" title="Upgrade to Master Die"
+                 {{#unless system.esoterica.master}}data-action="upgradeStat" data-type="md" data-key="sorcery" data-label="Sorcery" data-isesoterica="true" data-hased="{{system.esoterica.expert}}"{{/unless}}>
+                M {{#if system.esoterica.master}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+            {{else}}
+              <label class="em-label reign-text-light reign-cursor-pointer reign-flex-center-gap4" title="{{localize 'REIGN.ExpertDie'}}">E <input type="checkbox" name="system.esoterica.expert" {{checked system.esoterica.expert}}/></label>
+              <label class="em-label reign-text-light reign-cursor-pointer reign-flex-center-gap4" title="{{localize 'REIGN.MasterDie'}}">M <input type="checkbox" name="system.esoterica.master" {{checked system.esoterica.master}}/></label>
+            {{/if}}
+          </div>
+        </div>
+
+        <div class="reign-sorcery-box reign-p10 reign-flex-center">
+          <input type="number" name="system.esoterica.sorcery" value="{{system.esoterica.sorcery}}" class="reign-sorcery-val reign-h40 reign-text-xl reign-border-thick"/>
+        </div>
+
+        {{!-- CASTING ATTRIBUTES — highlights the school's associated stat --}}
+        <div class="reign-quick-attrs">
+          <div class="reign-quick-attrs-title">{{localize 'REIGN.CastingAttributes'}}</div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'body')}}reign-school-stat-active{{/if}}">
+            <span>Body:</span> <strong>{{system.attributes.body.value}}</strong>
+            {{#if (eq schoolStat 'body')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'coordination')}}reign-school-stat-active{{/if}}">
+            <span>Coordination:</span> <strong>{{system.attributes.coordination.value}}</strong>
+            {{#if (eq schoolStat 'coordination')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'sense')}}reign-school-stat-active{{/if}}">
+            <span>Sense:</span> <strong>{{system.attributes.sense.value}}</strong>
+            {{#if (eq schoolStat 'sense')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'knowledge')}}reign-school-stat-active{{/if}}">
+            <span>Knowledge:</span> <strong>{{system.attributes.knowledge.value}}</strong>
+            {{#if (eq schoolStat 'knowledge')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'command')}}reign-school-stat-active{{/if}}">
+            <span>Command:</span> <strong>{{system.attributes.command.value}}</strong>
+            {{#if (eq schoolStat 'command')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+          <div class="quick-attr-row {{#if (eq schoolStat 'charm')}}reign-school-stat-active{{/if}}">
+            <span>Charm:</span> <strong>{{system.attributes.charm.value}}</strong>
+            {{#if (eq schoolStat 'charm')}}<span class="reign-school-stat-pip">◆</span>{{/if}}
+          </div>
+        </div>
+      </div>
+
+      {{!-- SCHOOL PANEL --}}
+      <div class="stat-block reign-school-panel">
+        <div class="stat-header reign-school-header">
+          <i class="fas fa-hat-wizard"></i>
+          <h2 class="reign-text-sm reign-m0 reign-ml5">{{localize 'REIGN.SchoolPanel'}}</h2>
+        </div>
+        <div class="reign-school-body">
+          <div class="reign-school-field">
+            <label>{{localize 'REIGN.SchoolName'}}</label>
+            <input type="text" name="system.esoterica.schoolName" value="{{system.esoterica.schoolName}}" placeholder="{{localize 'REIGN.SchoolNamePlaceholder'}}"/>
+          </div>
+          <div class="reign-school-field">
+            <label>{{localize 'REIGN.SchoolDomain'}}</label>
+            <input type="text" name="system.esoterica.schoolDomain" value="{{system.esoterica.schoolDomain}}" placeholder="{{localize 'REIGN.SchoolDomainPlaceholder'}}"/>
+          </div>
+          <div class="reign-school-field">
+            <label>{{localize 'REIGN.SchoolMethod'}}</label>
+            <input type="text" name="system.esoterica.schoolMethod" value="{{system.esoterica.schoolMethod}}" placeholder="{{localize 'REIGN.SchoolMethodPlaceholder'}}"/>
+          </div>
+          <div class="reign-school-field">
+            <label>{{localize 'REIGN.SchoolStat'}}</label>
+            <select name="system.esoterica.schoolStat">
+              <option value="" {{#unless system.esoterica.schoolStat}}selected{{/unless}}>— Generalist —</option>
+              <option value="body"         {{#if (eq system.esoterica.schoolStat 'body')}}selected{{/if}}>Body</option>
+              <option value="coordination" {{#if (eq system.esoterica.schoolStat 'coordination')}}selected{{/if}}>Coordination</option>
+              <option value="sense"        {{#if (eq system.esoterica.schoolStat 'sense')}}selected{{/if}}>Sense</option>
+              <option value="knowledge"    {{#if (eq system.esoterica.schoolStat 'knowledge')}}selected{{/if}}>Knowledge</option>
+              <option value="command"      {{#if (eq system.esoterica.schoolStat 'command')}}selected{{/if}}>Command</option>
+              <option value="charm"        {{#if (eq system.esoterica.schoolStat 'charm')}}selected{{/if}}>Charm</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {{!-- ATTUNEMENT STATUS PANEL --}}
+      <div class="stat-block reign-attunement-panel">
+        <div class="stat-header reign-attunement-status-header">
+          <i class="fas fa-circle-nodes"></i>
+          <h2 class="reign-text-sm reign-m0 reign-ml5">{{localize 'REIGN.AttunementStatus'}}</h2>
+        </div>
+        <div class="reign-attunement-status-row">
+          <label class="reign-attune-option" title="Not attuned — temporary attunement spells required for advanced casting">
+            <input type="radio" name="system.esoterica.attunementStatus" value="none" {{#if (eq system.esoterica.attunementStatus 'none')}}checked{{/if}}/>
+            <span class="reign-attune-badge attune-none">{{localize 'REIGN.AttunementStatusNone'}}</span>
+          </label>
+          <label class="reign-attune-option" title="Temporary — an attunement spell is active this session">
+            <input type="radio" name="system.esoterica.attunementStatus" value="temporary" {{#if (eq system.esoterica.attunementStatus 'temporary')}}checked{{/if}}/>
+            <span class="reign-attune-badge attune-temporary">{{localize 'REIGN.AttunementStatusTemporary'}}</span>
+          </label>
+          <label class="reign-attune-option" title="Partial attunement — permanently attuned but with unpleasant side effects (fragile bones, sandy skin, etc.)">
+            <input type="radio" name="system.esoterica.attunementStatus" value="partial" {{#if (eq system.esoterica.attunementStatus 'partial')}}checked{{/if}}/>
+            <span class="reign-attune-badge attune-partial">{{localize 'REIGN.AttunementStatusImperfect'}}</span>
+          </label>
+          <label class="reign-attune-option" title="Perfect attunement — fully attuned; can cast all domain spells without temporary attunement, with associated benefits">
+            <input type="radio" name="system.esoterica.attunementStatus" value="perfect" {{#if (eq system.esoterica.attunementStatus 'perfect')}}checked{{/if}}/>
+            <span class="reign-attune-badge attune-perfect">{{localize 'REIGN.AttunementStatusFlawless'}}</span>
+          </label>
+        </div>
+        <div class="reign-attunement-notes-label">Effects &amp; Side-Effects</div>
+        <textarea name="system.esoterica.attunement" placeholder="{{localize 'REIGN.AttunementPlaceholder'}}" class="reign-textarea reign-attunement-textarea">{{system.esoterica.attunement}}</textarea>
+      </div>
+
+    </div>{{!-- end .reign-magic-stats --}}
+
+    {{!-- ── SPELL LIST (GROUPED BY SCHOOL) ─────────────────────────── --}}
+    <div class="item-list-container reign-spell-list">
+
+      <div class="list-header flexrow">
+        <h3 class="reign-col-2">{{localize 'REIGN.Spells'}}</h3>
+        <span class="reign-spell-col-pool reign-text-sm">{{localize 'REIGN.Pool'}}</span>
+        <span class="reign-spell-col-int reign-text-sm">Int.</span>
+        <span class="reign-spell-col-dur reign-text-sm">Duration</span>
+        <span class="reign-spell-col-fx reign-text-sm">{{localize 'REIGN.Effect'}}</span>
+        <a class="item-create control-btn" data-action="itemCreate" data-type="spell" title="Add Spell"><i class="fas fa-plus"></i></a>
+      </div>
+
+      <div class="reign-spell-scroll">
+        {{#if spells.length}}
+
+          {{!-- GROUPED VIEW: named school(s) --}}
+          {{#if hasSpellGroups}}
+            {{#each spellGroups as |group|}}
+            <div class="reign-spell-group">
+              <a class="reign-spell-group-header" data-action="toggleSpellGroup">
+                <i class="fas fa-chevron-down reign-spell-group-chevron"></i>
+                <span class="reign-spell-group-name">{{group.school}}</span>
+                <span class="reign-spell-group-count">{{group.spells.length}}</span>
+              </a>
+              {{#each group.spells as |item|}}
+              <div class="item-row reign-spell-row flexrow">
+                <span class="reign-spell-col-name reign-bold">
+                  <label class="rollable" data-action="rollStat" data-type="item" data-key="{{item.id}}" data-label="{{item.name}}" title="Cast {{item.name}}">
+                    <i class="fas fa-dice reign-mr5"></i>
+                  </label>
+                  {{#if item.isLocked}}<i class="fas fa-lock reign-spell-lock" title="Attunement required — you are not attuned"></i>{{/if}}
+                  {{#if item.isAttunementSpell}}<i class="fas fa-link-simple reign-spell-attune-icon" title="This is an attunement spell"></i>{{/if}}
+                  {{item.name}}
+                </span>
+                <span class="reign-spell-col-pool reign-item-subtext">{{item.system.pool}}</span>
+                <span class="reign-spell-col-int">
+                  <span class="reign-intensity-badge {{item.intensityClass}}" title="Intensity {{item.system.intensity}} — detectable within {{item.detectionRadius}}">{{item.system.intensity}}</span>
+                  {{#if item.hasSlow}}<span class="reign-spell-slow-badge" title="Slow {{item.system.slow}} — requires {{item.system.slow}} round(s) of preparation before rolling"><i class="fas fa-hourglass-half"></i>{{item.system.slow}}</span>{{/if}}
+                </span>
+                <span class="reign-spell-col-dur reign-item-subtext">{{item.system.duration}}</span>
+                <span class="reign-spell-col-fx reign-item-subtext">{{item.system.effect}}</span>
+                <div class="item-controls">
+                  <a data-action="itemToChat" data-item-id="{{item.id}}" title="Post to Chat"><i class="fas fa-comment"></i></a>
+                  <a data-action="itemEdit" data-item-id="{{item.id}}" title="Edit"><i class="fas fa-edit"></i></a>
+                  <a data-action="itemDelete" data-item-id="{{item.id}}" title="Delete"><i class="fas fa-trash"></i></a>
+                </a>
+              </a>
+              {{/each}}
+            </div>
+            {{/each}}
+
+          {{!-- FLAT VIEW: all ungrouped --}}
+          {{else}}
+            {{#each spells as |item|}}
+            <div class="item-row reign-spell-row flexrow">
+              <span class="reign-spell-col-name reign-bold">
+                <label class="rollable" data-action="rollStat" data-type="item" data-key="{{item.id}}" data-label="{{item.name}}" title="Cast {{item.name}}">
+                  <i class="fas fa-dice reign-mr5"></i>
+                </label>
+                {{#if item.isLocked}}<i class="fas fa-lock reign-spell-lock" title="Attunement required — you are not attuned"></i>{{/if}}
+                {{#if item.isAttunementSpell}}<i class="fas fa-link-simple reign-spell-attune-icon" title="This is an attunement spell"></i>{{/if}}
+                {{item.name}}
+              </span>
+              <span class="reign-spell-col-pool reign-item-subtext">{{item.system.pool}}</span>
+              <span class="reign-spell-col-int">
+                <span class="reign-intensity-badge {{item.intensityClass}}" title="Intensity {{item.system.intensity}} — detectable within {{item.detectionRadius}}">{{item.system.intensity}}</span>
+                {{#if item.hasSlow}}<span class="reign-spell-slow-badge" title="Slow {{item.system.slow}} — requires {{item.system.slow}} round(s) of preparation before rolling"><i class="fas fa-hourglass-half"></i>{{item.system.slow}}</span>{{/if}}
+              </span>
+              <span class="reign-spell-col-dur reign-item-subtext">{{item.system.duration}}</span>
+              <span class="reign-spell-col-fx reign-item-subtext">{{item.system.effect}}</span>
+              <div class="item-controls">
+                <a data-action="itemToChat" data-item-id="{{item.id}}" title="Post to Chat"><i class="fas fa-comment"></i></a>
+                <a data-action="itemEdit" data-item-id="{{item.id}}" title="Edit"><i class="fas fa-edit"></i></a>
+                <a data-action="itemDelete" data-item-id="{{item.id}}" title="Delete"><i class="fas fa-trash"></i></a>
+              </a>
+            </div>
+            {{/each}}
+          {{/if}}
+
+        {{else}}
+          <div class="reign-empty-list reign-text-muted">{{localize 'REIGN.NoSpells'}}</div>
+        {{/if}}
+      </div>
+
+    </div>{{!-- end .reign-spell-list --}}
+
+  </div>{{!-- end .reign-esoterica-split --}}
+</div>

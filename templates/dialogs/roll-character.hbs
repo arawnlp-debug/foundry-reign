@@ -1,0 +1,118 @@
+<div class="reign-dialog-pool-preview">
+  Expected Pool: <span id="pool-value" class="reign-pool-value">...</span>
+</div>
+
+{{!-- SPELL INFORMATION BANNER --}}
+{{#if isSpell}}
+<div class="reign-spell-dialog-info">
+  <div class="reign-spell-dialog-header">
+    <i class="fas fa-hat-wizard"></i>
+    <strong>Spell Cast</strong>
+    {{#if spellIsAttunementSpell}}<span class="reign-spell-dialog-tag attune">Attunement Spell</span>{{/if}}
+    {{#if spellAttunementRequired}}<span class="reign-spell-dialog-tag locked"><i class="fas fa-lock"></i> Attunement Required</span>{{/if}}
+  </div>
+  <div class="reign-spell-dialog-row">
+    <span>Difficulty:</span>
+    <strong class="reign-spell-dialog-intensity">Width of set must equal or exceed Intensity {{spellIntensity}}</strong>
+  </div>
+  {{#if (gt spellSlow 0)}}
+  <div class="reign-spell-dialog-row">
+    <span>Slow {{spellSlow}}:</span>
+    <span class="reign-text-muted">Fires once every {{spellSlow}}+1 rounds</span>
+  </div>
+  {{/if}}
+</div>
+{{/if}}
+
+<form class="reign-dialog-form">
+  <div class="form-group">
+    <label>Attribute:</label>
+    <select name="attr">
+      {{selectOptions attrOptions selected=defaultAttr}}
+    </select>
+  </div>
+  
+  {{#if showSkillSelect}}
+  <div class="form-group">
+    <label>Linked Skill:</label>
+    <select name="skillKey">
+      {{selectOptions skillOptions selected=defaultSkill}}
+    </select>
+  </div>
+  {{/if}}
+
+  <div class="dialog-grid {{#if isCombatRoll}}dialog-grid-2{{/if}}">
+    {{#if isCombatRoll}}
+    <div class="form-group">
+      <label>Called Shot (-1d):</label>
+      <select name="calledShot">
+        {{selectOptions calledShotOptions selected="0"}}
+      </select>
+    </div>
+    {{/if}}
+    <div class="form-group">
+      <label>Difficulty (Min Height):</label>
+      <input type="number" name="difficulty" value="{{difficulty}}" min="0" max="10"/>
+    </div>
+  </div>
+  
+  {{#if showEnvContext}}
+  <div class="form-group reign-dialog-section">
+      <label>Environment Context:</label>
+      <select name="envContext">
+          <option value="none">Normal Environment</option>
+          <option value="swimming">Swimming (Highly restricted by Armor/Shields)</option>
+      </select>
+  </div>
+  {{/if}}
+
+  {{#if isCombatRoll}}
+  <div class="form-group reign-dialog-section">
+      <label>{{localize 'REIGN.ManeuverLabel'}}:</label>
+      <select name="maneuver">
+          <option value="none">{{localize 'REIGN.ManeuverNone'}}</option>
+          {{#if maneuverOptions.simple.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategorySimple'}}">
+              {{#each maneuverOptions.simple as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+          {{#if maneuverOptions.advanced.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategoryAdvanced'}}">
+              {{#each maneuverOptions.advanced as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+          {{#if maneuverOptions.expert.length}}
+          <optgroup label="{{localize 'REIGN.ManeuverCategoryExpert'}}">
+              {{#each maneuverOptions.expert as |m|}}
+              <option value="{{m.id}}">{{localize m.label}}</option>
+              {{/each}}
+          </optgroup>
+          {{/if}}
+      </select>
+  </div>
+  {{/if}}
+
+  <div class="dialog-grid dialog-grid-3">
+    <div class="form-group"><label>Total Actions:</label><input type="number" name="multiActions" value="1" min="1" title="Penalty: -1d per extra action"/></div>
+    <div class="form-group"><label>Bonus Dice (+d):</label><input type="number" name="bonus" value="{{autoBonus}}"/></div>
+    <div class="form-group"><label>Penalty Dice (-d):</label><input type="number" name="penalty" value="{{autoPenalty}}" title="{{penaltyTitle}}"/></div>
+  </div>
+    
+  <div class="form-group">
+    <label>Passions:</label>
+    <div class="dialog-grid dialog-grid-3">
+      <div class="reign-passion-group"><label>Mission</label><select name="pMiss"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+      <div class="reign-passion-group"><label>Duty</label><select name="pDuty"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+      <div class="reign-passion-group"><label>Craving</label><select name="pCrav"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+    </div>
+  </div>
+  
+  <div class="dialog-grid dialog-grid-2 reign-dialog-section">
+    <div class="form-group"><label>Expert Die (1-10, 0=None):</label><input type="number" name="ed" value="{{initialEdValue}}" min="0" max="10"/></div>
+    <div class="form-group"><label>Master Dice (Max 1):</label><input type="number" name="md" value="{{initialMdValue}}" min="0" max="1"/></div>
+  </div>
+</form>
