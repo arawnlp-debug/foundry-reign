@@ -1,5 +1,9 @@
 // scripts/helpers/character-roller.js
 
+// Set to true locally to enable verbose roll diagnostics in the browser console.
+// Never commit with this set to true.
+const DEBUG_ROLLS = false;
+
 const { renderTemplate } = foundry.applications.handlebars;
 import { parseORE } from "./ore-engine.js";
 import { postOREChat } from "./chat.js";
@@ -90,7 +94,7 @@ export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShot
 export class CharacterRoller {
   static async rollCharacter(actor, dataset) {
     try {
-        console.log("Reign Roller | Execution Started.", dataset);
+        if (DEBUG_ROLLS) console.log("Reign Roller | Execution Started.", dataset);
 
         const { type, key, label } = dataset;
         const system = actor.system;
@@ -230,9 +234,6 @@ export class CharacterRoller {
             if (bodyVal < 4) {
                 return ui.notifications.error(`Cannot wield ${itemRef.name}. Massive weapons require a Body attribute of 4 or higher (Current: ${bodyVal}).`);
             }
-            if (!itemRef.system.qualities?.twoHanded) {
-                return ui.notifications.error(`${itemRef.name} is marked Massive but is not set as Two-Handed. Only two-handed weapons (big clubs, battleaxes, polearms, greatswords) can be massive. Check the weapon's qualities.`);
-            }
         }
 
         let armorWeight = "none";
@@ -250,7 +251,14 @@ export class CharacterRoller {
         if (!rawSkillKey || rawSkillKey === "none") rawSkillKey = key; 
         
         const skillMods = modifiers.skills?.[rawSkillKey] || {};
-        const ignoreMultiPenalty = Array.isArray(actionEconomy.ignoreMultiPenaltySkills) ? actionEconomy.ignoreMultiPenaltySkills.includes(rawSkillKey) : false;
+        // ignoreMultiPenaltySkills is a StringField — comma-separated skill names, e.g. "sorcery" or "sorcery,fight".
+        // Defensive: handle legacy array values or unexpected types without crashing.
+        const rawIgnoreSkills = actionEconomy.ignoreMultiPenaltySkills;
+        const ignoreSkillsStr = Array.isArray(rawIgnoreSkills)
+            ? rawIgnoreSkills.join(",")
+            : String(rawIgnoreSkills || "");
+        const ignoreSkillsList = ignoreSkillsStr.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+        const ignoreMultiPenalty = ignoreSkillsList.includes(rawSkillKey);
 
         const showSkillSelect = (type === "item");
         const isCombatRoll = (type === "item" && itemRef?.type === "weapon") || (type === "skill" && key === "fight") || (type === "move") || (type === "customSkill" && system.customSkills[key]?.isCombat);
@@ -391,9 +399,9 @@ export class CharacterRoller {
             maneuverOptions: isCombatRoll ? getManeuverOptions() : null
         };
 
-        console.log("Reign Roller | Rendering HTML Template...");
+        if (DEBUG_ROLLS) console.log("Reign Roller | Rendering HTML Template...");
         const content = await renderTemplate("systems/reign/templates/dialogs/roll-character.hbs", templateData);
-        console.log("Reign Roller | Template rendered safely. Opening DialogV2...");
+        if (DEBUG_ROLLS) console.log("Reign Roller | Template rendered safely. Opening DialogV2...");
 
         const rollData = await reignDialog(
           dialogTitle,
@@ -605,10 +613,15 @@ export class CharacterRoller {
         
         if (!rollData) return;
 
-        console.log("Reign Roller | Dialog Submitted.", rollData);
+        if (DEBUG_ROLLS) console.log("Reign Roller | Dialog Submitted.", rollData);
 
         if (type === "item" && itemRef?.type === "spell" && rollData.multiActions > 1) {
-            const isSpellImmune = Array.isArray(actionEconomy.ignoreMultiPenaltySkills) && actionEconomy.ignoreMultiPenaltySkills.includes("sorcery");
+            const rawIgnoreSpell = actionEconomy.ignoreMultiPenaltySkills;
+            const ignoreSpellStr = Array.isArray(rawIgnoreSpell)
+                ? rawIgnoreSpell.join(",")
+                : String(rawIgnoreSpell || "");
+            const ignoreSpellList = ignoreSpellStr.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+            const isSpellImmune = ignoreSpellList.includes("sorcery");
             if (!isSpellImmune) {
                 ui.notifications.warn("Sorcery requires full concentration and cannot be part of a multiple action. Reverting to 1 action.");
                 rollData.multiActions = 1;
@@ -719,7 +732,7 @@ export class CharacterRoller {
         let results = [];
         let actualRoll = null;
         
-        console.log("Reign Roller | Evaluating Final Dice...");
+        if (DEBUG_ROLLS) console.log("Reign Roller | Evaluating Final Dice...");
         if (poolMath.normalDiceCount > 0) {
           actualRoll = new Roll(`${poolMath.normalDiceCount}d10`);
           await actualRoll.evaluate();
@@ -750,7 +763,7 @@ export class CharacterRoller {
             } else {
                 await postOREChat(actor, label || "Action", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: poolMath.wasCapped, isAttack: isAttackRoll, isDefense: isDefenseRoll, poolBreakdown: poolBreakdown, advancedMods: advancedMods }, rollInstance);
             }
-            console.log("Reign Roller | Execution Complete.");
+            if (DEBUG_ROLLS) console.log("Reign Roller | Execution Complete.");
         };
 
         if (poolMath.actualMd > 0) {

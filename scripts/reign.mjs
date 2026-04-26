@@ -251,6 +251,15 @@ Hooks.on("preUpdateActor", (actor, changes, options, userId) => {
   if (esoterica) {
     if (esoterica?.master === true && (actor.system.esoterica?.expert || esoterica?.expert === true)) esoterica.expert = false;
     if (esoterica?.expert === true && (actor.system.esoterica?.master || esoterica?.master === true)) esoterica.master = false;
+
+    // Stash the previous attunementStatus so the updateActor hook can detect
+    // a genuine transition to "perfect" rather than a redundant re-save.
+    if (esoterica.attunementStatus !== undefined) {
+        if (!options.previousData) options.previousData = {};
+        if (!options.previousData.system) options.previousData.system = {};
+        if (!options.previousData.system.esoterica) options.previousData.system.esoterica = {};
+        options.previousData.system.esoterica.attunementStatus = actor.system.esoterica?.attunementStatus;
+    }
   }
 });
 
@@ -266,6 +275,64 @@ Hooks.on("preUpdateItem", (item, changes, options, userId) => {
         }
     }
     return true;
+});
+
+// ── ATTUNEMENT AE OFFER ────────────────────────────────────────────────────
+// When a character's attunementStatus transitions to "perfect", offer to create
+// a labelled Active Effect so the GM/player can record mechanical attunement
+// benefits (immunities, resistances, etc.) through the standard AE system.
+// This is entirely optional — dismissing the dialog has no effect.
+// Only fires for the owning user to avoid duplicate dialogs in multiplayer.
+Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (actor.type !== "character") return;
+
+    const newStatus = changes?.system?.esoterica?.attunementStatus;
+    if (newStatus !== "perfect") return;
+
+    const oldStatus = options?.previousData?.system?.esoterica?.attunementStatus;
+    if (oldStatus === "perfect") return; // already perfect — no transition
+
+    // Check if an attunement AE already exists for this school
+    const schoolName = actor.system.esoterica?.schoolName || "";
+    const aeLabel = schoolName
+        ? `Perfect Attunement: ${schoolName}`
+        : "Perfect Attunement";
+
+    const existingAE = actor.effects.find(e => e.name === aeLabel);
+    if (existingAE) return; // already created
+
+    // Only the GM or an owner of this actor should see the dialog
+    if (!actor.isOwner) return;
+
+    const confirmed = await DialogV2.confirm({
+        window: { title: "Attunement Achieved" },
+        content: `
+            <div class="reign-dialog-section">
+                <p><strong>${actor.name}</strong> has achieved Perfect Attunement${schoolName ? ` with <em>${schoolName}</em>` : ""}.</p>
+                <p>Would you like to create an Active Effect to track attunement benefits — immunities, resistances, and other mechanical advantages?</p>
+                <p class="reign-text-muted reign-text-sm">The effect will be created with no changes. Add mechanical entries to it as needed.</p>
+            </div>
+        `,
+        yes: { label: "Create Effect", icon: "fas fa-circle-nodes" },
+        no:  { label: "Not Now",       icon: "fas fa-times" }
+    });
+
+    if (!confirmed) return;
+
+    const attunementNotes = actor.system.esoterica?.attunement || "";
+    const aeData = {
+        name: aeLabel,
+        icon: "icons/magic/light/orbs-energize-teal.webp",
+        disabled: false,
+        description: attunementNotes || `Perfect attunement with ${schoolName || "this school"}. Add mechanical benefits as changes below.`,
+        changes: []
+    };
+
+    const created = await actor.createEmbeddedDocuments("ActiveEffect", [aeData]);
+    if (created?.length) {
+        ui.notifications.info(`Active Effect "${aeLabel}" created. Open the Effects tab to add mechanical benefits.`);
+    }
 });
 
 Hooks.on("updateItem", async (item, changes, options, userId) => {

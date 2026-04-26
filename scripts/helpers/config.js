@@ -61,6 +61,21 @@ export function getEffectDictionary() {
     dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.bonusWidth`, label: `Bonus Width (Equipment)`, mode: 2 });
   }
 
+  // Sorcery — separate from the skill loop as Sorcery is not in skillAttrMap
+  dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.pool", label: "Sorcery: Bonus Dice Pool", mode: 2 });
+  dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.bonusWidth", label: "Sorcery: Bonus Width", mode: 2 });
+  // ignoreMultiPenaltySkills: StringField — use mode Override (5) with a comma-separated value.
+  // e.g. value "sorcery" exempts sorcery; "sorcery,fight" exempts both. Case-insensitive at read time.
+  dict.push({ group: "Sorcery", value: "system.modifiers.actionEconomy.ignoreMultiPenaltySkills", label: "Ignore Multi-Action Penalty (comma-separated skills, e.g. sorcery)", mode: 5, isString: true });
+
+  // Combat — advanced modifiers consumed by damage.js but missing from the dictionary
+  // forceHitLocation: force all hits to a specific location (integer 1–10 = Height value)
+  dict.push({ group: "Combat & Damage", value: "system.modifiers.combat.forceHitLocation", label: "Force Hit Location (Height value 1–10)", mode: 2 });
+  // shiftHitLocationUp: shift the effective Height of each hit upward by N (e.g. Armor Piercing maneuver variants)
+  dict.push({ group: "Combat & Damage", value: "system.modifiers.combat.shiftHitLocationUp", label: "Shift Hit Location Up (by N)", mode: 2 });
+  // appendManeuvers: array of maneuver IDs applied automatically to every successful attack (RAW: certain advantages or disciplines)
+  dict.push({ group: "Combat & Damage", value: "system.modifiers.combat.appendManeuvers", label: "Append Forced Maneuver (maneuver ID string)", mode: 5, isString: true });
+
   // Immunities
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreFatiguePenalties", label: "Ignore Fatigue", mode: 5, isBool: true });
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreHeavyArmorSwim", label: "Swim in Heavy Armor", mode: 5, isBool: true });

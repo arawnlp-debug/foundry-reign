@@ -1,4 +1,9 @@
 // scripts/helpers/threat-roller.js
+
+// Set to true locally to enable verbose roll diagnostics in the browser console.
+// Never commit with this set to true.
+const DEBUG_ROLLS = false;
+
 import { postOREChat } from "./chat.js";
 import { parseORE, checkThreatElimination, calculateMoraleAttackRemoval } from "./ore-engine.js";
 import { reignDialog } from "./dialog-util.js";
@@ -20,7 +25,7 @@ export class ThreatRoller {
    */
   static async rollThreat(actor, dataset) {
     try {
-        console.log("Reign Threat Roller | Execution Started.", dataset);
+        if (DEBUG_ROLLS) console.log("Reign Threat Roller | Execution Started.", dataset);
         const system = actor.system;
 
         if (system.morale?.value === 0) return ui.notifications.warn(game.i18n.localize("REIGN.ThreatMoraleZero"));

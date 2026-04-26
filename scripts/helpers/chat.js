@@ -358,10 +358,13 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
   const flavor = await generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData, flags, parsed);
 
   // ✅ Serialize `advancedMods` natively into `rollFlags`
+  // advancedMods is passed inside flags by the roller — extract it cleanly so
+  // the spread below doesn't let the empty local parameter shadow the real value.
+  const resolvedAdvancedMods = flags.advancedMods || advancedMods || {};
   const messageFlags = { 
     reign: { 
         actorType, label: safeLabel, totalPool, results, expertDie, masterDiceCount, 
-        itemData, rollFlags: { ...flags, advancedMods },
+        itemData, rollFlags: { ...flags, advancedMods: resolvedAdvancedMods },
         isDefense, defenseType, gobbleDice
     } 
   };
