@@ -119,6 +119,17 @@ export class ReignCombat extends Combat {
       }
     }
 
+    // C1: Clear Shove bonus flags from all combatants — the window is one round only
+    for (const combatant of this.combatants) {
+      if (combatant.getFlag("reign", "shoveBonusAgainst")) {
+        await combatant.unsetFlag("reign", "shoveBonusAgainst");
+      }
+      // C2: Clear Iron Kiss setup if unused — blade opportunity expires at round end
+      if (combatant.getFlag("reign", "ironKissSetup")) {
+        await combatant.unsetFlag("reign", "ironKissSetup");
+      }
+    }
+
     return super.nextRound();
   }
 }

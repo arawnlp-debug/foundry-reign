@@ -116,6 +116,10 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
 
   // Equipment Width Bonus (RAW Ch6 p.114): Items can grant +Width to successful sets
   const bonusWidth = flags.advancedMods?.bonusWidth || 0;
+  // minHeight: AE-driven minimum Height for a set to count as successful (RAW: certain Advantages)
+  const minHeight  = flags.advancedMods?.minHeight  || 0;
+  // squishLimit: AE-driven maximum Width cap per set (RAW: certain Advantages / weapon properties)
+  const squishLimit = flags.advancedMods?.squishLimit || 0; // 0 = no cap
 
   const setsData = [];
   parsed.sets.forEach((s, index) => {
@@ -126,21 +130,30 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     if (s.height < difficulty) {
       isSuccess = false;
       failReason = `Difficulty ${difficulty} Required`;
-    } else if (isSpell && s.height < spellIntensity) {
+    } else if (isSpell && s.width < spellIntensity) {
       isSuccess = false;
-      failReason = `Intensity ${spellIntensity} Required`;
+      failReason = `Intensity ${spellIntensity} Required (Width too low)`;
+    } else if (minHeight > 0 && s.height < minHeight) {
+      // minHeight AE: set Height must reach the minimum or the set doesn't count
+      isSuccess = false;
+      failReason = `Minimum Height ${minHeight} Required`;
     }
 
     if (isSuccess) hasSuccessfulSet = true;
 
-    // Apply equipment Width bonus to successful sets only
-    const effectiveWidth = isSuccess ? s.width + bonusWidth : s.width;
+    // Apply equipment Width bonus to successful sets, then clamp to squishLimit
+    const rawEffectiveWidth = isSuccess ? s.width + bonusWidth : s.width;
+    const effectiveWidth = (squishLimit > 0 && rawEffectiveWidth > squishLimit)
+        ? squishLimit
+        : rawEffectiveWidth;
     const widthBonusText = (isSuccess && bonusWidth > 0) ? ` (+${bonusWidth}W)` : "";
+    const squishText     = (isSuccess && squishLimit > 0 && s.width + bonusWidth > squishLimit)
+        ? ` (capped ${squishLimit})` : "";
 
     const setObj = {
       width: effectiveWidth,
       height: s.height,
-      text: foundry.utils.escapeHTML(`${effectiveWidth}×${s.height}${widthBonusText}`),
+      text: foundry.utils.escapeHTML(`${effectiveWidth}×${s.height}${widthBonusText}${squishText}`),
       location: (actorType === "character" && (isAttack || isHealingSpell || isFirstAid) && !isDefense) ? foundry.utils.escapeHTML(getHitLocationLabel(locKey)) : null,
       isSuccess,
       failReason: foundry.utils.escapeHTML(failReason),
@@ -181,6 +194,7 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
         const tierResult = resolveWidthTier(maneuverDef, s.width);
         if (tierResult) {
             const outcome = {
+                maneuverKey: maneuverDef.id,
                 maneuverLabel: maneuverDef.label,
                 tier: tierResult.tier,
                 tierLabel: tierResult.tier >= 4 ? "Master" : tierResult.tier === 3 ? "Expert" : "Standard",
@@ -195,7 +209,31 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
                 bonusShock: tierResult.bonusShock || 0,
                 bonusKilling: tierResult.bonusKilling || 0,
                 convertKillingToShock: !!tierResult.convertKillingToShock,
-                discardOverflow: !!tierResult.discardOverflow
+                discardOverflow: !!tierResult.discardOverflow,
+                // C1: Status effect application fields
+                applyStatus: tierResult.applyStatus || "",
+                clearStatus: tierResult.clearStatus || "",
+                setFlag: tierResult.setFlag || "",
+                statusTarget: tierResult.statusTarget || "target",
+                slamShock: tierResult.slamShock || 0,
+                slamMultiLoc: !!tierResult.slamMultiLoc,
+                hasStatusEffect: !!(tierResult.applyStatus || tierResult.clearStatus || tierResult.setFlag),
+                // C2: Per-round hold/setup fields — Strangle
+                strangleShock: tierResult.strangleShock === "width+1" ? s.width + 1 : (tierResult.strangleShock || 0),
+                strangleNextRound: tierResult.strangleNextRound || 0,
+                hasStrangleSetup: !!tierResult.strangleShock,
+                // C2: Iron Kiss setup
+                ironKissVirtualWidth: tierResult.ironKissVirtualWidth || 0,
+                hasIronKissSetup: !!tierResult.ironKissVirtualWidth,
+                // C2: Redirect
+                redirectWidthMod: tierResult.redirectWidthMod ?? 0,
+                redirectAny: !!tierResult.redirectAny,
+                hasRedirectSetup: tierResult.redirectWidthMod !== undefined,
+                // C2: Submission Hold
+                holdShock: tierResult.holdShock || 0,
+                wrenchKilling: tierResult.wrenchKilling || 0,
+                holdHeight: flags.calledShot || 0,
+                hasSubmissionHold: !!tierResult.holdShock
             };
 
             // Morale Attack calculation for Threaten and Display Kill
@@ -304,7 +342,11 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
 
   if (game.combat && actor && parsed.sets.length > 0) {
     const range = item?.type === "weapon" ? (item.system.range || "0") : "0";
-    const initValue = calculateInitiative(parsed.sets, isDefense, flags.isAttack, flags.isMinion, foundry.utils.escapeHTML(range));
+    let initValue = calculateInitiative(parsed.sets, isDefense, flags.isAttack, flags.isMinion, foundry.utils.escapeHTML(range));
+
+    // bonusTiming AE: flat initiative bonus from Advantages (RAW: certain disciplines add +1 timing)
+    const bonusTiming = flags.advancedMods?.bonusTiming || 0;
+    if (bonusTiming !== 0) initValue += bonusTiming;
 
     const combatants = game.combat.combatants.filter(c => c.actorId === actor.id);
     

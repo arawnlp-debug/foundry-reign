@@ -127,6 +127,16 @@
                                             {{localize set.maneuverOutcome.rulesText}}
                                         </div>
                                     </details>
+                                    {{#if set.isSuccess}}
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary gm-resolve-maneuver-btn"
+                                        data-maneuver-key="{{set.maneuverOutcome.maneuverKey}}"
+                                        data-maneuver-label="{{localize set.maneuverOutcome.maneuverLabel}}"
+                                        data-width="{{set.width}}"
+                                        data-height="{{set.height}}"
+                                        title="GM: post a confirmation that this manoeuvre has been resolved">
+                                        <i class="fas fa-gavel"></i> GM: Resolve {{localize set.maneuverOutcome.maneuverLabel}}
+                                    </button>
+                                    {{/if}}
                                 {{/if}}
                             </div>
                         {{/if}}
@@ -150,6 +160,80 @@
                                 {{#if ../isFirstAid}}
                                     <button class="reign-btn-first-aid reign-btn-primary apply-first-aid-btn" data-width="{{set.width}}" title="Apply First Aid (Convert Killing to Shock)" {{#unless set.isSuccess}}disabled{{/unless}}>
                                         <i class="fas fa-notes-medical"></i> Apply First Aid
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C1: Manoeuvre status effect button (Pin, Restrain, Stand, Shove, Slam) --}}
+                                {{#if set.maneuverOutcome.hasStatusEffect}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-maneuver-status-btn"
+                                        data-maneuver-key="{{set.maneuverOutcome.maneuverKey}}"
+                                        data-apply-status="{{set.maneuverOutcome.applyStatus}}"
+                                        data-clear-status="{{set.maneuverOutcome.clearStatus}}"
+                                        data-set-flag="{{set.maneuverOutcome.setFlag}}"
+                                        data-status-target="{{set.maneuverOutcome.statusTarget}}"
+                                        data-slam-shock="{{set.maneuverOutcome.slamShock}}"
+                                        data-slam-multi-loc="{{set.maneuverOutcome.slamMultiLoc}}"
+                                        title="Apply {{localize set.maneuverOutcome.maneuverLabel}} Effect"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-magic"></i> Apply: {{localize set.maneuverOutcome.maneuverLabel}}
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Strangle — initial application + maintain hold --}}
+                                {{#if set.maneuverOutcome.hasStrangleSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-strangle-initial-btn"
+                                        data-shock="{{set.maneuverOutcome.strangleShock}}"
+                                        title="Apply {{set.maneuverOutcome.strangleShock}} Shock to target's head"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-fist"></i> Apply: Strangle ({{set.maneuverOutcome.strangleShock}} Shock to Head)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary apply-strangle-maintain-btn"
+                                        data-shock="{{set.maneuverOutcome.strangleNextRound}}"
+                                        title="Maintain strangle: apply {{set.maneuverOutcome.strangleNextRound}} Shock next round (no roll needed)">
+                                        <i class="fas fa-repeat"></i> Maintain Strangle ({{set.maneuverOutcome.strangleNextRound}} Shock)
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Iron Kiss — setup this round, execute next round --}}
+                                {{#if set.maneuverOutcome.hasIronKissSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary setup-iron-kiss-btn"
+                                        data-virtual-width="{{set.maneuverOutcome.ironKissVirtualWidth}}"
+                                        title="Set up Iron Kiss: store {{set.maneuverOutcome.ironKissVirtualWidth}}×10 guaranteed attack for next round"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-knife"></i> Set Up: Iron Kiss ({{set.maneuverOutcome.ironKissVirtualWidth}}×10 ready)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary execute-iron-kiss-btn"
+                                        title="Execute Iron Kiss: fire the stored guaranteed attack (next round)">
+                                        <i class="fas fa-bolt"></i> Execute Iron Kiss
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Redirect — opens dialog for incoming attack parameters --}}
+                                {{#if set.maneuverOutcome.hasRedirectSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-redirect-btn"
+                                        data-width-mod="{{set.maneuverOutcome.redirectWidthMod}}"
+                                        data-redirect-any="{{set.maneuverOutcome.redirectAny}}"
+                                        title="Apply Redirect: enter the attacker's damage and redirect to a new target"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-rotate"></i> Apply: Redirect
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Submission Hold — apply hold damage + wrench free option --}}
+                                {{#if set.maneuverOutcome.hasSubmissionHold}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-submission-hold-btn"
+                                        data-shock="{{set.maneuverOutcome.holdShock}}"
+                                        data-hold-height="{{set.maneuverOutcome.holdHeight}}"
+                                        title="Apply Hold: {{set.maneuverOutcome.holdShock}} Shock to held limb"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-link"></i> Apply: Hold ({{set.maneuverOutcome.holdShock}} Shock)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary apply-wrench-free-btn"
+                                        data-killing="{{set.maneuverOutcome.wrenchKilling}}"
+                                        data-hold-height="{{set.maneuverOutcome.holdHeight}}"
+                                        title="Wrench Free: target self-inflicts {{set.maneuverOutcome.wrenchKilling}} Killing to break the hold"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-person-running"></i> Wrench Free ({{set.maneuverOutcome.wrenchKilling}} Killing to self)
                                     </button>
                                 {{/if}}
                             </div>

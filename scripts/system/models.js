@@ -90,7 +90,7 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                 skills: new ObjectField({ initial: {} }), 
                 attributes: new ObjectField({ initial: {} }),
                 actionEconomy: new SchemaField({
-                    ignoreMultiPenaltySkills: new ArrayField(new StringField()),
+                    ignoreMultiPenaltySkills: new StringField({ initial: "" }),
                     freeGobbleDice: new NumberField({ initial: 0, integer: true })
                 }),
                 healthMax: new SchemaField({

@@ -59,13 +59,18 @@ export function getEffectDictionary() {
     const sName = s.charAt(0).toUpperCase() + s.slice(1);
     dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.pool`, label: `Bonus Dice Pool`, mode: 2 });
     dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.bonusWidth`, label: `Bonus Width (Equipment)`, mode: 2 });
+    dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.minHeight`, label: `Minimum Height (sets below this Height fail)`, mode: 2 });
+    dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.squishLimit`, label: `Squish Limit (max Width per set)`, mode: 2 });
+    dict.push({ group: `Skill: ${sName}`, value: `system.modifiers.skills.${s}.bonusTiming`, label: `Bonus Timing (flat initiative bonus)`, mode: 2 });
   }
 
   // Sorcery — separate from the skill loop as Sorcery is not in skillAttrMap
   dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.pool", label: "Sorcery: Bonus Dice Pool", mode: 2 });
   dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.bonusWidth", label: "Sorcery: Bonus Width", mode: 2 });
-  // ignoreMultiPenaltySkills: StringField — use mode Override (5) with a comma-separated value.
-  // e.g. value "sorcery" exempts sorcery; "sorcery,fight" exempts both. Case-insensitive at read time.
+  dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.minHeight", label: "Sorcery: Minimum Height (sets below this Height fail)", mode: 2 });
+  dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.squishLimit", label: "Sorcery: Squish Limit (max Width per set)", mode: 2 });
+  dict.push({ group: "Sorcery", value: "system.modifiers.skills.sorcery.bonusTiming", label: "Sorcery: Bonus Timing (flat initiative bonus)", mode: 2 });
+  // ignoreMultiPenaltySkills: comma-separated skill names exempt from multi-action penalties
   dict.push({ group: "Sorcery", value: "system.modifiers.actionEconomy.ignoreMultiPenaltySkills", label: "Ignore Multi-Action Penalty (comma-separated skills, e.g. sorcery)", mode: 5, isString: true });
 
   // Combat — advanced modifiers consumed by damage.js but missing from the dictionary

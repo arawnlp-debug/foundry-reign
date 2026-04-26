@@ -291,6 +291,14 @@
 .reign-btn-morale { background: rgba(156, 39, 176, 0.1); border: 1px solid #9c27b0; color: #7b1fa2; flex: 0 0 auto !important; padding: 0 8px !important; font-size: 0.8em; font-weight: bold; }
 .reign-btn-morale:hover { background: rgba(156, 39, 176, 0.3); }
 .theme-dark .reign-btn-morale { color: #ce93d8; }
+/* C1: Manoeuvre status effect button — teal/teal-dark */
+.reign-btn-maneuver { background: rgba(0, 137, 123, 0.1); border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); }
+.reign-btn-maneuver:hover { background: rgba(0, 137, 123, 0.25); }
+.theme-dark .reign-btn-maneuver { background: rgba(0, 137, 123, 0.15); color: #80cbc4; border-color: #80cbc4; }
+/* C2: Secondary hold button (Maintain / Execute / Wrench Free) — muted teal outline */
+.reign-btn-maneuver-secondary { background: transparent; border: 1px dashed var(--reign-color-emerald); color: var(--reign-color-emerald); opacity: 0.85; }
+.reign-btn-maneuver-secondary:hover { background: rgba(0, 137, 123, 0.15); opacity: 1; }
+.theme-dark .reign-btn-maneuver-secondary { color: #80cbc4; border-color: #80cbc4; }
 
 /* -----------------------------------------
     COMBAT TRACKER UI

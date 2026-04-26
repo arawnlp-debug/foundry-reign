@@ -1211,3 +1211,347 @@ async function checkAndSpoilSet(targetActor) {
         ui.notifications.warn(`${targetActor.name}'s action was spoiled by the attack!`);
     }
 }
+
+
+// ==========================================
+// C1: MANOEUVRE STATUS APPLICATION
+// ==========================================
+
+/**
+ * Applies the status effect (or flag) associated with a Tier 1 manoeuvre outcome.
+ * Called from the renderChatMessageHTML handler when the "Apply: <Manoeuvre>" button is clicked.
+ *
+ * @param {Object} opts
+ * @param {string} opts.maneuverKey   - The manoeuvre ID (e.g. "pin", "slam").
+ * @param {string} opts.applyStatus   - Status ID to toggle ON on the target (e.g. "pinned").
+ * @param {string} opts.clearStatus   - Status ID to toggle OFF on the rolling actor (e.g. "prone" for Stand).
+ * @param {string} opts.setFlag       - Flag name to set on the attacker combatant (e.g. "shoveBonusAgainst").
+ * @param {string} opts.statusTarget  - "target" or "self".
+ * @param {number} opts.slamShock     - Extra Shock from Slam (chat note only — applied manually).
+ * @param {boolean} opts.slamMultiLoc - Whether the Slam shock hits multiple locations.
+ * @param {string} opts.actorId       - The rolling actor's ID (from msg.speaker.actor).
+ */
+export async function applyManeuverStatus({ maneuverKey, applyStatus, clearStatus, setFlag, statusTarget, slamShock, slamMultiLoc, actorId }) {
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+  const targets = [...game.user.targets];
+
+  // ── Apply a status effect to the targeted token(s) ──────────────────────
+  if (applyStatus) {
+    if (targets.length === 0) {
+      return ui.notifications.warn("Select a target token first before applying the manoeuvre effect.");
+    }
+
+    for (const target of targets) {
+      if (target.actor) {
+        await target.actor.toggleStatusEffect(applyStatus, { active: true });
+      }
+    }
+
+    const targetNames = targets.map(t => t.name).join(", ");
+    const maneuverLabel = game.i18n.localize(`REIGN.Maneuver${maneuverKey.charAt(0).toUpperCase() + maneuverKey.slice(1)}`) || maneuverKey;
+
+    let extraNote = "";
+    if (applyStatus === "pinned") {
+      extraNote = `<p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Escape: Body + Fight or Coordination + Grapple vs. Difficulty equal to attacker's Body or Grapple (whichever is higher).</p>`;
+    }
+    if (slamShock > 0) {
+      const locNote = slamMultiLoc ? "multiple locations" : "one location";
+      extraNote += `<p class="reign-text-small reign-text-muted"><i class="fas fa-exclamation-triangle"></i> Also deals <strong>${slamShock} Shock</strong> to ${locNote} — apply manually or use the weapon damage button.</p>`;
+    }
+
+    await ChatMessage.create({
+      speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+      content: `<div class="reign-chat-card reign-card-success">
+        <h3 class="reign-msg-info"><i class="fas fa-magic"></i> ${maneuverLabel} — Effect Applied</h3>
+        <p><strong>${targetNames}</strong> is now <strong>${applyStatus}</strong>.</p>
+        ${extraNote}
+      </div>`
+    });
+  }
+
+  // ── Clear a status from the rolling actor (Stand: remove Prone from self) ──
+  if (clearStatus) {
+    if (!selfActor) {
+      return ui.notifications.warn("Could not identify the rolling actor.");
+    }
+    await selfActor.toggleStatusEffect(clearStatus, { active: false });
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor: selfActor }),
+      content: `<div class="reign-chat-card reign-card-success">
+        <h3 class="reign-msg-success"><i class="fas fa-arrow-up"></i> Stand — Effect Applied</h3>
+        <p><strong>${selfActor.name}</strong> stands up. <em>Prone</em> status cleared — Dodge eligibility restored.</p>
+      </div>`
+    });
+  }
+
+  // ── Set a per-round combatant flag (Shove: grant +1d on Trip/Slam vs. this target) ──
+  if (setFlag === "shoveBonusAgainst") {
+    if (targets.length === 0) {
+      return ui.notifications.warn("Select a target token first before applying the Shove effect.");
+    }
+    if (targets.length > 1) {
+      return ui.notifications.warn("Shove can only target one token at a time.");
+    }
+
+    const targetToken = targets[0];
+
+    if (!game.combat) {
+      return ui.notifications.warn("No active combat — Shove bonus flags require an active encounter.");
+    }
+
+    const attackerCombatant = game.combat.combatants.find(c => c.actorId === actorId);
+    if (attackerCombatant) {
+      await attackerCombatant.setFlag("reign", "shoveBonusAgainst", targetToken.id);
+    }
+
+    await ChatMessage.create({
+      speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+      content: `<div class="reign-chat-card reign-card-success">
+        <h3 class="reign-msg-info"><i class="fas fa-person-falling"></i> Shove — Effect Applied</h3>
+        <p><strong>${targetToken.name}</strong> is pushed back.</p>
+        <p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Attacker gains <strong>+1d</strong> on their next <em>Trip</em> or <em>Slam</em> against this target this round.</p>
+      </div>`
+    });
+  }
+}
+
+
+// ==========================================
+// C2: PER-ROUND HOLD MANOEUVRE FUNCTIONS
+// ==========================================
+
+/**
+ * Height → readable location label (mirrors ore-engine mapping).
+ */
+const HEIGHT_TO_LABEL = {
+  10: "Head", 9: "Torso (High)", 8: "Torso (Mid)", 7: "Torso (Low)",
+  6: "Right Arm (High)", 5: "Right Arm (Low)", 4: "Left Arm (High)", 3: "Left Arm (Low)",
+  2: "Right Leg", 1: "Left Leg"
+};
+
+// ── Strangle ──────────────────────────────────────────────────────────────────
+
+/**
+ * Applies Strangle Shock to the target's head.
+ * Used for both the initial application and the continuation ("Maintain Strangle").
+ * @param {Object} opts
+ * @param {number} opts.shock    - Amount of Shock to deal.
+ * @param {boolean} opts.isMaintain - True if this is a continuation click (no roll).
+ * @param {string|null} opts.actorId - Rolling actor's ID (from msg.speaker.actor).
+ */
+export async function applyStrangleDamage({ shock, isMaintain = false, actorId = null }) {
+  const targets = [...game.user.targets];
+  if (targets.length === 0) return ui.notifications.warn("Select a target token first.");
+
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+  const label = isMaintain ? "Strangle Maintained" : "Strangle Applied";
+  const icon = isMaintain ? "fa-repeat" : "fa-hand-fist";
+
+  // Height 10 = head. Width 1 + fixed Shock string keeps damage formula simple.
+  await applyDamageToTarget(1, 10, `${shock} Shock`, 0, false, 0, selfActor, null);
+
+  await ChatMessage.create({
+    speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+    content: `<div class="reign-chat-card reign-card-success">
+      <h3 class="reign-msg-info"><i class="fas ${icon}"></i> ${label}</h3>
+      <p><strong>${shock} Shock</strong> applied to <strong>${targets.map(t => t.name).join(", ")}</strong>'s Head.</p>
+      ${isMaintain ? "" : `<p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Hold the position — click <em>Maintain Strangle</em> next round to continue without rolling.</p>`}
+    </div>`
+  });
+}
+
+// ── Iron Kiss ─────────────────────────────────────────────────────────────────
+
+/**
+ * Stores the Iron Kiss setup in the attacker's combatant flag.
+ * Reads weapon formula and AP from the source chat message flags.
+ * @param {Object} opts
+ * @param {number} opts.virtualWidth  - The guaranteed set Width for next round (2, 4, or 6).
+ * @param {string|null} opts.actorId  - Rolling actor's ID.
+ * @param {ChatMessage} opts.msg      - The source chat message (for weapon formula).
+ */
+export async function setupIronKiss({ virtualWidth, actorId, msg }) {
+  if (!game.combat) return ui.notifications.warn("No active combat — Iron Kiss requires an active encounter.");
+
+  const attackerCombatant = game.combat.combatants.find(c => c.actorId === actorId);
+  if (!attackerCombatant) return ui.notifications.warn("Could not find your combatant in the active combat.");
+
+  // Read weapon formula from the roll's itemData
+  const itemData = msg?.flags?.reign?.rollFlags?.itemData;
+  const weaponFormula = itemData?.system?.damageFormula || itemData?.system?.damage || "Width Killing";
+  const ap = parseInt(itemData?.system?.qualities?.armorPiercing) || 0;
+
+  await attackerCombatant.setFlag("reign", "ironKissSetup", { virtualWidth, weaponFormula, ap });
+
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+  await ChatMessage.create({
+    speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+    content: `<div class="reign-chat-card reign-card-success">
+      <h3 class="reign-msg-info"><i class="fas fa-knife"></i> Iron Kiss — Set Up</h3>
+      <p>Blade at the throat. A <strong>${virtualWidth}×10</strong> attack is ready to fire next round.</p>
+      <p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Click <em>Execute Iron Kiss</em> next round — no roll required. The flag expires at round end if unused.</p>
+    </div>`
+  });
+}
+
+/**
+ * Executes the stored Iron Kiss — fires the guaranteed attack without a roll.
+ * Reads the setup flag from the attacker's combatant, then clears it.
+ * @param {Object} opts
+ * @param {string|null} opts.actorId - Rolling actor's ID.
+ */
+export async function executeIronKiss({ actorId }) {
+  if (!game.combat) return ui.notifications.warn("No active combat.");
+
+  const attackerCombatant = game.combat.combatants.find(c => c.actorId === actorId);
+  const setup = attackerCombatant?.getFlag("reign", "ironKissSetup");
+
+  if (!setup) {
+    return ui.notifications.warn("No Iron Kiss setup found — either it was already used or the round has advanced.");
+  }
+
+  const targets = [...game.user.targets];
+  if (targets.length === 0) return ui.notifications.warn("Select the target token first.");
+
+  const { virtualWidth, weaponFormula, ap } = setup;
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+
+  // Fire the guaranteed attack: virtualWidth × Height 10 (head)
+  await applyDamageToTarget(virtualWidth, 10, weaponFormula, ap, false, 0, selfActor, null);
+
+  // Consume the flag
+  await attackerCombatant.unsetFlag("reign", "ironKissSetup");
+
+  await ChatMessage.create({
+    speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+    content: `<div class="reign-chat-card reign-card-success">
+      <h3 class="reign-msg-danger"><i class="fas fa-bolt"></i> Iron Kiss — Executed</h3>
+      <p>Guaranteed <strong>${virtualWidth}×10</strong> strike to Head fired against <strong>${targets.map(t => t.name).join(", ")}</strong>.</p>
+      <p class="reign-text-small reign-text-muted">Formula: ${weaponFormula}${ap ? `, AP ${ap}` : ""}.</p>
+    </div>`
+  });
+}
+
+// ── Redirect ──────────────────────────────────────────────────────────────────
+
+/**
+ * Opens a dialog asking for the incoming attack's Width and damage formula,
+ * then redirects the damage to the currently targeted token at the appropriate Width.
+ * @param {Object} opts
+ * @param {number} opts.widthMod    - Width modifier to apply to the incoming Width (-1 or 0).
+ * @param {boolean} opts.redirectAny - Tier 4: can redirect even non-ruined attacks.
+ * @param {string|null} opts.actorId - Rolling actor's ID.
+ */
+export async function applyRedirectDamage({ widthMod, redirectAny, actorId }) {
+  const targets = [...game.user.targets];
+  if (targets.length === 0) return ui.notifications.warn("Select the new target token to redirect the attack to.");
+
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+
+  // Build location options for the height selector
+  const heightOptions = Object.entries(HEIGHT_TO_LABEL)
+    .sort((a, b) => b[0] - a[0])
+    .map(([h, l]) => `<option value="${h}">${l} (${h})</option>`)
+    .join("");
+
+  const dialogContent = `
+    <div class="reign-dialog-intro">Redirect Incoming Attack</div>
+    <div class="reign-dialog-subtitle">Enter the attacker's original Width and damage details.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0;">
+      <label><strong>Incoming Width:</strong>
+        <input type="number" name="incomingWidth" min="1" max="10" value="2" style="width:60px;margin-left:8px;">
+      </label>
+      <label><strong>Damage Formula:</strong>
+        <input type="text" name="dmgFormula" value="Width Shock" style="width:120px;margin-left:8px;" placeholder="e.g. Width Shock">
+      </label>
+      <label><strong>Hit Location (Height):</strong>
+        <select name="hitHeight" style="margin-left:8px;">${heightOptions}</select>
+      </label>
+      <label><strong>AP:</strong>
+        <input type="number" name="ap" min="0" max="5" value="0" style="width:50px;margin-left:8px;">
+      </label>
+      ${redirectAny ? `<p class="reign-text-small reign-text-muted"><i class="fas fa-star"></i> Tier 4: any attack can be redirected.</p>` : ""}
+      ${widthMod < 0 ? `<p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Redirected at Width−1 (Tier 2).</p>` : ""}
+    </div>`;
+
+  const result = await reignDialog(
+    "Redirect Attack",
+    dialogContent,
+    (e, b, d) => ({
+      incomingWidth: parseInt(d.element.querySelector('[name="incomingWidth"]')?.value) || 2,
+      dmgFormula:    d.element.querySelector('[name="dmgFormula"]')?.value || "Width Shock",
+      hitHeight:     parseInt(d.element.querySelector('[name="hitHeight"]')?.value) || 8,
+      ap:            parseInt(d.element.querySelector('[name="ap"]')?.value) || 0
+    }),
+    { defaultLabel: "Redirect", width: 380 }
+  );
+
+  if (!result) return;
+
+  const incomingWidth = Math.max(1, result.incomingWidth);
+  const redirectWidth = Math.max(1, incomingWidth + widthMod);
+  const dmgFormula    = result.dmgFormula;
+  const hitHeight     = result.hitHeight;
+  const ap            = result.ap;
+
+  await applyDamageToTarget(redirectWidth, hitHeight, dmgFormula, ap, false, 0, selfActor, null);
+
+  await ChatMessage.create({
+    speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+    content: `<div class="reign-chat-card reign-card-success">
+      <h3 class="reign-msg-info"><i class="fas fa-rotate"></i> Redirect — Applied</h3>
+      <p>Attack redirected to <strong>${targets.map(t => t.name).join(", ")}</strong> at <strong>${redirectWidth}×${hitHeight}</strong>${widthMod < 0 ? " (Width−1)" : ""}.</p>
+      <p class="reign-text-small reign-text-muted">Formula: ${dmgFormula}${ap ? `, AP ${ap}` : ""}.</p>
+    </div>`
+  });
+}
+
+// ── Submission Hold ───────────────────────────────────────────────────────────
+
+/**
+ * Applies Submission Hold Shock to the held limb, or applies Wrench Free Killing to the target.
+ * @param {Object} opts
+ * @param {number} opts.shock       - Shock to apply (hold).
+ * @param {number} opts.killing     - Killing to apply (wrench free). 0 if applying hold.
+ * @param {number} opts.holdHeight  - Hit location height (from calledShot in roll).
+ * @param {boolean} opts.isWrench   - True if the target is wrenching free (applies Killing).
+ * @param {string|null} opts.actorId - Rolling actor's ID.
+ */
+export async function applySubmissionHold({ shock, killing, holdHeight, isWrench = false, actorId = null }) {
+  const targets = [...game.user.targets];
+  if (targets.length === 0) return ui.notifications.warn("Select the target token first.");
+
+  if (!holdHeight || holdHeight < 1 || holdHeight > 5) {
+    // Submission Hold needs a limb — heights 1-6 (arms/legs). Warn if head/torso selected.
+    if (holdHeight >= 7) {
+      return ui.notifications.warn("Submission Hold requires a called shot to a limb (arm or leg), not head or torso.");
+    }
+  }
+
+  const locLabel = HEIGHT_TO_LABEL[holdHeight] || `Location ${holdHeight}`;
+  const selfActor = actorId ? game.actors.get(actorId) : null;
+
+  if (isWrench) {
+    // Target wrenches free — self-inflicts Killing to break the hold
+    await applyDamageToTarget(1, holdHeight, `${killing} Killing`, 0, false, 0, selfActor, null);
+    await ChatMessage.create({
+      speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+      content: `<div class="reign-chat-card reign-card-success">
+        <h3 class="reign-msg-info"><i class="fas fa-person-running"></i> Wrench Free — Applied</h3>
+        <p><strong>${targets.map(t => t.name).join(", ")}</strong> wrenches free — self-inflicts <strong>${killing} Killing</strong> to their <strong>${locLabel}</strong>.</p>
+        <p class="reign-text-small reign-text-muted">The hold is broken.</p>
+      </div>`
+    });
+  } else {
+    // Attacker applies hold — deals Shock to target's held limb
+    await applyDamageToTarget(1, holdHeight, `${shock} Shock`, 0, false, 0, selfActor, null);
+    await ChatMessage.create({
+      speaker: selfActor ? ChatMessage.getSpeaker({ actor: selfActor }) : undefined,
+      content: `<div class="reign-chat-card reign-card-success">
+        <h3 class="reign-msg-info"><i class="fas fa-link"></i> Submission Hold — Applied</h3>
+        <p><strong>${shock} Shock</strong> applied to <strong>${targets.map(t => t.name).join(", ")}</strong>'s <strong>${locLabel}</strong>.</p>
+        <p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Target chooses: stay held (auto-pinned next round) or wrench free (click <em>Wrench Free</em> — takes ${killing} Killing).</p>
+      </div>`
+    });
+  }
+}

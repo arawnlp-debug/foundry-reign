@@ -308,6 +308,8 @@
     "Spells": "Spells",
     "StatusBleeding": "Bleeding",
     "StatusBlind": "Blind",
+    "StatusPinned": "Pinned",
+    "StatusRestrained": "Restrained",
     "StatusDazed": "Dazed",
     "StatusDead": "Dead",
     "StatusMaimed": "Maimed",
@@ -374,6 +376,7 @@
     "ManeuverShoveRules": "Attack pool, no penalty. No damage. Target moved back ~5 feet, loses 1 die from a set. You get +1d to Trip or Slam next round. Opponents trying to Trip or Slam you get +1d.",
 
     "ManeuverStand": "Stand Up",
+    "ManeuverStandResult": "You stand up successfully. Prone cleared — Dodge eligibility restored.",
     "ManeuverStandRules": "No roll if only standing. If combined with another action, -1d penalty. Stand happens automatically during Declare if no other action taken.",
 
     "ManeuverTackle": "Tackle",
@@ -424,9 +427,9 @@
     "ManeuverSlamRules": "Body + Fight or Coordination + Grapple at Difficulty 3. Target must be within 100 lbs of your weight. Cannot slam someone already downed.",
 
     "ManeuverStrangle": "Strangle",
-    "ManeuverStrangleResult2": "2 Shock to head. Next round auto 2×10 for 2 more Shock if undisturbed.",
-    "ManeuverStrangleResult3": "3 Shock to head. Auto 3 Shock next round unless target successfully defends this round.",
-    "ManeuverStrangleResult4": "Width+1 Shock to head. Auto 4 Shock next round if undisturbed.",
+    "ManeuverStrangleResult2": "2 Shock to head. Maintain hold next round for 2 more Shock without rolling.",
+    "ManeuverStrangleResult3": "3 Shock to head. Maintain hold next round for 3 more Shock without rolling.",
+    "ManeuverStrangleResult4": "Width+1 Shock to head. Maintain hold next round for 4 more Shock without rolling.",
     "ManeuverStrangleRules": "Called shot to the head. No edged weapons. No -1d penalty if target already pinned. While strangling: no other attacks, no dodge/parry, limited movement.",
 
     "ManeuverTrip": "Trip",
@@ -436,9 +439,9 @@
     "ManeuverTripRules": "Called shot to leg (location 1 or 2). No called-shot penalty. +1d if target is using Shove, Tackle, or foot Charge.",
 
     "ManeuverIronKiss": "Iron Kiss",
-    "ManeuverIronKissResult2": "No damage. Next round: auto 2×10 attack to head without rolling.",
-    "ManeuverIronKissResult3": "No damage. Next round: auto 4×10 attack to head without rolling.",
-    "ManeuverIronKissResult4": "No damage. Next round: auto 6×10 attack to head without rolling.",
+    "ManeuverIronKissResult2": "No damage. Set Up stores a 2×10 automatic attack — Execute next round without rolling.",
+    "ManeuverIronKissResult3": "No damage. Set Up stores a 4×10 automatic attack — Execute next round without rolling.",
+    "ManeuverIronKissResult4": "No damage. Set Up stores a 6×10 automatic attack — Execute next round without rolling.",
     "ManeuverIronKissRules": "Called shot to the head at -2d (replaces standard -1d). Requires edged or pointed weapon. Places blade against throat — next round can deliver guaranteed lethal strike.",
 
     "ManeuverRedirect": "Redirect",

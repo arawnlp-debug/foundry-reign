@@ -650,7 +650,18 @@ export class CharacterRoller {
             else if (rollData.skillKey === "esoterica_sorcery") finalItemSkillValue = parseInt(system.esoterica.sorcery) || 0;
         }
 
-        let finalRawTotal = baseValue + finalAttrVal + finalItemSkillValue + rollData.bonus + rollData.passionBonus;
+        // C1: Shove Bonus — +1d on Trip or Slam against the token that was shoved this round.
+        // Must check after rollData is available (maneuver selected in dialog).
+        let shoveBonus = 0;
+        if (isAttackRoll && (rollData.maneuver === "trip" || rollData.maneuver === "slam") && game.combat) {
+          const myCombatant = game.combat.combatants.find(c => c.actorId === actor.id);
+          const shoveBonusAgainst = myCombatant?.getFlag("reign", "shoveBonusAgainst");
+          if (shoveBonusAgainst && [...game.user.targets].some(t => t.id === shoveBonusAgainst)) {
+            shoveBonus = 1;
+          }
+        }
+
+        let finalRawTotal = baseValue + finalAttrVal + finalItemSkillValue + rollData.bonus + rollData.passionBonus + shoveBonus;
         const poolMath = calculateOREPool(finalRawTotal, rollData.ed, rollData.md, rollData.calledShot, rollData.penalty, rollData.multiActions, ignoreMultiPenalty);
 
         if (poolMath.downgradedSpecialDice > 0) {
@@ -677,6 +688,8 @@ export class CharacterRoller {
         
         // PACKAGE C Item 6: Show aim bonus in breakdown
         if (aimBonus > 0) poolBreakdown.push({ label: `Aim Bonus (${aimBonus} round${aimBonus > 1 ? "s" : ""})`, value: `+${aimBonus}`, isPenalty: false });
+        // C1: Shove bonus breakdown entry
+        if (shoveBonus > 0) poolBreakdown.push({ label: "Shove Bonus (vs. shoved target)", value: "+1", isPenalty: false });
 
         if (rollData.penalty > 0) poolBreakdown.push({ label: "Penalties & Conditions", value: `-${rollData.penalty}`, isPenalty: true });
         
@@ -692,7 +705,7 @@ export class CharacterRoller {
             minHeight: skillMods.minHeight || 0,
             bonusWidth: skillMods.bonusWidth || 0,
             bonusTiming: skillMods.bonusTiming || 0,
-            squishLimit: skillMods.squishLimit || 1,
+            squishLimit: skillMods.squishLimit || 0,
             ignoreArmorTarget: combatMods.ignoreArmorTarget || 0,
             forceHitLocation: combatMods.forceHitLocation || 0,
             shiftHitLocationUp: combatMods.shiftHitLocationUp || 0,
@@ -747,6 +760,11 @@ export class CharacterRoller {
             if (isAttackRoll && aimBonus > 0) {
                 await actor.unsetFlag("reign", "aimBonus");
                 await actor.unsetFlag("reign", "aimedThisRound");
+            }
+            // C1: Consume shove bonus flag once it has been applied to a Trip or Slam roll
+            if (isAttackRoll && shoveBonus > 0 && game.combat) {
+                const myCombatant = game.combat.combatants.find(c => c.actorId === actor.id);
+                if (myCombatant) await myCombatant.unsetFlag("reign", "shoveBonusAgainst");
             }
 
             if (rawSkillKey === "counterspell") {

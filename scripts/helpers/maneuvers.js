@@ -97,7 +97,7 @@ export const MANEUVERS = Object.freeze({
     id: "pin",
     label: "REIGN.ManeuverPin",
     category: "simple",
-    tier: 2,
+    tier: 1,
     poolType: "grapple",
     poolPenalty: 0,
     difficulty: 0,
@@ -108,7 +108,7 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: true,
     widthTiers: {
-      2: { description: "REIGN.ManeuverPinResult" }
+      2: { applyStatus: "pinned", statusTarget: "target", description: "REIGN.ManeuverPinResult" }
     },
     rulesText: "REIGN.ManeuverPinRules"
   },
@@ -117,7 +117,7 @@ export const MANEUVERS = Object.freeze({
     id: "restrain",
     label: "REIGN.ManeuverRestrain",
     category: "simple",
-    tier: 2,
+    tier: 1,
     poolType: "grapple",
     poolPenalty: 0,
     difficulty: 0,
@@ -128,7 +128,7 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: true,
     widthTiers: {
-      2: { description: "REIGN.ManeuverRestrainResult" }
+      2: { applyStatus: "restrained", statusTarget: "target", description: "REIGN.ManeuverRestrainResult" }
     },
     rulesText: "REIGN.ManeuverRestrainRules"
   },
@@ -137,7 +137,7 @@ export const MANEUVERS = Object.freeze({
     id: "shove",
     label: "REIGN.ManeuverShove",
     category: "simple",
-    tier: 2,
+    tier: 1,
     poolType: "attack",
     poolPenalty: 0,
     difficulty: 0,
@@ -148,7 +148,7 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: true,
     widthTiers: {
-      2: { description: "REIGN.ManeuverShoveResult" }
+      2: { setFlag: "shoveBonusAgainst", statusTarget: "target", description: "REIGN.ManeuverShoveResult" }
     },
     rulesText: "REIGN.ManeuverShoveRules"
   },
@@ -157,7 +157,7 @@ export const MANEUVERS = Object.freeze({
     id: "stand",
     label: "REIGN.ManeuverStand",
     category: "simple",
-    tier: 2,
+    tier: 1,
     poolType: "attack",
     poolPenalty: -1,
     difficulty: 0,
@@ -167,7 +167,9 @@ export const MANEUVERS = Object.freeze({
     firstRoundOnly: false,
     isMultiAction: false,
     noDamage: true,
-    widthTiers: {},
+    widthTiers: {
+      2: { clearStatus: "prone", statusTarget: "self", description: "REIGN.ManeuverStandResult" }
+    },
     rulesText: "REIGN.ManeuverStandRules"
   },
 
@@ -353,7 +355,7 @@ export const MANEUVERS = Object.freeze({
     id: "slam",
     label: "REIGN.ManeuverSlam",
     category: "advanced",
-    tier: 2,
+    tier: 1,
     poolType: "grapple",
     poolPenalty: 0,
     difficulty: 3,
@@ -364,9 +366,10 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: false,
     widthTiers: {
-      2: { description: "REIGN.ManeuverSlamResult2" },
-      3: { description: "REIGN.ManeuverSlamResult3" },
-      4: { description: "REIGN.ManeuverSlamResult4" }
+      // RAW: all tiers make target Prone. Width 3+ adds Shock; Width 4+ hits multiple locations.
+      2: { applyStatus: "prone", statusTarget: "target", slamShock: 0, slamMultiLoc: false, description: "REIGN.ManeuverSlamResult2" },
+      3: { applyStatus: "prone", statusTarget: "target", slamShock: 1, slamMultiLoc: false, description: "REIGN.ManeuverSlamResult3" },
+      4: { applyStatus: "prone", statusTarget: "target", slamShock: 1, slamMultiLoc: true,  description: "REIGN.ManeuverSlamResult4" }
     },
     rulesText: "REIGN.ManeuverSlamRules"
   },
@@ -375,7 +378,7 @@ export const MANEUVERS = Object.freeze({
     id: "strangle",
     label: "REIGN.ManeuverStrangle",
     category: "advanced",
-    tier: 2,
+    tier: 1,
     poolType: "grapple",
     poolPenalty: 0,
     difficulty: 0,
@@ -386,9 +389,11 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: false,
     widthTiers: {
-      2: { description: "REIGN.ManeuverStrangleResult2" },
-      3: { description: "REIGN.ManeuverStrangleResult3" },
-      4: { description: "REIGN.ManeuverStrangleResult4" }
+      // strangleShock: initial Shock this round (string "width+1" resolved at outcome build time)
+      // strangleNextRound: auto Shock next round if hold maintained
+      2: { strangleShock: 2, strangleNextRound: 2, description: "REIGN.ManeuverStrangleResult2" },
+      3: { strangleShock: 3, strangleNextRound: 3, description: "REIGN.ManeuverStrangleResult3" },
+      4: { strangleShock: "width+1", strangleNextRound: 4, description: "REIGN.ManeuverStrangleResult4" }
     },
     rulesText: "REIGN.ManeuverStrangleRules"
   },
@@ -426,7 +431,7 @@ export const MANEUVERS = Object.freeze({
     id: "ironKiss",
     label: "REIGN.ManeuverIronKiss",
     category: "expert",
-    tier: 2,
+    tier: 1,
     poolType: "attack",
     poolPenalty: -2,             // RAW: -2d instead of the standard -1d called-shot penalty
     difficulty: 0,
@@ -437,9 +442,10 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: true,
     widthTiers: {
-      2: { description: "REIGN.ManeuverIronKissResult2" },
-      3: { description: "REIGN.ManeuverIronKissResult3" },
-      4: { description: "REIGN.ManeuverIronKissResult4" }
+      // ironKissVirtualWidth: the Width of the guaranteed auto-attack next round (Height always 10)
+      2: { ironKissVirtualWidth: 2, description: "REIGN.ManeuverIronKissResult2" },
+      3: { ironKissVirtualWidth: 4, description: "REIGN.ManeuverIronKissResult3" },
+      4: { ironKissVirtualWidth: 6, description: "REIGN.ManeuverIronKissResult4" }
     },
     rulesText: "REIGN.ManeuverIronKissRules"
   },
@@ -448,7 +454,7 @@ export const MANEUVERS = Object.freeze({
     id: "redirect",
     label: "REIGN.ManeuverRedirect",
     category: "expert",
-    tier: 2,
+    tier: 1,
     poolType: "dodge",
     poolPenalty: -2,
     difficulty: 0,
@@ -459,9 +465,11 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: true,
     widthTiers: {
-      2: { description: "REIGN.ManeuverRedirectResult2" },
-      3: { description: "REIGN.ManeuverRedirectResult3" },
-      4: { description: "REIGN.ManeuverRedirectResult4" }
+      // redirectWidthMod: applied to attacker's Width when redirecting (-1, 0, 0)
+      // redirectAny: tier 4 only — can redirect even non-ruined attacks
+      2: { redirectWidthMod: -1, redirectAny: false, description: "REIGN.ManeuverRedirectResult2" },
+      3: { redirectWidthMod:  0, redirectAny: false, description: "REIGN.ManeuverRedirectResult3" },
+      4: { redirectWidthMod:  0, redirectAny: true,  description: "REIGN.ManeuverRedirectResult4" }
     },
     rulesText: "REIGN.ManeuverRedirectRules"
   },
@@ -470,7 +478,7 @@ export const MANEUVERS = Object.freeze({
     id: "submissionHold",
     label: "REIGN.ManeuverSubmissionHold",
     category: "expert",
-    tier: 2,
+    tier: 1,
     poolType: "grapple",
     poolPenalty: -1,             // RAW: -1d unless already pinned
     difficulty: 0,
@@ -481,9 +489,11 @@ export const MANEUVERS = Object.freeze({
     isMultiAction: false,
     noDamage: false,
     widthTiers: {
-      2: { description: "REIGN.ManeuverSubmissionHoldResult2" },
-      3: { description: "REIGN.ManeuverSubmissionHoldResult3" },
-      4: { description: "REIGN.ManeuverSubmissionHoldResult4" }
+      // holdShock: Shock applied to held limb this round
+      // wrenchKilling: Killing self-inflicted if target wrenches free
+      2: { holdShock: 1, wrenchKilling: 2, description: "REIGN.ManeuverSubmissionHoldResult2" },
+      3: { holdShock: 3, wrenchKilling: 3, description: "REIGN.ManeuverSubmissionHoldResult3" },
+      4: { holdShock: 5, wrenchKilling: 4, description: "REIGN.ManeuverSubmissionHoldResult4" }
     },
     rulesText: "REIGN.ManeuverSubmissionHoldRules"
   },

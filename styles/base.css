@@ -230,3 +230,28 @@
 .reign-btn-dashboard:hover { filter: brightness(1.15); }
 /* Utility: JS-toggled visibility (replaces inline style="display:none") */
 .reign-hidden { display: none; }
+/* -----------------------------------------
+    TOKEN HUD: STATUS EFFECTS GRID
+    Reign uses exactly 9 curated statuses.
+    Force a clean 3×3 grid so the panel
+    always renders as a tidy square.
+----------------------------------------- */
+#token-hud .status-effects {
+    display: grid !important;
+    grid-template-columns: repeat(3, 36px) !important;
+    grid-auto-rows: 36px !important;
+    gap: 3px !important;
+    padding: 5px !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+#token-hud .status-effects .effect-control {
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 2px !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    object-fit: contain !important;
+}

@@ -8,7 +8,7 @@ import { ReignCompanySheet } from "./sheets/company-sheet.js";
 import { ReignThreatSheet } from "./sheets/threat-sheet.js";
 import { ReignItemSheet } from "./sheets/item-sheet.js";
 import { generateOREChatHTML, applyItemEffectsToTargets, assignGobbleSet, postOREChat } from "./helpers/chat.js";
-import { applyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget, applyOffensiveMoraleAttack } from "./combat/damage.js";
+import { applyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget, applyOffensiveMoraleAttack, applyManeuverStatus, applyStrangleDamage, setupIronKiss, executeIronKiss, applyRedirectDamage, applySubmissionHold } from "./combat/damage.js";
 import { applyCompanyDamageToTarget } from "./combat/company-damage.js";
 import { consumeGobbleDie, diveForCover } from "./combat/defense.js";
 import { ReignCombat } from "./combat/ore-combat.js";
@@ -92,18 +92,15 @@ Hooks.once("init", async () => {
     { id: "maimed", name: "REIGN.StatusMaimed", img: "icons/svg/sword.svg", _id: "maimed0000000000" },
     { id: "prone", name: "REIGN.StatusProne", img: "icons/svg/falling.svg", _id: "prone00000000000" },
     { id: "bleeding", name: "REIGN.StatusBleeding", img: "icons/svg/blood.svg", _id: "bleeding00000000" },
+    { id: "pinned", name: "REIGN.StatusPinned", img: "icons/svg/net.svg", _id: "pinned0000000000" },
+    { id: "restrained", name: "REIGN.StatusRestrained", img: "icons/svg/anchor.svg", _id: "restrained000000" },
     { id: "blind", name: "REIGN.StatusBlind", img: "icons/svg/blind.svg", _id: "blind00000000000" } 
   ];
 
-  // V14 COMPLIANCE: Proxy-safe array mutation
-  for (const status of reignStatuses) {
-    const existing = CONFIG.statusEffects.find(e => e.id === status.id);
-    if (existing) {
-      Object.assign(existing, status);
-    } else {
-      CONFIG.statusEffects.push(status);
-    }
-  }
+  // V14 COMPLIANCE: Proxy-safe array mutation.
+  // Replace all Foundry core statuses with only Reign statuses so the token HUD
+  // shows only conditions that are meaningful in this system.
+  CONFIG.statusEffects.splice(0, CONFIG.statusEffects.length, ...reignStatuses);
 
   CONFIG.Actor.dataModels = {
     character: models.ReignCharacterData,
@@ -625,6 +622,143 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const sourceDesc = btn.dataset.source || "Maneuver";
       
       await applyOffensiveMoraleAttack(moraleValue, sourceDesc);
+    });
+  });
+
+  // C1: MANOEUVRE STATUS EFFECT BUTTON (Pin, Restrain, Stand, Shove, Slam)
+  element.querySelectorAll(".apply-maneuver-status-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      if (!game.user.isGM && msg.author?.id !== game.user.id) {
+        return ui.notifications.warn("Only the GM or the rolling player can apply this manoeuvre's effect.");
+      }
+
+      await applyManeuverStatus({
+        maneuverKey:  btn.dataset.maneuverKey  || "",
+        applyStatus:  btn.dataset.applyStatus  || "",
+        clearStatus:  btn.dataset.clearStatus  || "",
+        setFlag:      btn.dataset.setFlag      || "",
+        statusTarget: btn.dataset.statusTarget || "target",
+        slamShock:    parseInt(btn.dataset.slamShock) || 0,
+        slamMultiLoc: btn.dataset.slamMultiLoc === "true",
+        actorId:      msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C2: STRANGLE — Initial application
+  element.querySelectorAll(".apply-strangle-initial-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await applyStrangleDamage({
+        shock: parseInt(btn.dataset.shock) || 0,
+        isMaintain: false,
+        actorId: msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C2: STRANGLE — Maintain hold (next round, no roll)
+  element.querySelectorAll(".apply-strangle-maintain-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await applyStrangleDamage({
+        shock: parseInt(btn.dataset.shock) || 0,
+        isMaintain: true,
+        actorId: msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C2: IRON KISS — Setup (store flag for next round)
+  element.querySelectorAll(".setup-iron-kiss-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await setupIronKiss({
+        virtualWidth: parseInt(btn.dataset.virtualWidth) || 2,
+        actorId: msg.speaker?.actor || null,
+        msg
+      });
+    });
+  });
+
+  // C2: IRON KISS — Execute (fire the stored guaranteed attack)
+  element.querySelectorAll(".execute-iron-kiss-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await executeIronKiss({ actorId: msg.speaker?.actor || null });
+    });
+  });
+
+  // C2: REDIRECT — Apply redirected damage via dialog
+  element.querySelectorAll(".apply-redirect-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await applyRedirectDamage({
+        widthMod:    parseInt(btn.dataset.widthMod) || 0,
+        redirectAny: btn.dataset.redirectAny === "true",
+        actorId:     msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C2: SUBMISSION HOLD — Apply hold damage to held limb
+  element.querySelectorAll(".apply-submission-hold-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await applySubmissionHold({
+        shock:      parseInt(btn.dataset.shock) || 0,
+        killing:    0,
+        holdHeight: parseInt(btn.dataset.holdHeight) || 3,
+        isWrench:   false,
+        actorId:    msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C2: SUBMISSION HOLD — Wrench Free (target self-inflicts Killing)
+  element.querySelectorAll(".apply-wrench-free-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await applySubmissionHold({
+        shock:      0,
+        killing:    parseInt(btn.dataset.killing) || 0,
+        holdHeight: parseInt(btn.dataset.holdHeight) || 3,
+        isWrench:   true,
+        actorId:    msg.speaker?.actor || null
+      });
+    });
+  });
+
+  // C3: GM RESOLVE BUTTON — Tier 2 manoeuvre acknowledgement
+  element.querySelectorAll(".gm-resolve-maneuver-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      if (!game.user.isGM) {
+        return ui.notifications.warn("Only the GM can resolve Tier 2 manoeuvres.");
+      }
+
+      const maneuverLabel = btn.dataset.maneuverLabel || "Manoeuvre";
+      const width  = btn.dataset.width  || "?";
+      const height = btn.dataset.height || "?";
+      const rollerName = msg.speaker?.alias || msg.author?.name || "Unknown";
+
+      await ChatMessage.create({
+        content: `<div class="reign-chat-card">
+          <h3 class="reign-msg-info"><i class="fas fa-gavel"></i> ${maneuverLabel} — GM Resolved</h3>
+          <p><strong>${rollerName}</strong> performed <strong>${maneuverLabel}</strong> (${width}×${height}).</p>
+          <p class="reign-text-small reign-text-muted"><i class="fas fa-book"></i> Effect applied at GM discretion per RAW rules.</p>
+        </div>`
+      });
     });
   });
 });
