@@ -61,7 +61,7 @@
 /* Colors & Backgrounds */
 .bg-white, .reign-bg-white { background: var(--reign-bg-paper); }
 .bg-crimson { background: var(--reign-color-blood); color: var(--reign-text-light); }
-.bg-teal { background: #00695c; color: var(--reign-text-light); }
+.bg-teal { background: var(--reign-color-teal); color: var(--reign-text-light); }
 
 /* Typography */
 .reign-bold { font-weight: bold; }
@@ -196,7 +196,7 @@
 /* -----------------------------------------
     ROLL DIALOG UTILITIES
 ----------------------------------------- */
-.reign-pool-value { color: #4ade80; }
+.reign-pool-value { color: var(--reign-color-emerald); }
 .reign-passion-group { display: flex; flex-direction: column; gap: 2px; }
 .reign-passion-group label { font-size: var(--reign-text-xs); text-transform: none; }
 .reign-passion-group select { font-size: var(--reign-text-sm); padding: 2px; }

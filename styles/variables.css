@@ -29,6 +29,30 @@
   --reign-dark-red: #4a0000;
   --reign-navy: #1a237e;
   --reign-burnt-orange: #e65100;
+
+  /* Semantic UI Colours — Chat Cards & Banners */
+  /* Teal: success confirmations, manoeuvre effects, healing */
+  --reign-color-teal: #00695c;
+  --reign-color-teal-light: #00897b;
+  --reign-color-teal-border: #4db6ac;
+  --reign-bg-teal: #e0f2f1;
+  /* Danger: failed rolls, critical wounds */
+  --reign-bg-danger: #ffebee;
+  --reign-color-danger: #c62828;
+  --reign-color-danger-border: #ef5350;
+  /* Warning: cautions, partial results */
+  --reign-bg-warn: #fff3e0;
+  --reign-color-warn-border: #ffb74d;
+  /* Info: gobble dice, deflect, blue callouts */
+  --reign-bg-info: #e3f2fd;
+  --reign-color-blue-dark: #1565c0;
+  --reign-color-info-border: #90caf9;
+  /* Amber: mid-intensity spells, temporary attunement */
+  --reign-color-amber: #c88b00;
+  --reign-bg-amber: #fff8e1;
+  /* Arcane: extreme-intensity spells, esoteric power */
+  --reign-color-arcane: #4a1a6e;
+  --reign-color-arcane-light: #e2d4ff;
   
   --reign-text-dark: #111111;          /* Standard reading text */
   --reign-text-muted: #555555;         /* Helper text and hints */
@@ -100,6 +124,24 @@
   --reign-dark-red: #660000;
   --reign-navy: #3949ab;
   --reign-burnt-orange: #f57c00;
+
+  /* Semantic UI Colours — Dark Mode */
+  --reign-color-teal: #009688;
+  --reign-color-teal-light: #00bfa5;
+  --reign-color-teal-border: #00897b;
+  --reign-bg-teal: #004d40;
+  --reign-bg-danger: #3b1010;
+  --reign-color-danger: #ef5350;
+  --reign-color-danger-border: #ff1744;
+  --reign-bg-warn: #3e2723;
+  --reign-color-warn-border: #d84315;
+  --reign-bg-info: #001e36;
+  --reign-color-blue-dark: #42a5f5;
+  --reign-color-info-border: #0d47a1;
+  --reign-color-amber: #e6a800;
+  --reign-bg-amber: #2e2200;
+  --reign-color-arcane: #9c6dbf;
+  --reign-color-arcane-light: #d4b8f0;
   
   --reign-text-dark: #e0e0e0;
   --reign-text-muted: #999999;

@@ -393,10 +393,20 @@ export class CharacterRoller {
 
         const calledShotOptions = { "0": "None", "10": "Head (10)", "9": "Torso High (9)", "8": "Torso Mid (8)", "7": "Torso Low (7)", "6": "Right Arm High (6)", "5": "Right Arm Low (5)", "4": "Left Arm High (4)", "3": "Left Arm Low (3)", "2": "Right Leg (2)", "1": "Left Leg (1)" };
 
+        const isDodgeRoll = isDefenseRoll && rawSkillKey === "dodge";
+
+        // For dodge rolls, filter maneuver options to poolType "dodge" only (e.g. Redirect).
+        // Grouped into a flat list — no category headers needed for a single maneuver.
+        const dodgeManeuverOptions = isDodgeRoll
+            ? Object.values(MANEUVERS).filter(m => m.poolType === "dodge")
+            : null;
+
         const templateData = {
             defaultAttr, attrOptions, showSkillSelect, defaultSkill, skillOptions, isCombatRoll, calledShotOptions,
             difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue,
-            maneuverOptions: isCombatRoll ? getManeuverOptions() : null
+            maneuverOptions: isCombatRoll ? getManeuverOptions() : null,
+            isDodgeRoll,
+            dodgeManeuverOptions
         };
 
         if (DEBUG_ROLLS) console.log("Reign Roller | Rendering HTML Template...");
@@ -528,6 +538,33 @@ export class CharacterRoller {
                   let userBonus = bonusInput?.value || String(autoBonus);
                   let lastManeuver = "none";
 
+                  // D+: Submission Hold — restrict calledShot dropdown to limb locations only.
+                  // Heights 1–6 are arms and legs; 7–10 are torso and head (invalid for a joint lock).
+                  const LIMB_HEIGHTS = new Set(["0", "1", "2", "3", "4", "5", "6"]);
+
+                  function restrictCalledShotToLimbs(select) {
+                      if (!select) return;
+                      for (const opt of select.options) {
+                          if (!LIMB_HEIGHTS.has(opt.value)) {
+                              opt.disabled = true;
+                              opt.style.display = "none";
+                          }
+                      }
+                      // If current selection is head/torso, default to Right Arm High
+                      if (!LIMB_HEIGHTS.has(select.value)) select.value = "6";
+                      // Add a visual hint on the select itself
+                      select.title = "Submission Hold requires a limb (arm or leg)";
+                  }
+
+                  function unrestrictCalledShot(select) {
+                      if (!select) return;
+                      for (const opt of select.options) {
+                          opt.disabled = false;
+                          opt.style.display = "";
+                      }
+                      select.title = "";
+                  }
+
                   maneuverSelect.addEventListener("change", () => {
                       const mId = maneuverSelect.value;
 
@@ -538,6 +575,8 @@ export class CharacterRoller {
                           if (penaltyInput) penaltyInput.value = userPenalty;
                           if (multiActionsInput) multiActionsInput.value = userMultiActions;
                           if (bonusInput) bonusInput.value = userBonus;
+                          // D+: Remove limb restriction if we're leaving Submission Hold
+                          if (lastManeuver === "submissionHold") unrestrictCalledShot(calledShotSelect);
                       }
 
                       if (mId === "none") {
@@ -563,6 +602,11 @@ export class CharacterRoller {
                           if (mDef.calledShot === "head") calledShotSelect.value = "10";
                           else if (mDef.calledShot === "arm") calledShotSelect.value = "6"; // Default right arm high
                           else if (mDef.calledShot === "leg") calledShotSelect.value = "2"; // Default right leg
+                      }
+
+                      // D+: Submission Hold — restrict called shot to limb locations (arms/legs only)
+                      if (mId === "submissionHold") {
+                          restrictCalledShotToLimbs(calledShotSelect);
                       }
 
                       // Auto-set difficulty

@@ -1,13 +1,13 @@
 <div class="reign-sheet-root threat-sheet">
   <header class="sheet-header">
-    <div class="header-top cm-flex-gap15 cm-align-end cm-p10">
+    <div class="header-top reign-p10">
       <img src="{{actor.img}}" 
            data-action="editImage" 
            title="{{actor.name}}" 
            class="profile-img reign-circle threat-profile-img" 
            alt="{{actor.name}}"/>
            
-      <div class="header-fields cm-flex-col cm-gap5">
+      <div class="header-fields">
         <input name="name" 
                type="text" 
                value="{{actor.name}}" 
@@ -15,7 +15,7 @@
                class="reign-threat-header-input"/>
                
         <div class="reign-threat-type-label">
-          {{localize 'REIGN.UnworthyOpponent'}}
+          {{localize 'REIGN.ThreatTypeUnworthy'}}
         </div>
       </div>
     </div>
@@ -33,10 +33,10 @@
           </h2>
         </div>
 
-        <div class="threat-input-row cm-p15 cm-flex-around cm-align-center cm-gap20">
+        <div class="threat-input-row reign-flex-around">
           {{!-- PACKAGE A: Threat Rating (1-4) — elimination threshold, NOT the pool --}}
           <div class="reign-text-center">
-            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+            <label class="reign-bold reign-mb5 reign-block reign-text-lg">
               {{localize 'REIGN.ThreatRating'}}
             </label>
             <input type="number" 
@@ -48,8 +48,8 @@
                    title="{{localize 'REIGN.ThreatRatingDesc'}}"/>
           </div>
           
-          <div class="reign-text-center cm-flex-50">
-            <label class="reign-bold cm-mb5 cm-block cm-text-lg">
+          <div class="reign-text-center reign-flex1">
+            <label class="reign-bold reign-mb5 reign-block reign-text-lg">
               {{localize 'REIGN.ParentCompany'}}
             </label>
             <select name="system.parentCompany" class="reign-threat-select">
@@ -63,14 +63,14 @@
       <div class="threat-sub-grid">
         
         {{!-- PACKAGE A: FIGHTERS (was Magnitude) — group size = dice pool --}}
-        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+        <div class="stat-block bg-white reign-text-center reign-pb10 threat-main-border">
           <div class="stat-header bg-crimson reign-flex-center threat-header-red">
             <h2>{{localize 'REIGN.Fighters'}}</h2>
           </div>
           <div class="reign-desc-text threat-desc-italics">
             {{localize 'REIGN.FightersDesc'}}
           </div>
-          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+          <div class="reign-fraction-input reign-flex-center reign-pb10">
             <input type="number" 
                    name="system.magnitude.value" 
                    value="{{system.magnitude.value}}" 
@@ -86,7 +86,7 @@
                    title="{{localize 'REIGN.MaxFighters'}}"/>
           </div>
           {{!-- PACKAGE A: Manual fighter removal button --}}
-          <div class="cm-flex-center cm-pb5">
+          <div class="reign-flex-center reign-mb5">
             <a class="reign-text-small rollable" 
                data-action="eliminateMinions" 
                title="{{localize 'REIGN.EliminateMinions'}}">
@@ -96,7 +96,7 @@
         </div>
 
         {{!-- MORALE --}}
-        <div class="stat-block bg-white reign-text-center cm-pb10 threat-main-border">
+        <div class="stat-block bg-white reign-text-center reign-pb10 threat-main-border">
           <div class="stat-header bg-teal reign-flex-center threat-header-teal">
             <h2 class="rollable" 
                 data-action="rollMorale" 
@@ -107,7 +107,7 @@
           <div class="reign-desc-text threat-desc-italics">
             {{localize 'REIGN.MoraleDesc'}}
           </div>
-          <div class="reign-fraction-input cm-flex-center cm-gap10 cm-pb10">
+          <div class="reign-fraction-input reign-flex-center reign-pb10">
             <input type="number" 
                    name="system.morale.value" 
                    value="{{system.morale.value}}" 
@@ -123,7 +123,7 @@
                    title="{{localize 'REIGN.MaxMorale'}}"/>
           </div>
           {{!-- PACKAGE A: Receive Morale Attack button --}}
-          <div class="cm-flex-center cm-pb5">
+          <div class="reign-flex-center reign-mb5">
             <a class="reign-text-small rollable"
                data-action="receiveMoraleAttack" 
                title="{{localize 'REIGN.ReceiveMoraleAttack'}}">
@@ -134,18 +134,18 @@
         
       </div>
 
-      <div class="stat-block bg-white cm-mt10 threat-main-border">
+      <div class="stat-block bg-white reign-mt10 threat-main-border">
         <div class="stat-header reign-flex-center threat-header-black">
           <h2>{{localize 'REIGN.DescriptionTactics'}}</h2>
         </div>
-        <div class="cm-p15 threat-damage-formula-row">
-          <label class="reign-bold cm-mb5 cm-block">
+        <div class="threat-damage-formula-row">
+          <label class="reign-bold reign-mb5 reign-block">
             {{localize 'REIGN.DamageFormula'}}
           </label>
           <input type="text" 
                  name="system.damageFormula" 
                  value="{{system.damageFormula}}" 
-                 class="reign-threat-weapon cm-mb10" 
+                 class="reign-threat-weapon reign-mb10" 
                  placeholder="{{localize 'REIGN.DamagePlaceholder'}}"/>
         </div>
         <textarea name="system.description" 

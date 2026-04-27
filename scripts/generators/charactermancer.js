@@ -417,7 +417,32 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
   }
 
   async _applyStageGains(stage) {
-      if (stage.description) this.oneRollState.biography.push(`**${stage.label}**: ${stage.description}`);
+      // D3: Collect gains for this stage so they can be appended to the biography entry.
+      const gainParts = [];
+
+      if (stage.attributes) Object.entries(stage.attributes).forEach(([k, v]) => {
+          gainParts.push(`+${v} ${k.charAt(0).toUpperCase() + k.slice(1)}`);
+      });
+      if (stage.skills) Object.entries(stage.skills).forEach(([k, v]) => {
+          gainParts.push(`+${v} ${k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
+      });
+      if (stage.customSkills) stage.customSkills.forEach(cs => {
+          gainParts.push(`+${cs.value || 1} ${cs.name}`);
+      });
+      if (stage.wealth) gainParts.push(`+${stage.wealth} Wealth`);
+      if (stage.advantages) stage.advantages.forEach(a => gainParts.push(a.name));
+      if (stage.martialPaths) stage.martialPaths.forEach(m => gainParts.push(m.name));
+      if (stage.esoterica) stage.esoterica.forEach(e => gainParts.push(e.name));
+      if (stage.spells) stage.spells.forEach(s => gainParts.push(s.name));
+      if (stage.weapons) stage.weapons.forEach(w => gainParts.push(w.name));
+      if (stage.armor) stage.armor.forEach(a => gainParts.push(a.name));
+      if (stage.shields) stage.shields.forEach(sh => gainParts.push(sh.name));
+      if (stage.gear) stage.gear.forEach(g => gainParts.push(g.name));
+
+      if (stage.description) {
+          const gainLine = gainParts.length > 0 ? `\nGained: ${gainParts.join(", ")}` : "";
+          this.oneRollState.biography.push(`**${stage.label}**: ${stage.description}${gainLine}`);
+      }
 
       if (stage.attributes) {
           for (const [attr, val] of Object.entries(stage.attributes)) {
@@ -632,11 +657,66 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
   }
 
   async _onAcceptFate(event, target) {
-       event.preventDefault(); 
-       const bioText = this.oneRollState.biography.join("\n\n");
-       this.oneRollState.finalBio = bioText;
-       
+       event.preventDefault();
+       this.oneRollState.finalBio = this._buildFinalBiography();
        await this._onFinishCharacter(event, target);
+  }
+
+  /**
+   * D3: Builds a structured biography string from the one-roll biography entries
+   * and the final draft character state. Produces:
+   *   - One paragraph per life path stage (description + gains)
+   *   - Special events clearly marked
+   *   - A summary block: total wealth, advantages, equipment
+   */
+  _buildFinalBiography() {
+      const sections = this.oneRollState.biography;
+      const dc = this.draftCharacter;
+
+      // Stage paragraphs — already formatted in _applyStageGains
+      const storyLines = sections.join("\n\n");
+
+      // Summary block
+      const summaryParts = [];
+
+      // Wealth
+      if (dc.wealth > 0) summaryParts.push(`Wealth: ${dc.wealth}`);
+
+      // Advantages
+      if (dc.advantages?.length > 0) {
+          summaryParts.push(`Advantages: ${dc.advantages.map(a => a.name.replace(/\[PLACEHOLDER\] /, "")).join(", ")}`);
+      }
+
+      // Problems
+      if (dc.problems?.length > 0) {
+          summaryParts.push(`Problems: ${dc.problems.map(p => p.name.replace(/\[PLACEHOLDER\] /, "")).join(", ")}`);
+      }
+
+      // Equipment (weapons, armour, shields, gear combined)
+      const equipment = [
+          ...(dc.weapons  || []).map(w => w.name.replace(/\[PLACEHOLDER\] /, "")),
+          ...(dc.armor    || []).map(a => a.name.replace(/\[PLACEHOLDER\] /, "")),
+          ...(dc.shields  || []).map(s => s.name.replace(/\[PLACEHOLDER\] /, "")),
+          ...(dc.gear     || []).map(g => g.name.replace(/\[PLACEHOLDER\] /, ""))
+      ];
+      if (equipment.length > 0) summaryParts.push(`Equipment: ${equipment.join(", ")}`);
+
+      // Martial paths & esoterica
+      if (dc.martialPaths?.length > 0) {
+          summaryParts.push(`Martial Paths: ${dc.martialPaths.map(m => m.name.replace(/\[PLACEHOLDER\] /, "")).join(", ")}`);
+      }
+      if (dc.esoterica?.length > 0) {
+          summaryParts.push(`Esoterica: ${dc.esoterica.map(e => e.name.replace(/\[PLACEHOLDER\] /, "")).join(", ")}`);
+      }
+      if (dc.spells?.length > 0) {
+          summaryParts.push(`Spells: ${dc.spells.map(s => s.name.replace(/\[PLACEHOLDER\] /, "")).join(", ")}`);
+      }
+
+      const summaryBlock = summaryParts.length > 0
+          ? `\n\n--- Character Summary ---\n${summaryParts.join("\n")}`
+          : "";
+
+      return storyLines + summaryBlock;
   }
 
   async _handleItemDrop(event) {

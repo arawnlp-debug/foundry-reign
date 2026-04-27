@@ -2,7 +2,187 @@
 
 ---
 
-## Sprint 4 — Sorcery Elevation
+## v2.6.0 — Presentation Pass
+
+### D1 — Sheet Consistency
+
+**Files:** `templates/actor/threat-sheet.hbs`, `templates/actor/company-sheet.hbs`, `lang/en.json`
+
+Threat sheet: all legacy `cm-*` utility class references replaced with their `reign-*` equivalents throughout `threat-sheet.hbs`. The `cm-*` classes remain defined in `actor-sheet.css` for backward compatibility but are no longer used by any system template. Header layout, stat blocks, and action rows now use the shared utility system consistently with the character sheet.
+
+Company sheet: profile image gains `reign-circle` for visual parity with the character sheet. Header-top gets `reign-p10` padding. Two hardcoded English strings ("Company XP", "War Chest (Pledged Dice)") replaced with locale keys `REIGN.CompanyXP` and `REIGN.CompanyWarChest`.
+
+---
+
+### D2 — Dark Mode & CSS Variable Audit
+
+**Files:** `styles/variables.css`, `styles/chat.css`, `styles/actor-sheet.css`, `styles/base.css`
+
+Fourteen new semantic colour variables defined with full light and dark mode values, covering all categories introduced in v2.3.0–v2.5.0 that previously used hardcoded hex values:
+
+| Variable | Light | Dark | Use |
+|---|---|---|---|
+| `--reign-color-teal` | `#00695c` | `#009688` | Success confirmations, manoeuvre effects |
+| `--reign-color-teal-light` | `#00897b` | `#00bfa5` | Teal borders, hover states |
+| `--reign-color-teal-border` | `#4db6ac` | `#00897b` | Teal card borders |
+| `--reign-bg-teal` | `#e0f2f1` | `#004d40` | Teal card backgrounds |
+| `--reign-bg-danger` | `#ffebee` | `#3b1010` | Danger/failure backgrounds |
+| `--reign-color-danger` | `#c62828` | `#ef5350` | Danger text |
+| `--reign-color-danger-border` | `#ef5350` | `#ff1744` | Danger borders |
+| `--reign-bg-warn` | `#fff3e0` | `#3e2723` | Warning backgrounds |
+| `--reign-color-warn-border` | `#ffb74d` | `#d84315` | Warning borders |
+| `--reign-bg-info` | `#e3f2fd` | `#001e36` | Info/gobble backgrounds |
+| `--reign-color-blue-dark` | `#1565c0` | `#42a5f5` | Info text |
+| `--reign-color-info-border` | `#90caf9` | `#0d47a1` | Info borders |
+| `--reign-color-amber` | `#c88b00` | `#e6a800` | Mid-intensity spells, temporary attunement |
+| `--reign-color-arcane` | `#4a1a6e` | `#9c6dbf` | Extreme-intensity spells, esoteric power |
+
+Approximately 35 hardcoded hex values replaced across `chat.css`, `actor-sheet.css`, and `base.css`. `.intensity-mid` now uses `--reign-color-amber`; `.intensity-extreme` uses `--reign-color-arcane` and `--reign-color-arcane-light`. All button variants (magic, heal, morale, manoeuvre, company), banner states, die faces, tag colours, wound banners, and the gobble dice block are fully variablised. The token HUD status wheel (9 Reign-specific statuses in a 3×3 CSS grid) is covered.
+
+---
+
+### D+ — Redirect UX (Dodge Roll Dialog)
+
+**Files:** `combat/character-roller.js`, `templates/dialogs/roll-character.hbs`, `lang/en.json`
+
+Redirect was previously inaccessible from the roll dialog — the manoeuvre selector was gated on `isCombatRoll` which excluded dodge rolls. A separate `isDodgeRoll` flag now identifies Dodge skill rolls, passing a filtered `dodgeManeuverOptions` array (only manoeuvres with `poolType: "dodge"`) to the dialog template. A dedicated manoeuvre block renders below the standard combat block showing only dodge manoeuvres, with a hint line noting the −2d penalty. Selecting Redirect applies the penalty automatically via the existing manoeuvre wiring. All downstream systems (pool breakdown, chat card outcome, Apply: Redirect button) function without further changes.
+
+---
+
+### D+ — Submission Hold Limb UX
+
+**File:** `combat/character-roller.js`
+
+When Submission Hold is selected from the manoeuvre dropdown, the Called Shot selector is filtered in-place: head and torso options (heights 7–10) are disabled and hidden, leaving only arm and leg locations (1–6) plus None. If the current selection is a head or torso height, it defaults to Right Arm High (6). A tooltip on the select communicates the restriction. All options are restored when switching away from Submission Hold. This prevents the post-roll "requires a limb" warning from firing in normal play.
+
+---
+
+### D3 — Charactermancer Biography Formatting
+
+**File:** `generators/charactermancer.js`
+
+One-roll character creation biography output is restructured. Previously a flat join of description strings; now each life path stage entry includes a compact "Gained:" line listing all mechanical awards from that stage (attributes, skills, wealth, advantages, equipment, and esoterica). A `_buildFinalBiography()` method replaces the inline `.join` call in `_onAcceptFate`, appending a "--- Character Summary ---" block at the end of the biography showing final wealth, advantages, problems, equipment, martial paths, esoterica, and spells. Stages without a `description` field in the one-roll table remain silent in the biography — gains from those stages are still applied to the character.
+
+Example output:
+
+```
+**Farmstead Childhood**: You grew up working the land in a quiet valley.
+Gained: +1 Body, +1 Endurance, +1 Wealth
+
+**Trade Caravan**: A merchant hired you as a guard across three seasons of road.
+Gained: +1 Fight, +1 Scrutinize, Sword
+
+*(Special)*: A veteran soldier took an interest and taught you a fighting style.
+
+--- Character Summary ---
+Wealth: 3
+Advantages: Iron Stomach
+Equipment: Sword, Leather Armour
+```
+
+---
+
+### Bug Fix — `squishLimit` Sentinel Value
+
+**File:** `combat/character-roller.js`
+
+`squishLimit` was initialised to `1` when no Active Effect set it, rather than `0`. The chat engine treats `0` as "no cap" and any positive value as an active Width cap — so the default of `1` was silently capping every set above Width 1 and zeroing all manoeuvre bonus damage (Charge, Knockout, Slam, etc.) since the AE system launched. Fixed to `|| 0`.
+
+---
+
+### Bug Fix — `models.js` `ignoreMultiPenaltySkills` Field Type
+
+**File:** `system/models.js`
+
+`ignoreMultiPenaltySkills` was defined as `ArrayField(StringField)` but the AE dictionary registered it as `mode: Override` (5) with `isString: true`, and the roller treated it as a comma-separated string. A Foundry Override AE cannot write a clean value into an ArrayField. Corrected to `StringField({ initial: "" })`. The defensive array/string parsing in `character-roller.js` handles any legacy actor data that stored an array.
+
+---
+
+## v2.5.0 — Combat Manoeuvre Automation
+
+### C1 — Positional & Status Manoeuvres
+
+**Files:** `combat/maneuvers.js`, `combat/chat.js`, `combat/damage.js`, `scripts/reign.mjs`, `combat/ore-combat.js`, `combat/character-roller.js`, `templates/chat/ore-roll.hbs`, `styles/chat.css`, `styles/base.css`, `lang/en.json`
+
+Five manoeuvres promoted from Tier 2 to Tier 1 with automated status effect application via a teal "Apply: X" button on their chat cards:
+
+| Manoeuvre | Effect |
+|---|---|
+| **Pin** | Applies `pinned` status to target; posts escape roll instructions |
+| **Restrain** | Applies `restrained` status to target |
+| **Stand** | Clears `prone` from the rolling actor; restores dodge eligibility |
+| **Shove** | Sets `shoveBonusAgainst` combatant flag with the target token ID; grants +1d to the attacker's next Trip or Slam against that specific target this round |
+| **Slam** | Applies `prone` to target; Width 3+ posts a chat note for additional Shock |
+
+`pinned` and `restrained` added to Reign's curated status effect list. Token HUD stripped to 9 Reign-specific statuses and forced into a 3×3 CSS grid via `base.css`. Shove bonus is target-specific (flag stores token ID), consumed on use, and cleared by `nextRound()`.
+
+---
+
+### C2 — Damage-Modifying Manoeuvres
+
+**Files:** `combat/maneuvers.js`, `combat/chat.js`, `combat/damage.js`, `scripts/reign.mjs`, `combat/ore-combat.js`, `templates/chat/ore-roll.hbs`, `lang/en.json`
+
+Four manoeuvres promoted from Tier 2 to Tier 1 with per-round hold tracking via combatant flags:
+
+| Manoeuvre | Implementation |
+|---|---|
+| **Strangle** | "Apply: Strangle" fires initial Shock to Head; "Maintain Strangle" button applies continuation Shock next round without rolling |
+| **Iron Kiss** | "Set Up" stores `ironKissSetup` flag with weapon formula and virtual Width; "Execute" fires the guaranteed Width×10 attack next round consuming the flag; flag cleared by `nextRound()` if unused |
+| **Redirect** | "Apply: Redirect" opens a dialog for the incoming attack's Width, formula, hit location, and AP; damage is applied to the targeted token at the redirected Width |
+| **Submission Hold** | "Apply: Hold" deals Shock to the held limb; "Wrench Free" applies self-inflicted Killing to the same location |
+
+---
+
+### C3 — Tier 2 GM Resolve Button
+
+**Files:** `templates/chat/ore-roll.hbs`, `scripts/reign.mjs`
+
+Tier 2 manoeuvre chat cards gain a dashed "GM: Resolve X" button (visible on success only, GM-restricted). Clicking it posts a confirmation message naming the manoeuvre, Width×Height, and the rolling player — providing a chat record that the GM has acknowledged and applied the narrative effect.
+
+---
+
+### Bug Fix — `advancedMods` Key Collision
+
+**File:** `combat/chat.js`
+
+`resolvedAdvancedMods = flags.advancedMods || advancedMods || {}` — a local `advancedMods` parameter was shadowing the flags value on every attack roll, silently zeroing all advanced modifiers (manoeuvre data, minHeight, squishLimit, bonusTiming) since launch. The resolution order now correctly prefers the flags value.
+
+---
+
+## v2.4.0 — Active Effects Phase 2
+
+### B1 — Sorcery AE Coverage
+
+**File:** `helpers/config.js`
+
+Sorcery group added to `getEffectDictionary()` covering: Bonus Pool, Bonus Width, minHeight, squishLimit, bonusTiming, and `ignoreMultiPenaltySkills` (Override mode, comma-separated string).
+
+### B2 — RAW Audit of Existing AE Paths
+
+**File:** `helpers/config.js`
+
+Three new AE paths added and tested end-to-end:
+
+- `forceHitLocation` — overrides the rolled hit location for all sets on that roll
+- `shiftHitLocationUp` — increments the hit location by N steps (capped at Head)
+- `appendManeuvers` — adds extra manoeuvre options to the roll dialog dropdown
+
+`squishLimit`, `bonusTiming`, and `minHeight` implemented end-to-end:
+- `minHeight`: third failure condition in set evaluation ("Minimum Height N Required")
+- `squishLimit`: Width capped after bonusWidth addition, `(capped N)` shown in set text
+- `bonusTiming`: added to `initValue` after `calculateInitiative` in `postOREChat`
+
+### B3 — Attunement as Active Effects
+
+**File:** `scripts/reign.mjs`
+
+`preUpdateActor` stashes previous `attunementStatus` into `options.previousData`. `updateActor` hook fires when status transitions to `"perfect"`, offering to create a pre-labelled AE with attunement notes pre-populated. Guards: owner only, no duplicates, correct actor type, genuine transition only.
+
+---
+
+## v2.3.0 — Sorcery Elevation & School System
+
+### Sprint 4 — Sorcery Elevation
 
 A comprehensive overhaul of the magic system across 17 files. This sprint brings the sorcery implementation into full alignment with the OneRoll Engine rules, replacing placeholder fields and free-text areas with structured, mechanical data that integrates with the roller, chat cards, and character creation.
 
@@ -179,9 +359,7 @@ Added `.reign-hidden { display: none; }`. Used to replace two pre-existing inlin
 
 ---
 
-## Sprint 5 — Magic School System
-
-A setting-configurable magical school registry. Schools are defined in the One-Roll Table JSON file, not in code — different worlds load different schools automatically.
+### Sprint 5 — Magic School System
 
 ### 5.1 Schools in the One-Roll Table JSON
 **File:** `data/oneroll-default.json`
@@ -232,13 +410,9 @@ The picker:
 
 ---
 
-## Sprints 1–3
+## Earlier Versions
 
-See the Sprint 1–3 section below for earlier changes covering critical bug fixes, DRY extraction, and chat message optimisation.
-
----
-
-## Sprint 3 — Chat Message Optimization
+### Sprint 3 — Chat Message Optimization
 
 ### 3.1 Slimmed chat flag `itemData`
 **File:** `helpers/chat.js`
@@ -247,7 +421,7 @@ Replaced `item.toObject()` (which serialized the entire item including notes HTM
 
 ---
 
-## Sprint 2 — DRY Extraction & Architecture
+### Sprint 2 — DRY Extraction & Architecture
 
 ### 2.1 Centralized hit location constants
 **File:** `helpers/config.js`
@@ -281,7 +455,7 @@ Replaced manual instance tracking with `static syncAll()` derived from `ui.windo
 
 ---
 
-## Sprint 1 — Critical Bug Fixes
+### Sprint 1 — Critical Bug Fixes
 
 ### 1.1 Company conquest reward uses pre-damage size
 **File:** `combat/company-damage.js`

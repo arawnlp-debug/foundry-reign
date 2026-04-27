@@ -1,7 +1,7 @@
 <div class="reign-sheet-root company-sheet">
   <header class="sheet-header">
-    <div class="header-top">
-      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img"/>
+    <div class="header-top reign-p10">
+      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img reign-circle"/>
       <div class="header-fields">
         <div class="title-row">
           <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'REIGN.CompanyNamePlaceholder'}}" class="reign-company-title"/>
@@ -29,7 +29,7 @@
         </button>
 
         <div class="reign-stat-panel">
-            <h4>Company XP</h4>
+            <h4>{{localize 'REIGN.CompanyXP'}}</h4>
             <div class="panel-content">
                 <div class="reign-stat-column" title="Unspent Experience">
                     <span class="reign-stat-label">UNSPENT</span>
@@ -43,7 +43,7 @@
         </div>
 
         <div class="reign-stat-panel">
-            <h4>War Chest (Pledged Dice)</h4>
+            <h4>{{localize 'REIGN.CompanyWarChest'}}</h4>
             <div class="panel-content">
                 <div class="reign-stat-column" title="Pledged Standard Dice (+1d)">
                     <span class="reign-stat-label">DICE</span>

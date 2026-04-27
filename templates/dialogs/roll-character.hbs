@@ -96,6 +96,22 @@
   </div>
   {{/if}}
 
+  {{!-- D+: Dodge manoeuvre selector — shows only poolType:"dodge" manoeuvres (e.g. Redirect) --}}
+  {{#if isDodgeRoll}}
+  <div class="form-group reign-dialog-section">
+      <label>{{localize 'REIGN.ManeuverLabel'}}:</label>
+      <select name="maneuver">
+          <option value="none">{{localize 'REIGN.ManeuverNone'}}</option>
+          {{#each dodgeManeuverOptions as |m|}}
+          <option value="{{m.id}}">{{localize m.label}}</option>
+          {{/each}}
+      </select>
+      <span class="reign-text-small reign-text-muted" style="display:block;margin-top:3px;">
+          <i class="fas fa-info-circle"></i> {{localize 'REIGN.DodgeManeuverHint'}}
+      </span>
+  </div>
+  {{/if}}
+
   <div class="dialog-grid dialog-grid-3">
     <div class="form-group"><label>Total Actions:</label><input type="number" name="multiActions" value="1" min="1" title="Penalty: -1d per extra action"/></div>
     <div class="form-group"><label>Bonus Dice (+d):</label><input type="number" name="bonus" value="{{autoBonus}}"/></div>
