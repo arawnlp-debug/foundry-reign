@@ -2,6 +2,44 @@
 
 ---
 
+## v2.8.0 — Quality of Life
+
+### F1 — Counterspell Integration
+
+**Files:** `templates/chat/ore-roll.hbs`, `scripts/reign.mjs`
+
+A counterspell gobble button (ban icon, magic blue) is added to the secondary action row of each set on spell chat cards. It works identically to the existing Dodge/Parry gobble button — clicking it calls `consumeGobbleDie(msg, heightToRemove)` against that set's Height, using the counterspeller's already-rolled Gobble Dice. No new roll dialog is opened; the mechanic is the same as Dodge and Parry per RAW.
+
+The existing Dodge/Parry gobble button (shield icon) is preserved on spell cards but is now conditionally shown — it only appears when the spell item has `dodgeable` or `parriable` set to true. On physical attack cards the shield gobble button is unchanged and always visible. The counterspell gobble button never appears on physical attack cards.
+
+---
+
+### F2 — One-Roll Table Validation
+
+**File:** `generators/charactermancer.js`
+
+`_loadOneRollTable` previously failed silently on malformed JSON — a parse error produced only a notification, and a structurally valid but incomplete table (missing `sets` or `waste`) would load and cause downstream errors in character generation.
+
+The method is rewritten with a two-tier validation layer:
+
+**Errors (blocking):** Missing `tableName`, `sets`, or `waste` keys; `sets` is not an object; JSON parse failure. On any error, loading halts and a structured red error card posts to chat listing every problem found, with the file path and an instruction to fix and reload.
+
+**Warnings (advisory):** No `schools` key (school picker will be hidden); malformed set entries (wrong shape for life path results). Warnings post an amber card to chat but loading continues normally.
+
+Two new helper methods: `_postTableValidationError(path, errors, warnings)` and `_postTableValidationWarning(path, warnings)`. Both post structured chat cards using the existing card style classes.
+
+---
+
+### F3 — Eerie Detection Prompt
+
+**Files:** `templates/chat/ore-roll.hbs`, `scripts/reign.mjs`, `combat/character-roller.js`, `templates/dialogs/roll-character.hbs`
+
+When a spell fires successfully at Intensity 2 or higher, a "Roll Sense + Eerie (Xft)" button appears alongside the Counter This Spell button. Clicking it opens the Sense + Eerie roll dialog pre-configured with the spell's detection radius and name. The dialog banner notes the RAW rule: any match succeeds — there is no Width or Height threshold for detection. The character is either within range or they are not.
+
+Detection radius values are the canonical RAW table (Intensity 1 = none, 2 = 5 ft, 3 = 10 ft, 4 = 50 ft, 5 = 1,000 ft, 6 = 1 mile, 7 = 10 miles, 8 = 25 miles, 9 = 50 miles, 10 = 100 miles) already computed by the existing detection radius system and passed through `spellDetectionRadius` on the chat card flags.
+
+---
+
 ## v2.6.0 — Presentation Pass
 
 ### D1 — Sheet Consistency

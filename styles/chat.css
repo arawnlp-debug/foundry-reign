@@ -460,3 +460,15 @@
 .reign-chat-card .reign-msg-result { text-align: center; font-size: var(--reign-text-lg); font-weight: bold; margin: 5px 0; }
 .reign-chat-card.reign-card-success { border-color: var(--reign-color-emerald); }
 .reign-chat-card.reign-card-fail { border-color: var(--reign-color-blood); }
+/* F2: One-Roll Table validation cards */
+.reign-validation-list { margin: 4px 0 0 0; padding: 0 0 0 4px; list-style: none; font-size: 0.85em; }
+.reign-validation-list.error li { color: var(--reign-color-danger); margin-bottom: 3px; }
+.reign-validation-list.warn li { color: var(--reign-color-warn-border); margin-bottom: 3px; }
+.reign-card-warn { background: var(--reign-bg-warn); border-left: 3px solid var(--reign-color-warn-border); }
+.theme-dark .reign-card-warn { background: var(--reign-bg-warn); }
+
+/* F1/F3: Spell action buttons row */
+.reign-spell-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.reign-btn-info { background: rgba(66, 165, 245, 0.1); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
+.reign-btn-info:hover { background: rgba(66, 165, 245, 0.25); }
+.theme-dark .reign-btn-info { color: var(--reign-color-blue-dark); border-color: var(--reign-color-info-border); }

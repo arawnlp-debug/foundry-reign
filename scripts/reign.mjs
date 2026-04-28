@@ -761,6 +761,46 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       });
     });
   });
+
+  // F1: COUNTERSPELL GOBBLE BUTTON — same mechanic as Dodge/Parry gobble, applied to spell sets
+  element.querySelectorAll(".counterspell-gobble-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      if (!msg.isAuthor && !game.user.isGM) return ui.notifications.warn("Only the GM or the rolling player can alter this spell's dice.");
+      const heightToRemove = parseInt(btn.dataset.height);
+      await consumeGobbleDie(msg, heightToRemove);
+    });
+  });
+
+  // F3: ROLL SENSE + EERIE BUTTON — opens roll dialog pre-set for detection check
+  element.querySelectorAll(".roll-eerie-detection-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const detectionRadius = btn.dataset.detectionRadius || "Unknown";
+      const spellName       = btn.dataset.spellName || "a spell";
+
+      const actor = game.user.character
+        || game.actors.find(a => a.type === "character" && a.isOwner);
+
+      if (!actor) {
+        return ui.notifications.warn("No owned character found to roll Sense + Eerie.");
+      }
+
+      // Open roll dialog pre-set to Sense + Eerie.
+      // Pass eerieDetection flag so the dialog banner and result can note
+      // that any match succeeds — no Width or Height threshold.
+      await CharacterRoller.rollCharacter(actor, {
+        type: "skill",
+        key: "eerie",
+        label: "Sense + Eerie (Detection)",
+        defaultAttr: "sense",
+        eerieDetection: true,
+        eerieDetectionRadius: detectionRadius,
+        eerieSpellName: spellName
+      });
+    });
+  });
 });
 
 Hooks.on("preCreateItem", (item, data, options, userId) => {

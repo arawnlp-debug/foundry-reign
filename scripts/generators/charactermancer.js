@@ -343,18 +343,114 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
 
       try {
           const response = await fetch(path);
-          if (response.ok) {
-              this.oneRollTable = await response.json();
-              this.oneRollTable._path = path;
-              return this.oneRollTable;
-          } else {
+          if (!response.ok) {
               ui.notifications.error(`${game.i18n.localize("REIGN.CM.Errors.TableNotFound")} ${path}`);
+              return null;
           }
+
+          let table;
+          try {
+              table = await response.json();
+          } catch (parseErr) {
+              console.error("Reign | One-Roll Table parse error", parseErr);
+              ui.notifications.error(`${game.i18n.localize("REIGN.CM.Errors.JsonParseError")} ${path}`);
+              this._postTableValidationError(path, [`JSON parse failed: ${parseErr.message}`], []);
+              return null;
+          }
+
+          // F2: Structural validation — collect errors and warnings separately.
+          // Errors block loading; warnings are advisory only.
+          const errors = [];
+          const warnings = [];
+
+          // Required top-level keys
+          if (!table.tableName)  errors.push("Missing required field: \"tableName\"");
+          if (!table.sets)       errors.push("Missing required field: \"sets\"");
+          if (!table.waste)      errors.push("Missing required field: \"waste\"");
+
+          // Advisory: schools key absent is fine but worth noting
+          if (!table.schools) warnings.push("No \"schools\" key found — school picker will be hidden during character creation");
+
+          // Validate sets structure if present
+          if (table.sets && typeof table.sets === "object") {
+              const setKeys = Object.keys(table.sets);
+              if (setKeys.length === 0) {
+                  errors.push("\"sets\" is empty — no life path results defined");
+              } else {
+                  // Check a sample of set entries for expected structure
+                  let malformedSets = 0;
+                  for (const [setKey, setVal] of Object.entries(table.sets)) {
+                      if (!setVal || typeof setVal !== "object") { malformedSets++; continue; }
+                      if (!setVal.stages && !setVal.label && !setVal.description) malformedSets++;
+                  }
+                  if (malformedSets > 0) {
+                      warnings.push(`${malformedSets} set entry(ies) appear malformed — expected objects with "label", "description", or "stages"`);
+                  }
+              }
+          } else if (table.sets) {
+              errors.push("\"sets\" must be an object keyed by Width-Height (e.g. \"2x10\")");
+          }
+
+          // Validate waste structure if present
+          if (table.waste && !Array.isArray(table.waste) && typeof table.waste !== "object") {
+              errors.push("\"waste\" must be an array or object of waste results");
+          }
+
+          // Hard stop on errors
+          if (errors.length > 0) {
+              this._postTableValidationError(path, errors, warnings);
+              return null;
+          }
+
+          // Soft warnings — post to chat but continue loading
+          if (warnings.length > 0) {
+              this._postTableValidationWarning(path, warnings);
+          }
+
+          table._path = path;
+          this.oneRollTable = table;
+          return table;
+
       } catch (e) {
-          console.error("Failed to load One-Roll table", e);
+          console.error("Reign | Failed to load One-Roll table", e);
           ui.notifications.error(`${game.i18n.localize("REIGN.CM.Errors.JsonParseError")} ${path}`);
+          return null;
       }
-      return null;
+  }
+
+  /**
+   * F2: Posts a structured error card to chat when the One-Roll Table fails validation.
+   * Blocking — table will not load.
+   */
+  _postTableValidationError(path, errors, warnings) {
+      const errorList = errors.map(e => `<li><i class="fas fa-times-circle"></i> ${e}</li>`).join("");
+      const warnList  = warnings.length > 0
+          ? `<ul class="reign-validation-list warn">${warnings.map(w => `<li><i class="fas fa-exclamation-triangle"></i> ${w}</li>`).join("")}</ul>`
+          : "";
+      ChatMessage.create({
+          content: `<div class="reign-chat-card reign-card-danger">
+              <h3 class="reign-msg-danger"><i class="fas fa-times-circle"></i> One-Roll Table Failed to Load</h3>
+              <p class="reign-text-small reign-text-muted">${path}</p>
+              <ul class="reign-validation-list error">${errorList}</ul>
+              ${warnList}
+              <p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Fix the JSON and reload the Charactermancer.</p>
+          </div>`
+      });
+  }
+
+  /**
+   * F2: Posts an advisory warning card to chat when the table loads but has structural issues.
+   * Non-blocking — table loads normally.
+   */
+  _postTableValidationWarning(path, warnings) {
+      const warnList = warnings.map(w => `<li><i class="fas fa-exclamation-triangle"></i> ${w}</li>`).join("");
+      ChatMessage.create({
+          content: `<div class="reign-chat-card reign-card-warn">
+              <h3 class="reign-msg-info"><i class="fas fa-exclamation-triangle"></i> One-Roll Table Loaded with Warnings</h3>
+              <p class="reign-text-small reign-text-muted">${path}</p>
+              <ul class="reign-validation-list warn">${warnList}</ul>
+          </div>`
+      });
   }
 
   async _findItem(name, type) {

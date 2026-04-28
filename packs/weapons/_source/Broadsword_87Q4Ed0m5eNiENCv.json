@@ -1,0 +1,43 @@
+{
+  "name": "Broadsword",
+  "type": "weapon",
+  "system": {
+    "damage": "Width+1 Killing",
+    "pool": "fight",
+    "range": "Close",
+    "equipped": false,
+    "qualities": {
+      "armorPiercing": 0,
+      "slow": 0,
+      "twoHanded": false,
+      "massive": false,
+      "unarmed": false,
+      "area": 0
+    },
+    "notes": "Combat weapon. Uses the same stats as Saber, Cutlass, and Scimitar.",
+    "wealthCost": 2,
+    "equippedTimestamp": 0
+  },
+  "_id": "87Q4Ed0m5eNiENCv",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608058,
+    "modifiedTime": 1777294608060,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!87Q4Ed0m5eNiENCv"
+}

@@ -87,7 +87,9 @@
         "NativeLanguageLocked": "Native Language Master Die is locked.",
         "NotEnoughPoints": "Not enough points!",
         "SpellsTooHigh": "Starting characters cannot know spells above Sixth Intensity.",
-        "TableNotFound": "Could not find table at:"
+        "TableNotFound": "Could not find table at:",
+        "TableValidationFailed": "One-Roll Table failed validation — see chat for details.",
+        "TableWarningNoSchools": "One-Roll Table has no schools defined — school picker will be hidden."
       },
       "ExpertDie": "Expert Die",
       "ForgeLegendSubtitle": "How will your story be written?",

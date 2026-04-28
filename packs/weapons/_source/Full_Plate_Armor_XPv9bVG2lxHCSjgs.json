@@ -1,0 +1,42 @@
+{
+  "name": "Full Plate Armor",
+  "type": "armor",
+  "system": {
+    "armorWeight": "heavy",
+    "ar": 3,
+    "equipped": false,
+    "protectedLocations": {
+      "head": true,
+      "torso": true,
+      "armL": true,
+      "armR": true,
+      "legL": true,
+      "legR": true
+    },
+    "notes": "Protects locations 1-10. Imposes -2d to Climb/Run, and Difficulty 4 to Endurance/Athletics.",
+    "wealthCost": 4,
+    "equippedTimestamp": 0
+  },
+  "_id": "XPv9bVG2lxHCSjgs",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608075,
+    "modifiedTime": 1777294608076,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!XPv9bVG2lxHCSjgs"
+}

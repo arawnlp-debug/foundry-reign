@@ -1,0 +1,43 @@
+{
+  "name": "Attune to the Flame Weavers (Example)",
+  "type": "spell",
+  "system": {
+    "school": "Flame Weavers (Example)",
+    "intensity": 1,
+    "castingTime": 10,
+    "slow": 0,
+    "duration": "Permanent",
+    "castingStat": "knowledge",
+    "attunementRequired": false,
+    "isAttunementSpell": true,
+    "dodgeable": false,
+    "parriable": false,
+    "armorBlocks": false,
+    "effect": "Aligns the caster's spiritual essence with the element of fire. This spell does nothing on its own, but is required as a prerequisite to cast advanced spells of the Flame Weavers.",
+    "damage": "",
+    "pool": "",
+    "page": ""
+  },
+  "_id": "9V73rWQmjxyj3DWN",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608102,
+    "modifiedTime": 1777294608102,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!9V73rWQmjxyj3DWN"
+}

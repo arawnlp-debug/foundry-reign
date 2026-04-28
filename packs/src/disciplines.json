@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Captivating Gaze (Example)",
+    "type": "discipline",
+    "system": {
+      "path": "Way of the Silver Tongue (Example)",
+      "associatedSkill": "fascinate",
+      "rank": 1,
+      "effect": "First tier of the Silver Tongue path. When making a Fascinate roll to command the attention of a crowd, you may ignore up to -1d of penalties caused by hostile or noisy environments."
+    }
+  },
+  {
+    "name": "The Unspoken Word (Example)",
+    "type": "discipline",
+    "system": {
+      "path": "Way of the Silver Tongue (Example)",
+      "associatedSkill": "fascinate",
+      "rank": 2,
+      "effect": "Second tier. If your Fascinate roll fails to produce a set, you may immediately roll 1d10 and add it to the results, potentially forming a set. You must already know Captivating Gaze (Example) to learn this."
+    }
+  }
+]

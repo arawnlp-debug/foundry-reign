@@ -395,18 +395,24 @@ export class CharacterRoller {
 
         const isDodgeRoll = isDefenseRoll && rawSkillKey === "dodge";
 
-        // For dodge rolls, filter maneuver options to poolType "dodge" only (e.g. Redirect).
-        // Grouped into a flat list — no category headers needed for a single maneuver.
         const dodgeManeuverOptions = isDodgeRoll
             ? Object.values(MANEUVERS).filter(m => m.poolType === "dodge")
             : null;
+
+        // F3: Eerie detection context — passed from the "Roll Sense + Eerie" button
+        const isEerieDetection      = !!dataset.eerieDetection;
+        const eerieDetectionRadius  = dataset.eerieDetectionRadius || "";
+        const eerieSpellName        = dataset.eerieSpellName || "a spell";
 
         const templateData = {
             defaultAttr, attrOptions, showSkillSelect, defaultSkill, skillOptions, isCombatRoll, calledShotOptions,
             difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue,
             maneuverOptions: isCombatRoll ? getManeuverOptions() : null,
             isDodgeRoll,
-            dodgeManeuverOptions
+            dodgeManeuverOptions,
+            isEerieDetection,
+            eerieDetectionRadius,
+            eerieSpellName
         };
 
         if (DEBUG_ROLLS) console.log("Reign Roller | Rendering HTML Template...");

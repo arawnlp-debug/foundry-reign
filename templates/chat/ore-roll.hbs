@@ -252,10 +252,27 @@
                                     </button>
                                 {{/if}}
 
+                                {{!-- Dodge/Parry gobble: always on physical attacks; only on spells that are dodgeable/parriable --}}
                                 {{#unless ../isDefense}}
-                                    <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Use Dodge or Parry)">
-                                        <i class="fas fa-shield-alt"></i>
-                                    </button>
+                                    {{#if ../isSpell}}
+                                        {{#if ../spellDodgeable}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Dodge or Parry this spell)">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                        {{else if ../spellParriable}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Dodge or Parry this spell)">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                        {{/if}}
+                                        {{!-- F1: Counterspell gobble — always available on spell cards --}}
+                                        <button class="reign-btn-small reign-btn-magic counterspell-gobble-btn" data-height="{{set.height}}" title="Gobble 1 Die (Counterspell/Dodge/Parry)">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    {{else}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Use Dodge or Parry)">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                    {{/if}}
                                 {{/unless}}
 
                                 {{#if set.companyDmg}}
