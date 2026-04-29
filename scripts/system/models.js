@@ -28,8 +28,11 @@ const makeHealthLoc = () => new SchemaField({
 const makeQuality = () => new SchemaField({
     value: new NumberField({ initial: 0, min: 0, integer: true }),
     damage: new NumberField({ initial: 0, min: 0, integer: true }),
+    // ISSUE-006: `uses` tracks per-season action-economy expenditure (RAW Ch9 — each Company
+    // Action that draws on a Quality marks it as used for that season; it resets at season end).
+    // It subtracts from `effective` alongside `damage`. Reset via "Advance Month" in the dashboard.
     uses: new NumberField({ initial: 0, min: 0, integer: true }),
-    effective: new NumberField({ initial: 0, min: 0, integer: true }), // V14 FIX: Explicitly define derived fields
+    effective: new NumberField({ initial: 0, min: 0, integer: true }), // runtime-only; recomputed each prepareDerivedData
     notes: new StringField({ initial: "" })
 });
 
@@ -131,6 +134,9 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                     ignoreHeadShock: new BooleanField({ initial: false }),
                     ignoreTorsoPenalties: new BooleanField({ initial: false }),
                     ignoreFatiguePenalties: new BooleanField({ initial: false }),
+                    // General-purpose flag: allows swimming in Heavy Armor at a mandatory −4d penalty
+                    // instead of auto-failing. RAW use case: Whale Blessed Advantage (Rules Ch4).
+                    // GMs may also apply this for supernatural creatures, special circumstances, etc.
                     ignoreHeavyArmorSwim: new BooleanField({ initial: false }),
                     cannotUseTwoHanded: new BooleanField({ initial: false }),
                     immuneToBeauty: new BooleanField({ initial: false })
@@ -195,10 +201,11 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
         const equippedTower = this.parent?.items?.find(i => i.type === "shield" && i.system.equipped && i.system.shieldSize === "tower");
         this.hasTowerShieldPenalty = !!equippedTower;
         
-        if (equippedTower && !equippedTower.system.isStationary) {
-            if (!this.modifiers) this.modifiers = {};
-            this.modifiers.globalSpeed = (this.modifiers.globalSpeed || 0) - 2; 
-        }
+        // ISSUE-020 FIX: Tower Shield speed penalty was previously mutating this.modifiers.globalSpeed
+        // inside prepareDerivedData, which pollutes schema data and causes phantom update events.
+        // Instead, expose it as a read-only transient property. Any code needing the penalty
+        // should read actor.system.towerShieldSpeedPenalty (−2 when moving, 0 when stationary).
+        this.towerShieldSpeedPenalty = (equippedTower && !equippedTower.system.isStationary) ? -2 : 0;
     }
 }
 
@@ -232,6 +239,11 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
     }
 
     prepareDerivedData() {
+        // ISSUE-021 NOTE: `effective` is defined in makeQuality() so Foundry V14's schema
+        // validation accepts it, but its value on disk is always stale. The authoritative
+        // value is computed here every time the document is prepared. Macros and external
+        // integrations must read actor.system.qualities[key].effective at runtime, not from
+        // raw stored data.
         for (const key of Object.keys(this.qualities)) {
             const q = this.qualities[key];
             q.effective = Math.max(0, q.value - (q.damage || 0) - (q.uses || 0));
@@ -242,19 +254,98 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
 export class ReignThreatData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return {
-            threatLevel: new NumberField({ initial: 3, min: 0, integer: true }),
+            // ── Mob fields (existing) ──────────────────────────────────────────────
+            threatLevel:   new NumberField({ initial: 3, min: 0, integer: true }),
             damageFormula: new StringField({ initial: "Width Shock" }),
             magnitude: new SchemaField({
                 value: new NumberField({ initial: 5, min: 0, integer: true }),
-                max: new NumberField({ initial: 5, min: 1, integer: true })
+                max:   new NumberField({ initial: 5, min: 1, integer: true })
             }),
             morale: new SchemaField({
                 value: new NumberField({ initial: 5, min: 0, integer: true }),
-                max: new NumberField({ initial: 5, min: 1, integer: true })
+                max:   new NumberField({ initial: 5, min: 1, integer: true })
             }),
-            description: new StringField({ initial: "" }),
-            parentCompany: new StringField({ initial: "" })
+            description:   new StringField({ initial: "" }),
+            parentCompany: new StringField({ initial: "" }),
+
+            // ── G3.1: Creature Mode ────────────────────────────────────────────────
+            // When true: individual creature with wound boxes; false: mob (default).
+            creatureMode: new BooleanField({ initial: false }),
+
+            // Custom hit locations. Each entry: key, display name, roll heights (1-10),
+            // wound box count, armor rating, and current damage state.
+            customLocations: new ArrayField(new SchemaField({
+                key:         new StringField({ initial: "" }),
+                name:        new StringField({ initial: "" }),
+                rollHeights: new ArrayField(new NumberField({ integer: true, min: 1, max: 10 })),
+                woundBoxes:  new NumberField({ initial: 5, min: 1, integer: true }),
+                ar:          new NumberField({ initial: 0, min: 0, integer: true }),
+                shock:       new NumberField({ initial: 0, min: 0, integer: true }),
+                killing:     new NumberField({ initial: 0, min: 0, integer: true })
+            })),
+
+            // Creature attributes — Body, Coordination, Sense (animals have no Charm/Knowledge/Command)
+            creatureAttributes: new SchemaField({
+                body:         new NumberField({ initial: 3, min: 0, integer: true }),
+                coordination: new NumberField({ initial: 2, min: 0, integer: true }),
+                sense:        new NumberField({ initial: 2, min: 0, integer: true })
+            }),
+
+            // Creature skills as a flexible key/value map. Values are numbers (dice pool).
+            // Master Dice are stored as negative numbers (−1 = 1 MD), per convention.
+            creatureSkills: new ObjectField({ initial: {} }),
+
+            // Bestiary display fields
+            trainability: new StringField({ initial: "" }),
+            tricks:       new NumberField({ initial: 0, min: 0, integer: true }),
+            movement:     new StringField({ initial: "" }),
+            specialRules: new StringField({ initial: "" }),
+
+            // Defined attacks — each is a rollable action with a pool and damage formula.
+            creatureAttacks: new ArrayField(new SchemaField({
+                name:      new StringField({ initial: "Attack" }),
+                attribute: new StringField({ initial: "body" }),    // "body"|"coordination"|"sense"
+                skill:     new StringField({ initial: "" }),         // key from creatureSkills
+                damage:    new StringField({ initial: "Width Shock" }),
+                notes:     new StringField({ initial: "" }),         // "Two per round", "Slow 1" etc.
+                isSlow:    new NumberField({ initial: 0, min: 0, integer: true }) // Slow N
+            })),
+
+            // G4: Per-combat special mechanics flags
+            creatureFlags: new SchemaField({
+                // G4.1 Big Cat: free Gobble Dice per round (value 10)
+                freeGobbleDicePerRound: new NumberField({ initial: 0, min: 0, integer: true }),
+                // G4.2 Elephant: Morale Attack once per combat
+                moraleAttackOnce:       new BooleanField({ initial: false }),
+                // G4.3 Boa: whether the creature has a constrict ability
+                hasConstrict:           new BooleanField({ initial: false }),
+                constrictActive:        new BooleanField({ initial: false }),
+                constrictTargetId:      new StringField({ initial: "" }),
+                // G4.4 Rhino: whether the creature uses charge accumulation (NOT all 'run' creatures)
+                hasChargeAccumulation:  new BooleanField({ initial: false }),
+                chargeRunWidest:        new NumberField({ initial: 0, min: 0, integer: true }),
+                // G4.5 Venom
+                venomPotency:           new NumberField({ initial: 0, min: 0, integer: true }),
+                venomType:              new StringField({ initial: "" })
+            })
         };
+    }
+
+    prepareDerivedData() {
+        // Build a height→location-key lookup for fast hit resolution in the damage pipeline.
+        // Example: { 1: ["leftForeLeg"], 2: ["rightForeLeg"], 9: ["head","back"], 10: ["head","back"] }
+        // Multiple keys per height occur on creatures like the Elephant where positions overlap.
+        if (this.creatureMode && this.customLocations?.length > 0) {
+            this.heightLocationMap = {};
+            for (const loc of this.customLocations) {
+                for (const h of (loc.rollHeights || [])) {
+                    if (!this.heightLocationMap[h]) this.heightLocationMap[h] = [];
+                    this.heightLocationMap[h].push(loc.key);
+                }
+            }
+        } else {
+            this.heightLocationMap = {};
+        }
     }
 }
 

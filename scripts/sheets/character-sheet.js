@@ -106,6 +106,11 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
           if (!restType) return;
           const system = this.document.system;
 
+          // RAW: Daily Vigor recovery — roll Body + Vigor.
+          // On a successful set the character chooses ONE of two options:
+          //   A) Remove Shock equal to the set's Width (distributed across any locations), OR
+          //   B) Convert exactly 1 Killing damage to Shock on any one location.
+          // Only the best set is used. (Rules — Daily recovery.)
           if (restType === "vigor") {
               const body = parseInt(system.attributes.body?.value) || 0;
               const vigor = parseInt(system.skills.vigor?.value) || 0;
@@ -119,16 +124,64 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
               const parsed = parseORE(results);
 
               if (parsed.sets.length === 0) {
-                  await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-fail">Vigorous Recovery Failed</h3><p>Rolled ${pool}d10 (Body + Vigor) and found no matches. No Shock was recovered.</p></div>` });
+                  await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-fail">Vigorous Recovery Failed</h3><p>Rolled ${pool}d10 (Body + Vigor) and found no matches. No recovery.</p></div>` });
                   return;
               }
 
               const bestSet = parsed.sets[0];
               const width = bestSet.width;
 
+              // Build lists for the OR choice dialog
+              const hasKilling = HIT_LOCATIONS.some(loc => (system.health[loc].killing || 0) > 0);
+              const killingOptions = HIT_LOCATIONS
+                  .filter(loc => (system.health[loc].killing || 0) > 0)
+                  .map(loc => `<option value="${loc}">${loc === "armR" ? "Right Arm" : loc === "armL" ? "Left Arm" : loc === "legR" ? "Right Leg" : loc === "legL" ? "Left Leg" : loc.charAt(0).toUpperCase() + loc.slice(1)} (Kill: ${system.health[loc].killing})</option>`)
+                  .join("");
+
+              const choiceContent = `
+                <form class="reign-dialog-form">
+                  <p class="reign-dialog-callout">Roll succeeded! Best set: <strong>${bestSet.text}</strong>. Choose one recovery option:</p>
+                  <div class="form-group">
+                    <label><input type="radio" name="vigorMode" value="shock" checked> Remove <strong>${width} Shock</strong> (distributed across locations)</label>
+                  </div>
+                  <div class="form-group">
+                    <label>
+                      <input type="radio" name="vigorMode" value="killing" ${!hasKilling ? "disabled" : ""}> 
+                      Convert <strong>1 Killing → Shock</strong> on one location ${!hasKilling ? "(no Killing damage present)" : ""}
+                    </label>
+                    ${hasKilling ? `<select name="killingLoc" style="margin-top:4px;width:100%">${killingOptions}</select>` : ""}
+                  </div>
+                </form>
+              `;
+
+              const modeChoice = await reignDialog("Vigorous Recovery — Choose Option", choiceContent, (e, b, d) => {
+                  const f = d.element.querySelector("form");
+                  return {
+                      mode: f.querySelector('[name="vigorMode"]:checked')?.value || "shock",
+                      killingLoc: f.querySelector('[name="killingLoc"]')?.value || null
+                  };
+              }, { defaultLabel: "Apply" });
+
+              if (!modeChoice) return;
+
+              // Option B: Convert 1 Killing → Shock
+              if (modeChoice.mode === "killing") {
+                  const loc = modeChoice.killingLoc;
+                  if (!loc || !(system.health[loc].killing > 0)) return ui.notifications.warn("No Killing damage at that location.");
+                  const effectiveMax = this.document.system.effectiveMax?.[loc] || 5;
+                  const newKilling = system.health[loc].killing - 1;
+                  const newShock = Math.min(system.health[loc].shock + 1, effectiveMax);
+                  await this.document.update({ [`system.health.${loc}.killing`]: newKilling, [`system.health.${loc}.shock`]: newShock });
+                  await syncCharacterStatusEffects(this.document);
+                  const locLabel = loc === "armR" ? "Right Arm" : loc === "armL" ? "Left Arm" : loc === "legR" ? "Right Leg" : loc === "legL" ? "Left Leg" : loc.charAt(0).toUpperCase() + loc.slice(1);
+                  await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Vigorous Recovery</h3><p>Rolled ${pool}d10 (Body+Vigor). Set: ${bestSet.text}.<br>Converted <strong>1 Killing → Shock</strong> on <strong>${locLabel}</strong>.</p></div>` });
+                  return;
+              }
+
+              // Option A: Remove Shock (distributed)
               const distContent = `
                 <form class="reign-dialog-form">
-                  <p class="reign-dialog-callout">Your roll succeeded! Width: <strong>${width}</strong>. You may remove up to ${width} Shock.</p>
+                  <p class="reign-dialog-callout">Width: <strong>${width}</strong>. Remove up to ${width} Shock across any locations.</p>
                   <div class="form-group"><label>Head (Shock: ${system.health.head.shock}):</label><input type="number" name="head" value="0" min="0" max="${Math.min(width, system.health.head.shock)}"></div>
                   <div class="form-group"><label>Torso (Shock: ${system.health.torso.shock}):</label><input type="number" name="torso" value="0" min="0" max="${Math.min(width, system.health.torso.shock)}"></div>
                   <div class="form-group"><label>R. Arm (Shock: ${system.health.armR.shock}):</label><input type="number" name="armR" value="0" min="0" max="${Math.min(width, system.health.armR.shock)}"></div>
@@ -138,7 +191,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
                 </form>
               `;
 
-              const dist = await reignDialog("Distribute Healing", distContent, (e,b,d) => {
+              const dist = await reignDialog("Distribute Shock Removal", distContent, (e,b,d) => {
                       const f = d.element.querySelector("form");
                       return { head: parseInt(f.head.value)||0, torso: parseInt(f.torso.value)||0, armR: parseInt(f.armR.value)||0, armL: parseInt(f.armL.value)||0, legR: parseInt(f.legR.value)||0, legL: parseInt(f.legL.value)||0 };
                   }, { defaultLabel: "Apply Healing" }
@@ -147,7 +200,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
               if (!dist) return;
 
               const totalAllocated = dist.head + dist.torso + dist.armR + dist.armL + dist.legR + dist.legL;
-              if (totalAllocated > width) return ui.notifications.error(`You allocated ${totalAllocated} healing, but only generated ${width}. Rest cancelled.`);
+              if (totalAllocated > width) return ui.notifications.error(`You allocated ${totalAllocated} but only generated ${width}. Rest cancelled.`);
 
               const updates = {};
               for (const [k, v] of Object.entries(dist)) { if (v > 0) updates[`system.health.${k}.shock`] = Math.max(0, system.health[k].shock - v); }
@@ -157,29 +210,47 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
                   await syncCharacterStatusEffects(this.document);
               }
 
-              await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Vigorous Recovery</h3><p>Rolled ${pool}d10 (Body+Vigor). Set: ${bestSet.text}.<br>Recovered <strong>${totalAllocated} Shock</strong> total.</p></div>` });
+              await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Vigorous Recovery</h3><p>Rolled ${pool}d10 (Body+Vigor). Set: ${bestSet.text}.<br>Removed <strong>${totalAllocated} Shock</strong> total.</p></div>` });
               return;
           }
 
           const updates = {};
           let totalHealed = 0;
 
-          HIT_LOCATIONS.forEach(loc => {
-              let currentShock = parseInt(system.health[loc].shock) || 0;
-              let currentKilling = parseInt(system.health[loc].killing) || 0;
-
-              if (restType === "day" && currentShock > 0) { updates[`system.health.${loc}.shock`] = currentShock - 1; totalHealed++; } 
-              else if (restType === "week" && currentKilling > 0) { updates[`system.health.${loc}.killing`] = currentKilling - 1; totalHealed++; }
-          });
+          if (restType === "day") {
+              // RAW: Daily natural Shock recovery — 1 Shock from every location that has any.
+              HIT_LOCATIONS.forEach(loc => {
+                  const currentShock = parseInt(system.health[loc].shock) || 0;
+                  if (currentShock > 0) { updates[`system.health.${loc}.shock`] = currentShock - 1; totalHealed++; }
+              });
+          } else if (restType === "week") {
+              // RAW: After a full week without new damage, 1 Killing on each LIMB converts to Shock.
+              // Head and Torso are NOT included — limbs only (armR, armL, legR, legL).
+              const LIMB_LOCATIONS = ["armR", "armL", "legR", "legL"];
+              LIMB_LOCATIONS.forEach(loc => {
+                  const currentKilling = parseInt(system.health[loc].killing) || 0;
+                  if (currentKilling > 0) {
+                      const effectiveMax = this.document.system.effectiveMax?.[loc] || 5;
+                      const currentShock  = parseInt(system.health[loc].shock) || 0;
+                      updates[`system.health.${loc}.killing`] = currentKilling - 1;
+                      // Killing converts to Shock — cap at the location max.
+                      updates[`system.health.${loc}.shock`] = Math.min(currentShock + 1, effectiveMax);
+                      totalHealed++;
+                  }
+              });
+          }
 
           if (totalHealed > 0) {
               await this.document.update(updates);
               await syncCharacterStatusEffects(this.document);
               const timeStr = restType === "day" ? "a full day" : "a full week";
-              const healStr = restType === "day" ? "Shock" : "Killing";
-              await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.document }), content: `<div class="reign-chat-card"><h3 class="reign-msg-info"><i class="fas fa-campground"></i> Natural Healing</h3><p>${foundry.utils.escapeHTML(this.document.name)} rests for <strong>${timeStr}</strong>, naturally recovering <strong>1 ${healStr}</strong> damage across ${totalHealed} affected locations.</p></div>` });
+              const healDesc = restType === "day"
+                  ? `naturally recovering <strong>1 Shock</strong> from ${totalHealed} location(s)`
+                  : `converting <strong>1 Killing → Shock</strong> on ${totalHealed} limb(s)`;
+              await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.document }), content: `<div class="reign-chat-card"><h3 class="reign-msg-info"><i class="fas fa-campground"></i> Natural Healing</h3><p>${foundry.utils.escapeHTML(this.document.name)} rests for <strong>${timeStr}</strong>, ${healDesc}.</p></div>` });
           } else {
-              ui.notifications.info(`${this.document.name} has no ${restType === "day" ? "Shock" : "Killing"} damage to heal via passive resting.`);
+              const noHealMsg = restType === "day" ? "no Shock damage to heal" : "no Killing damage on any limb to convert";
+              ui.notifications.info(`${this.document.name} has ${noHealMsg} via passive resting.`);
           }
       } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
   }

@@ -18,14 +18,14 @@
   <div class="stat-header"><h2>{{localize 'REIGN.PreferredMoves'}}</h2></div>
   <div class="stat-skills reign-move-list">
       <div class="preferred-move-row">
-        <label class="rollable" data-action="rollStat" data-type="skill" data-key="parry" data-label="Parry">{{localize 'REIGN.ParryPool'}} <i class="fas fa-dice"></i></label>
+        <label class="rollable" data-action="rollStat" data-type="skill" data-key="parry" data-label="Parry">{{localize 'REIGN.ParryPool'}} <i class="fas fa-dice-d10"></i></label>
         <div class="move-details">
           <span>Body ({{preferredMoves.body}}) + Parry ({{preferredMoves.parry}}){{#if preferredMoves.shieldBonus}} + Shield ({{preferredMoves.shieldBonus}}){{/if}} =</span>
           <span class="move-total">{{preferredMoves.parryTotal}}</span>
         </div>
       </div>
       <div class="preferred-move-row">
-        <label class="rollable" data-action="rollStat" data-type="skill" data-key="dodge" data-label="Dodge">{{localize 'REIGN.DodgePool'}} <i class="fas fa-dice"></i></label>
+        <label class="rollable" data-action="rollStat" data-type="skill" data-key="dodge" data-label="Dodge">{{localize 'REIGN.DodgePool'}} <i class="fas fa-dice-d10"></i></label>
         <div class="move-details">
           <span>Coordination ({{preferredMoves.coord}}) + Dodge ({{preferredMoves.dodge}}) =</span>
           <span class="move-total">{{preferredMoves.dodgeTotal}}</span>
@@ -35,7 +35,7 @@
       <div class="preferred-move-row dynamic-move">
         <div class="reign-move-row">
           <a class="delete-custom-move" data-action="deleteCustomMove" data-move-id="{{move.key}}" title="Delete Move"><i class="fas fa-trash"></i></a>
-          <label class="rollable" data-action="rollStat" data-type="move" data-key="{{move.key}}" data-label="{{move.name}}"><i class="fas fa-dice"></i></label>
+          <label class="rollable" data-action="rollStat" data-type="move" data-key="{{move.key}}" data-label="{{move.name}}"><i class="fas fa-dice-d10"></i></label>
           <input type="text" name="system.customMoves.{{move.key}}.name" value="{{move.name}}" placeholder="Move Name..." class="move-name-input"/>
           <div class="move-details">
             <span class="reign-move-total-label">{{localize 'REIGN.Total'}}:</span>

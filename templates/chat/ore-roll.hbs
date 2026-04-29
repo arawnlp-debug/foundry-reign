@@ -256,20 +256,20 @@
                                 {{#unless ../isDefense}}
                                     {{#if ../isSpell}}
                                         {{#if ../spellDodgeable}}
-                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Dodge or Parry this spell)">
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Dodge or Parry to cancel this {{../label}} set (Height {{set.height}})">
                                             <i class="fas fa-shield-alt"></i>
                                         </button>
                                         {{else if ../spellParriable}}
-                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Dodge or Parry this spell)">
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Parry to cancel this {{../label}} set (Height {{set.height}})">
                                             <i class="fas fa-shield-alt"></i>
                                         </button>
                                         {{/if}}
                                         {{!-- F1: Counterspell gobble — always available on spell cards --}}
-                                        <button class="reign-btn-small reign-btn-magic counterspell-gobble-btn" data-height="{{set.height}}" title="Gobble 1 Die (Counterspell/Dodge/Parry)">
+                                        <button class="reign-btn-small reign-btn-magic counterspell-gobble-btn" data-height="{{set.height}}" title="Gobble 1 Die — Counterspell this {{../label}} set (Height {{set.height}})">
                                             <i class="fas fa-ban"></i>
                                         </button>
                                     {{else}}
-                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die (Use Dodge or Parry)">
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Dodge or Parry to cancel this {{../label}} set (Height {{set.height}})">
                                             <i class="fas fa-shield-alt"></i>
                                         </button>
                                     {{/if}}
@@ -394,6 +394,10 @@
             <div class="reign-gobble-tracker">
                 <div class="reign-section-title reign-gobble-available-title">
                     <i class="fas fa-shield-alt"></i> Available Gobble Dice ({{gobbleCount}})
+                    {{!-- ISSUE-034: Confirm auto-assignment so players know it happened --}}
+                    {{#if gobbleDiceAutoAssigned}}
+                        <span class="reign-text-muted reign-text-small"> — auto-assigned from your only set</span>
+                    {{/if}}
                 </div>
                 <div class="dice-tray wrap gobble-list">
                     {{#if gobbleDice.length}}

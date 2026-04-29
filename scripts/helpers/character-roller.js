@@ -236,11 +236,15 @@ export class CharacterRoller {
             }
         }
 
+        // ISSUE-004 FIX: Encumbrance must use derivedWeight (computed from coverage + AR per RAW Ch6 p.113),
+        // NOT the author-set armorWeight StringField which can diverge from RAW silently.
+        // armorWeight is kept as a cosmetic / tooltip field only.
         let armorWeight = "none";
         const equippedArmor = actor.items.filter(i => i.type === "armor" && i.system.equipped);
-        if (equippedArmor.some(a => a.system.armorWeight === "heavy")) armorWeight = "heavy";
-        else if (equippedArmor.some(a => a.system.armorWeight === "medium")) armorWeight = "medium";
-        else if (equippedArmor.some(a => a.system.armorWeight === "light")) armorWeight = "light";
+        const encumbWeights = equippedArmor.map(a => a.system.derivedWeight || a.system.armorWeight || "none");
+        if (encumbWeights.includes("heavy")) armorWeight = "heavy";
+        else if (encumbWeights.includes("medium")) armorWeight = "medium";
+        else if (encumbWeights.includes("light")) armorWeight = "light";
 
         const equippedShields = actor.items.filter(i => i.type === "shield" && i.system.equipped);
         const hasShield = equippedShields.length > 0;
@@ -298,10 +302,15 @@ export class CharacterRoller {
         }
 
         // Active Effect Override: Immunity to Fatigue & Armor Penalties
+        // ISSUE-015 FIX: ignoreFatiguePenalties must clear ALL encumbrance impossible checks
+        // consistently — previously it cleared heavy-armor+Stealth but not Tower Shield+Stealth
+        // or Tower Shield+Climb, making the flag behave differently depending on equipment type.
+        // RAW basis: this flag is intended for supernatural beings that ignore physical encumbrance
+        // entirely (e.g. spirits, golems). Apply uniformly or not at all.
         if (systemFlags.ignoreFatiguePenalties) {
             encumbPen = 0;
             encumbDiff = 0;
-            if (armorWeight === "heavy" && rawSkillKey === "stealth") encumbImpossible = false; 
+            encumbImpossible = false; // Clears ALL impossible checks: heavy+Stealth, Tower+Stealth, Tower+Climb
         }
 
         if (encumbImpossible) return ui.notifications.error(`This action is impossible while ${hasTower ? "carrying a Tower Shield" : "wearing Heavy Armor"}. It auto-fails.`);
@@ -404,6 +413,11 @@ export class CharacterRoller {
         const eerieDetectionRadius  = dataset.eerieDetectionRadius || "";
         const eerieSpellName        = dataset.eerieSpellName || "a spell";
 
+        // ISSUE-028 FIX: Auto-detect swimming from actor status so players don't have to
+        // remember to set the environment context manually every roll while in water.
+        const isSubmerged = actor.statuses.has("submerged") || actor.statuses.has("swimming") || actor.statuses.has("underwater");
+        const defaultEnvContext = (showEnvContext && isSubmerged) ? "swimming" : "none";
+
         const templateData = {
             defaultAttr, attrOptions, showSkillSelect, defaultSkill, skillOptions, isCombatRoll, calledShotOptions,
             difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue,
@@ -412,7 +426,8 @@ export class CharacterRoller {
             dodgeManeuverOptions,
             isEerieDetection,
             eerieDetectionRadius,
-            eerieSpellName
+            eerieSpellName,
+            defaultEnvContext
         };
 
         if (DEBUG_ROLLS) console.log("Reign Roller | Rendering HTML Template...");
@@ -485,9 +500,13 @@ export class CharacterRoller {
                 if (envContext === "swimming") {
                     if (armorWeight === "heavy") {
                         if (systemFlags.ignoreHeavyArmorSwim) {
+                            // ignoreHeavyArmorSwim AE: allows swimming in Heavy Armor at mandatory −4d.
+                            // RAW use case: Whale Blessed Advantage (Ch4). Also valid for GMs to apply
+                            // for special circumstances (creatures, effects, etc.).
                             penalty += 4;
                         } else {
-                            poolPreviewSpan.innerHTML = `<span class="reign-text-danger">Impossible (Heavy Armor)</span>`;
+                            // RAW Ch6 p.113: no chance of success without ignoreHeavyArmorSwim.
+                            poolPreviewSpan.innerHTML = `<span class="reign-text-danger">Impossible (Heavy Armor — no exception Active Effect)</span>`;
                             return;
                         }
                     } else if (armorWeight === "medium") {
@@ -681,10 +700,13 @@ export class CharacterRoller {
         if (rollData.envContext === "swimming") {
             if (armorWeight === "heavy") {
                 if (systemFlags.ignoreHeavyArmorSwim) {
+                    // ignoreHeavyArmorSwim AE: mandatory −4d; the auto-fail is lifted but the
+                    // penalty cannot be reduced. RAW example: Whale Blessed Advantage (Ch4).
                     rollData.penalty += 4;
-                    ui.notifications.warn("Swimming in Heavy Armor applies a −4d penalty (Active Effect).");
+                    ui.notifications.warn("Swimming in Heavy Armor: mandatory −4d penalty applies.");
                 } else {
-                    return ui.notifications.error("Swimming in Heavy Armor is impossible. You sink immediately.");
+                    // RAW Ch6 p.113: impossible without the ignoreHeavyArmorSwim Active Effect.
+                    return ui.notifications.error("Swimming in Heavy Armor is impossible. Apply the 'Can Swim in Heavy Armor' Active Effect to allow it.");
                 }
             } else if (armorWeight === "medium") {
                 rollData.penalty += 2;
@@ -762,6 +784,9 @@ export class CharacterRoller {
             combineGobbleDice: combatMods.combineGobbleDice || false,
             crossBlockActive: combatMods.crossBlockActive || false,
             appendManeuvers: combatMods.appendManeuvers || [],
+            // ISSUE-017 FIX: isMassive stored in server-side flags (not DOM data-attribute) so it
+            // cannot be spoofed by a player editing HTML. Also re-validates Body ≥ 4 at roll time.
+            isMassive: !!(type === "item" && itemRef?.type === "weapon" && itemRef.system.qualities?.massive && (parseInt(system.attributes.body?.value) || 0) >= 4),
             maneuver: null
         };
 

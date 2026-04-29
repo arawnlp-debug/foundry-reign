@@ -72,9 +72,11 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
   
   if (isDefense && gobbleDice === undefined) {
       if (parsed.sets.length === 1) {
-          // If only one set was rolled, auto-assign it for UX speed
+          // If only one set was rolled, auto-assign it for UX speed.
+          // ISSUE-034 FIX: Record auto-assignment so the template can display a confirmation banner.
           gobbleDice = [];
           for (let i = 0; i < parsed.sets[0].width; i++) gobbleDice.push(parsed.sets[0].height);
+          flags = { ...flags, gobbleDiceAutoAssigned: true };
       } else if (parsed.sets.length > 1) {
           // If multiple sets were rolled, flag the template to show the selection buttons
           needsGobbleSelection = true;
@@ -295,7 +297,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     spellParriable: isSpell && !!itemData.system.parriable,
     spellArmorBlocks: isSpell && !!itemData.system.armorBlocks,
     spellIsAttunementSpell: isSpell && !!itemData.system.isAttunementSpell,
-    spellAttunementRequired: isSpell && !!itemData.system.attunementRequired
+    spellAttunementRequired: isSpell && !!itemData.system.attunementRequired,
+    // ISSUE-034: Signal the template when gobble dice were automatically assigned (single set)
+    gobbleDiceAutoAssigned: !!(flags.gobbleDiceAutoAssigned)
   };
 
   return await foundry.applications.handlebars.renderTemplate("systems/reign/templates/chat/ore-roll.hbs", templateData);
@@ -407,7 +411,9 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
     reign: { 
         actorType, label: safeLabel, totalPool, results, expertDie, masterDiceCount, 
         itemData, rollFlags: { ...flags, advancedMods: resolvedAdvancedMods },
-        isDefense, defenseType, gobbleDice
+        isDefense, defenseType, gobbleDice,
+        // ISSUE-024/025: Stamp current combat round so gobble/spoil lookups can filter by round.
+        combatRound: game.combat?.round ?? undefined
     } 
   };
 

@@ -8,6 +8,9 @@ export const REIGN = {};
  * @constant {string[]}
  */
 export const HIT_LOCATIONS = Object.freeze(["head", "torso", "armR", "armL", "legR", "legL"]);
+// Fast O(1) lookup used by the creature sheet to detect humanoid-layout creatures
+// (enabling the standard silhouette when all location keys match HIT_LOCATIONS).
+export const HIT_LOCATIONS_SET = new Set(HIT_LOCATIONS);
 
 /**
  * Human-readable labels for each hit location (with die-face ranges).
@@ -83,7 +86,9 @@ export function getEffectDictionary() {
 
   // Immunities
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreFatiguePenalties", label: "Ignore Fatigue", mode: 5, isBool: true });
-  dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreHeavyArmorSwim", label: "Swim in Heavy Armor", mode: 5, isBool: true });
+  // Allows swimming in Heavy Armor at a mandatory −4d penalty rather than auto-failing.
+  // RAW example: Whale Blessed Advantage (Rules Ch4). Also usable for creatures, special effects, etc.
+  dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreHeavyArmorSwim", label: "Can Swim in Heavy Armor (mandatory −4d penalty)", mode: 5, isBool: true });
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.cannotUseTwoHanded", label: "Cannot Use Two-Handed Weapons", mode: 5, isBool: true });
 
   return dict;

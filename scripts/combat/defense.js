@@ -98,7 +98,11 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
 
     let slowDefenders = 0;
 
-    const defenseMessages = game.messages.contents.slice(-50).filter(m => {
+    // ISSUE-024 FIX: Increased from 50 → 200 messages. Additionally filter by combat round
+    // when the flag is present (stamped by postOREChat) to avoid stale cross-round gobbles.
+    const currentCombatRound = game.combat?.round ?? -1;
+
+    const defenseMessages = game.messages.contents.slice(-200).filter(m => {
         if (m.id === attackMsg.id) return false;
         if (m.speaker?.actor === attackerActorId) return false;
         const rf = m.flags?.reign;
@@ -106,11 +110,22 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
         const gd = rf.gobbleDice;
         if (!gd || !Array.isArray(gd) || gd.length === 0) return false;
 
+        // If the message was stamped with a combat round, reject cross-round gobbles.
+        if (rf.combatRound !== undefined && currentCombatRound >= 0 && rf.combatRound !== currentCombatRound) {
+            return false;
+        }
+
         const defActor = game.actors.get(m.speaker?.actor);
         const defMods = defActor?.system?.modifiers?.combat || {};
 
         let hasHeight = false;
         if (defMods.crossBlockActive) {
+            // ISSUE-014 — Cross Block / The Hidden Shell (Iron Tortoise, 4pt):
+            // Grants AR2 to all locations and provides gobble dice for all incoming hits.
+            // Current implementation: crossBlockActive bypasses the height gate (any die height works)
+            // but is still subject to the standard timing gate.
+            // RAW citation needed: confirm whether The Hidden Shell also grants timing immunity
+            // (like Superior Interception) or is limited to height-only bypass.
             hasHeight = true;
         } else if (defMods.combineGobbleDice) {
             hasHeight = gd.reduce((a, b) => a + b, 0) >= targetSetHeight;
@@ -120,13 +135,14 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
 
         if (!hasHeight) return false;
 
-        // P2 FIX: Enforce Width Timing
+        // P2 FIX: Enforce Width Timing — but NOT for Superior Interception (combineGobbleDice),
+        // which RAW explicitly states applies "regardless of timing" (Ch7 p.140).
         const parsedDef = parseORE(rf.results, rf.rollFlags?.isMinion);
         const defHeight = gd[0];
         const defSet = parsedDef.sets.find(s => s.height === defHeight);
         const defInit = defSet ? (defSet.width + (defSet.height / 100)) : 0;
 
-        if (defInit < attackInit) {
+        if (!defMods.combineGobbleDice && defInit < attackInit) {
             slowDefenders++;
             return false;
         }
@@ -135,6 +151,40 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
     });
 
     if (defenseMessages.length === 0) {
+        // G4.1: Check if the attacked creature has free Gobble Dice from a special ability.
+        // RAW Ch13 Big Cat: "1–3 free Dodge Gobble Dice per round, usable at any time, with a value of 10."
+        // "At any time" means no timing restriction — checked here regardless of attack initiative.
+        const attackerActorId = attackMsg?.speaker?.actor;
+        const attackedCombatant = game.combat?.combatants.find(c => c.actor?.id !== attackerActorId
+            && c.actor?.type === "threat" && c.actor?.system.creatureMode);
+        const attackedActor = attackedCombatant?.actor;
+        const freePool = attackedActor ? (attackedActor.getFlag("reign", "freeGobbleDice") || []) : [];
+
+        if (freePool.length > 0) {
+            if (!freePool.some(h => h >= targetSetHeight)) {
+                ui.notifications.warn(`${attackedActor.name}'s free Gobble Dice (value 10) cannot cancel Height ${targetSetHeight}.`);
+            } else {
+                // Consume one free die
+                const newPool = [...freePool];
+                newPool.splice(newPool.indexOf(10), 1);
+                await attackedActor.setFlag("reign", "freeGobbleDice", newPool);
+
+                const newResults = [...attackFlags.results];
+                const dieIdx = newResults.indexOf(targetSetHeight);
+                if (dieIdx !== -1) newResults.splice(dieIdx, 1);
+                await attackMsg.update({ "flags.reign.results": newResults });
+
+                await ChatMessage.create({
+                    speaker: ChatMessage.getSpeaker({ actor: attackedActor }),
+                    content: `<div class="reign-chat-card">
+                      <h3><i class="fas fa-paw"></i> ${foundry.utils.escapeHTML(attackedActor.name)} — Free Gobble Die!</h3>
+                      <p>Reflexively cancelled Height <strong>${targetSetHeight}</strong>. Free dice remaining: <strong>${newPool.length}</strong>.</p>
+                    </div>`
+                });
+                return true;
+            }
+        }
+
         if (slowDefenders > 0) {
             ui.notifications.warn(`Defense too slow! ${slowDefenders} defender(s) had the Height, but the attack (Width ${attackSet.width}) was faster.`);
         } else {

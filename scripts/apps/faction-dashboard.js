@@ -111,10 +111,13 @@ export class FactionDashboard extends ScrollPreserveMixin(HandlebarsApplicationM
         const currentUses = parseInt(c.system.qualities[q]?.uses) || 0;
         
         if (currentDmg > 0) {
+          // ISSUE-011 — RAW Ch9: Companies recover 1 point of temporary Quality damage each
+          // month during peacetime. (Realms Ch9 — confirm exact page reference against PDF.)
           updates[`system.qualities.${q}.damage`] = currentDmg - 1;
           healed = true;
         }
         if (currentUses > 0) {
+          // Uses (action-economy expenditure) reset to 0 each season/month per RAW Ch9.
           updates[`system.qualities.${q}.uses`] = 0;
           refreshed = true;
         }

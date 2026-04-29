@@ -1,6 +1,6 @@
 // scripts/combat/damage.js
 const { DialogV2 } = foundry.applications.api;
-import { computeLocationDamage, getHitLocation, getHitLocationLabel, parseORE, calculateInitiative, checkThreatElimination, calculateMoraleAttackRemoval } from "../helpers/ore-engine.js";
+import { computeLocationDamage, getHitLocation, getHitLocationLabel, parseORE, calculateInitiative, checkThreatElimination, calculateMoraleAttackRemoval, getCreatureHitLocation } from "../helpers/ore-engine.js";
 import { generateOREChatHTML } from "../helpers/chat.js";
 import { reignDialog, reignAlert, reignClose } from "../helpers/dialog-util.js";
 import { HIT_LOCATIONS } from "../helpers/config.js";
@@ -332,6 +332,17 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
     const safeTargetName = foundry.utils.escapeHTML(targetActor.name);
 
     // ==========================================
+    // G3.3: CREATURE MODE — Individual creature with wound boxes.
+    // Routes before the mob elimination logic so creature-mode threats
+    // use the full hit-location damage pipeline instead of binary removal.
+    // ==========================================
+    if (targetActor.type === "threat" && targetActor.system.creatureMode) {
+      await applyCreatureDamage(targetActor, width, height, baseShock, baseKilling,
+                                ap, isMassive, areaDice, advancedMods);
+      continue;
+    }
+
+    // ==========================================
     // PACKAGE A: RAW THREAT / MINION DAMAGE LOGIC
     // Unworthy opponents use binary elimination.
     // No wound boxes, no hit locations, no armor.
@@ -478,16 +489,13 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
         if (isMassive && locKey === primaryLoc && finalKilling > 0) finalKilling += 1;
 
         let loc = localHealth[locKey];
-        const totalCoverAr = getProtectedShieldCoverAR(targetActor, locKey);
-        
-        // ACTIVE EFFECT: Armor Bypass
-        const effectiveAr = Math.max(0, (targetActor.system.effectiveArmor?.[locKey] || 0) + totalCoverAr - ap - ignoreAr);
-        
-        const shockSoaked = Math.min(finalShock, effectiveAr);
-        const killingSoaked = Math.min(finalKilling, effectiveAr);
 
-        finalShock = Math.max(0, finalShock - effectiveAr);
-        finalKilling = Math.max(0, finalKilling - effectiveAr);
+        // RAW Ch6 / Ch1 p.10: "Armor does not protect against Area Attacks."
+        // AP, shield cover AR, and ignoreAr are all zeroed — the rule is absolute.
+        const totalCoverAr = 0;
+        const effectiveAr = 0;
+        const shockSoaked = 0;
+        const killingSoaked = 0;
 
         if (finalShock > 0 || finalKilling > 0) tookDamage = true;
 
@@ -585,7 +593,8 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
 
     const statusAlert = getStatusAlertHtml(targetActor, localHealth);
     const summaryHtml = damageSummary.length > 0 ? damageSummary.join("<br><br>") : "<em>All damage harmlessly deflected by armor!</em>";
-    const chatContent = `<div class="reign-chat-card"><h3 class="reign-text-danger">Damage Applied</h3><p class="reign-mb-small"><strong>Target:</strong> ${safeTargetName} ${areaDice > 0 ? "<em>(Area Effect)</em>" : ""}</p><div class="reign-callout reign-callout-danger">${summaryHtml}</div>${maneuverHtml}${statusAlert}</div>`;
+    const setLabel = areaDice > 0 ? `Area ${areaDice}d` : `${width}×${height}`;
+    const chatContent = `<div class="reign-chat-card"><h3 class="reign-text-danger">Damage Applied <span class="reign-text-small reign-text-muted">(${setLabel})</span></h3><p class="reign-mb-small"><strong>Target:</strong> ${safeTargetName} ${areaDice > 0 ? "<em>(Area Effect)</em>" : ""}</p><div class="reign-callout reign-callout-danger">${summaryHtml}</div>${maneuverHtml}${statusAlert}</div>`;
 
     await ChatMessage.create({ content: chatContent, speaker: ChatMessage.getSpeaker({ actor: targetActor }) });
 
@@ -841,6 +850,9 @@ export async function applyHealingToTarget(width, height, healString) {
     let healedShock = 0;
     let remainingHeal = baseHeal;
 
+    // ISSUE-012 — Healing priority: Killing healed before Shock.
+    // RAW Ch8 healing spells do not specify priority. Killing-first is the conservative
+    // interpretation (more dangerous damage cleared first). Reverse if RAW citation found.
     while(remainingHeal > 0 && loc.killing > 0) {
         loc.killing -= 1;
         healedKilling += 1;
@@ -1024,11 +1036,12 @@ Hooks.on("combatStart", async (combat, context) => {
 export async function performPostCombatRecovery(actor) {
     if (actor.type !== "character") return;
     
-    // PACKAGE E: Read the configurable recovery mode from world settings
+    // RAW: Half the Shock taken during this fight disappears immediately when combat ends,
+    // rounded up. "all" and "none" are GM house-rule variants.
     const recoveryMode = game.settings.get("reign", "postCombatRecovery") || "half";
 
     if (recoveryMode === "none") {
-        ui.notifications.info(`${actor.name}: Post-combat recovery is disabled (world setting). All Shock damage persists.`);
+        ui.notifications.info(`${actor.name}: Post-combat recovery is disabled (house rule). All Shock damage persists.`);
         return;
     }
 
@@ -1067,10 +1080,10 @@ export async function performPostCombatRecovery(actor) {
         await syncCharacterStatusEffects(actor);
         
         const safeName = foundry.utils.escapeHTML(actor.name);
-        const modeLabel = recoveryMode === "all" ? "all" : "half";
+        const modeLabel = recoveryMode === "all" ? "full (house rule)" : "half rounded up (RAW)";
         await ChatMessage.create({
             speaker: ChatMessage.getSpeaker({ actor: actor }),
-            content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Post-Combat Recovery</h3><p>Catching their breath, ${safeName} recovers <strong>${totalRecovered} Shock</strong> damage sustained during the battle (${modeLabel} recovery).</p></div>`
+            content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Post-Combat Recovery</h3><p>Catching their breath, ${safeName} recovers <strong>${totalRecovered} Shock</strong> sustained during the battle (${modeLabel}).</p></div>`
         });
     } else {
         ui.notifications.info(`${actor.name} took no new Shock damage this fight to recover.`);
@@ -1130,9 +1143,12 @@ async function checkAndSpoilSet(targetActor) {
     const combatant = game.combat.combatants.find(c => c.actorId === targetActor.id);
     if (!combatant || combatant.initiative === null) return;
 
-    const latestMsg = game.messages.contents.slice(-50).reverse().find(m => 
+    // ISSUE-025 FIX: Increased from 50 → 200 messages; also filter by combat round when stamped.
+    const spoilCombatRound = game.combat?.round ?? -1;
+    const latestMsg = game.messages.contents.slice(-200).reverse().find(m => 
         m.speaker?.actor === targetActor.id && 
-        m.flags?.reign?.results !== undefined
+        m.flags?.reign?.results !== undefined &&
+        (m.flags.reign.combatRound === undefined || spoilCombatRound < 0 || m.flags.reign.combatRound === spoilCombatRound)
     );
     if (!latestMsg) return;
 
@@ -1554,4 +1570,186 @@ export async function applySubmissionHold({ shock, killing, holdHeight, isWrench
       </div>`
     });
   }
+}
+
+// ==========================================
+// G3.3 / G4: CREATURE DAMAGE PIPELINE
+// ==========================================
+
+/**
+ * G3.3: Applies damage to a creature-mode threat actor using its custom location wound boxes.
+ * Routes through computeLocationDamage (same as character damage) per location hit.
+ *
+ * Area attacks ignore armor (RAW Ch1 p.10).
+ * Standard attacks apply the location's AR minus AP.
+ */
+async function applyCreatureDamage(targetActor, width, height, baseShock, baseKilling,
+                                    ap, isMassive, areaDice, advancedMods) {
+  const safeTargetName = foundry.utils.escapeHTML(targetActor.name);
+  const locs = foundry.utils.deepClone(targetActor.system.customLocations || []);
+
+  if (locs.length === 0) {
+    return ui.notifications.warn(`${safeTargetName} has no custom locations configured. Switch to mob mode or add locations.`);
+  }
+
+  const heightMap = targetActor.system.heightLocationMap || {};
+  const damageSummary = [];
+  let tookDamage = false;
+
+  if (areaDice > 0) {
+    // ── Area attack: roll areaDice, map each result to a creature location ──
+    // RAW Ch1 p.10: area attacks ignore armor entirely.
+    const splashRoll = new Roll(`${areaDice}d10`);
+    await splashRoll.evaluate();
+    const hitKeys = splashRoll.dice[0].results.flatMap(r => heightMap[r.result] || []);
+    const locCounts = {};
+    hitKeys.forEach(k => { locCounts[k] = (locCounts[k] || 0) + 1; });
+
+    for (const [locKey, hits] of Object.entries(locCounts)) {
+      const locIdx = locs.findIndex(l => l.key === locKey);
+      if (locIdx === -1) continue;
+      const loc = locs[locIdx];
+      const result = computeLocationDamage(loc.shock, loc.killing, baseShock * hits, baseKilling * hits, loc.woundBoxes);
+      loc.shock   = result.newShock;
+      loc.killing = result.newKilling;
+      tookDamage  = true;
+      damageSummary.push(`<strong>${loc.name}:</strong> Area hit ×${hits} — ${baseShock * hits}S/${baseKilling * hits}K (no AR)`);
+    }
+  } else {
+    // ── Standard hit: resolve height → location key(s) ──
+    const candidates = getCreatureHitLocation(height, heightMap);
+    if (candidates.length === 0) {
+      return ui.notifications.warn(`Height ${height} does not map to any location on ${safeTargetName}. Check the creature's roll height configuration.`);
+    }
+
+    // Use the first matching location. When multiple keys share a height (e.g. Elephant)
+    // the GM may redirect damage using the location's triage controls after the fact.
+    const locKey = candidates[0];
+    const locIdx = locs.findIndex(l => l.key === locKey);
+    if (locIdx === -1) return ui.notifications.warn(`Location key "${locKey}" not found on ${safeTargetName}.`);
+
+    const loc = locs[locIdx];
+    const effectiveAr = Math.max(0, (loc.ar || 0) - (ap || 0));
+    let finalShock   = Math.max(0, baseShock   - effectiveAr);
+    let finalKilling = Math.max(0, baseKilling - effectiveAr);
+
+    // RAW Ch6 p.114: Massive weapons +1 Killing (already added to baseKilling before
+    // this branch in applyDamageToTarget, but isMassive passed through for area-only edge cases)
+    if (isMassive && areaDice === 0) finalKilling += 1;
+
+    const soakedShock   = Math.min(baseShock,   effectiveAr);
+    const soakedKilling = Math.min(baseKilling,  effectiveAr);
+    const result = computeLocationDamage(loc.shock, loc.killing, finalShock, finalKilling, loc.woundBoxes);
+    loc.shock   = result.newShock;
+    loc.killing = result.newKilling;
+    tookDamage  = true;
+
+    const arNote = effectiveAr > 0 ? ` (AR ${effectiveAr} soaked ${soakedShock}S/${soakedKilling}K)` : "";
+    const ambiguousNote = candidates.length > 1
+      ? ` <span class="reign-text-warning" title="Height ${height} maps to: ${candidates.join(', ')}">⚠ Overlapping heights — GM may redirect</span>`
+      : "";
+    damageSummary.push(`<strong>${loc.name}:</strong> ${finalShock}S/${finalKilling}K applied${arNote}${ambiguousNote}`);
+  }
+
+  if (!tookDamage) {
+    return ui.notifications.info(`Damage dealt no effect to ${safeTargetName}.`);
+  }
+
+  await targetActor.update({ "system.customLocations": locs });
+  await checkCreatureDefeated(targetActor, locs);
+
+  // G4.5: Trigger venom if this creature has venomPotency and the attack was a bite (height-based)
+  if (areaDice === 0 && (targetActor.system.creatureFlags?.venomPotency || 0) > 0) {
+    // Only trigger on standard bite attacks — skip area attacks (the venom is in the bite)
+    // The GM applies venom from the outgoing attack button, not the incoming damage button.
+    // This flag is checked in the threat-roller outgoing attack path instead.
+  }
+
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+    content: `<div class="reign-chat-card">
+      <h3 class="reign-text-danger"><i class="fas fa-paw"></i> Creature Damage — ${safeTargetName}</h3>
+      <div class="reign-callout reign-callout-danger">${damageSummary.join("<br>")}</div>
+    </div>`
+  });
+}
+
+/**
+ * G3.3: Checks whether a creature should be flagged as defeated.
+ * A creature is defeated when ALL of its largest (primary) locations are fully filled with Killing damage.
+ * Posts a death card and toggles the 'dead' status. This is a soft trigger — GMs may override.
+ */
+async function checkCreatureDefeated(actor, locs) {
+  if (!locs || locs.length === 0) return;
+  const primaryMax = Math.max(...locs.map(l => l.woundBoxes || 5));
+  const primaryLocs = locs.filter(l => l.woundBoxes === primaryMax);
+  const allPrimaryFull = primaryLocs.every(l => (l.killing || 0) >= (l.woundBoxes || 5));
+  if (!allPrimaryFull) return;
+
+  // Already marked dead — don't double-post
+  if (actor.statuses?.has("dead")) return;
+
+  await actor.toggleStatusEffect("dead", { active: true });
+  const safeName = foundry.utils.escapeHTML(actor.name);
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="reign-chat-card reign-card-critical">
+      <h3>💀 ${safeName} is Defeated!</h3>
+      <p>All primary locations (${primaryLocs.map(l => l.name).join(", ")}) are filled with Killing damage.</p>
+    </div>`
+  });
+}
+
+/**
+ * G4.5: Rolls the creature's venom pool and posts a result card with resist buttons.
+ * Called from the threat-sheet outgoing bite attack handler.
+ *
+ * @param {Actor} creatureActor - The snake/venomous creature rolling venom.
+ * @param {Actor|null} targetActor - The bitten target (may be null if no token selected).
+ */
+export async function applyCreatureVenom(creatureActor, targetActor) {
+  const potency = creatureActor.system.creatureFlags?.venomPotency || 0;
+  if (potency < 1) return;
+
+  const venomType = creatureActor.system.creatureFlags?.venomType || "Unknown Venom";
+  const safeTarget = foundry.utils.escapeHTML(targetActor?.name || "Target");
+  const safeVenom  = foundry.utils.escapeHTML(venomType);
+  const targetId   = targetActor?.id || "";
+
+  const roll = new Roll(`${potency}d10`);
+  await roll.evaluate();
+  const results = roll.dice[0].results.map(r => r.result);
+  const parsed  = parseORE(results);
+  const hasSet  = parsed.sets.length > 0;
+
+  const diceDisplay = results.map(r => `<span class="reign-die reign-die-plain">${r}</span>`).join(" ");
+  const resultText  = hasSet
+    ? `<span class="reign-text-danger reign-text-bold">SET ${parsed.sets[0].width}×${parsed.sets[0].height} — VENOM TAKES HOLD</span>`
+    : `<span class="reign-text-muted">No set — venom fails to take hold this time</span>`;
+
+  const resistButtons = hasSet ? `
+    <hr>
+    <p class="reign-text-small reign-text-muted">
+      <strong>Major Effect</strong> if neither resist roll succeeds.<br>
+      <strong>Minor Effect</strong> if Body+Vigor OR Knowledge+Healing succeeds.
+    </p>
+    <div class="reign-action-buttons">
+      <button class="reign-btn-primary venom-resist-btn" data-target-id="${targetId}" data-resist-type="vigor">
+        <i class="fas fa-fist-raised"></i> Roll Body + Vigor (Target Resists)
+      </button>
+      <button class="reign-btn-primary venom-resist-btn" data-target-id="${targetId}" data-resist-type="healing">
+        <i class="fas fa-briefcase-medical"></i> Roll Knowledge + Healing (Healer Aids)
+      </button>
+    </div>` : "";
+
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor: creatureActor }),
+    content: `<div class="reign-chat-card reign-card-danger">
+      <h3>☠ ${safeVenom} (Potency ${potency})</h3>
+      <p><strong>Target:</strong> ${safeTarget}</p>
+      <div class="dice-tray wrap">${diceDisplay}</div>
+      <p>${resultText}</p>
+      ${resistButtons}
+    </div>`
+  });
 }

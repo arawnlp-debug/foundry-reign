@@ -1187,3 +1187,385 @@
     .reign .narrative-row { grid-template-columns: 1fr !important; }
     .reign-health-split { grid-template-columns: 1fr !important; }
 }
+
+/* ====================================================
+   CREATURE STAT BLOCK — G3/G4 (v3 — clean, top-tier)
+   Namespace: cs-*
+==================================================== */
+
+/* ── Location colour tokens ── */
+:root {
+  --cs-blood:   #7a1a1a; --cs-blood-bg:   #fdf0f0;
+  --cs-brass:   #9a6200; --cs-brass-bg:   #fdf7e3;
+  --cs-emerald: #275222; --cs-emerald-bg: #f0f8f0;
+  --cs-blue:    #025b9c; --cs-blue-bg:    #e8f2fb;
+  --cs-purple:  #6a1a96; --cs-purple-bg:  #f5eafd;
+  --cs-teal:    #005f56; --cs-teal-bg:    #e0f5f2;
+  --cs-ash:     #3d3830; --cs-ash-bg:     #f5f3f0;
+  --cs-amber:   #b57c00; --cs-amber-bg:   #fdf8e1;
+  --cs-empty:   #b0aaa4;
+}
+.theme-dark {
+  --cs-blood-bg: #280a0a; --cs-brass-bg: #261e00; --cs-emerald-bg: #091a08;
+  --cs-blue-bg: #001828; --cs-purple-bg: #180a2a; --cs-teal-bg: #002520;
+  --cs-ash-bg: #161412; --cs-amber-bg: #211800;
+}
+
+/* ── Sheet wrapper ── */
+.cs-sheet { display: flex; flex-direction: column; }
+
+/* ── Attributes bar ── */
+.cs-attributes-bar {
+  display: flex; align-items: stretch;
+  background: var(--reign-bg-iron);
+  border-bottom: 2px solid var(--reign-bg-iron);
+  flex-shrink: 0;
+}
+.cs-attr { display: flex; flex-direction: column; align-items: center; padding: 7px 8px 6px; gap: 3px; }
+.cs-attr-flex { flex: 1; min-width: 0; }
+.cs-attr-divider { width: 1px; background: rgba(255,255,255,0.12); margin: 5px 0; flex-shrink: 0; }
+.cs-attr-label {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.45); white-space: nowrap;
+}
+.cs-attr-input {
+  width: 38px; text-align: center;
+  font-family: var(--reign-font-display); font-size: 22px; font-weight: bold;
+  color: #fff; background: transparent; border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.18); padding: 0;
+  transition: border-color 0.15s;
+}
+.cs-attr-input:focus { outline: none; border-bottom-color: var(--reign-color-brass); }
+.cs-attr-input-text {
+  background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.85); font-family: var(--reign-font-data); font-size: 11px;
+  text-align: center; width: 100%; padding: 0; min-width: 44px;
+  transition: border-color 0.15s;
+}
+.cs-attr-input-sm { min-width: 32px; width: 48px; }
+.cs-attr-input-text:focus { outline: none; border-bottom-color: var(--reign-color-brass); }
+
+/* ── Section container ── */
+.cs-section { border-bottom: var(--reign-border-light); }
+.cs-section:last-child { border-bottom: none; }
+
+.cs-section-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 3px;
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--reign-text-muted);
+  background: var(--reign-bg-vellum);
+  border-bottom: var(--reign-border-light);
+  user-select: none;
+}
+.cs-add-btn {
+  margin-left: auto; padding: 0; width: 16px; height: 16px;
+  background: none; border: 1px solid currentColor;
+  border-radius: 3px; color: var(--reign-text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 9px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cs-add-btn:hover { color: var(--reign-color-blood); border-color: var(--reign-color-blood); }
+
+/* ── Skills (two columns) ── */
+.cs-skill-columns { display: flex; }
+.cs-skill-col { flex: 1; border-right: var(--reign-border-light); }
+.cs-skill-col:last-child { border-right: none; }
+.cs-skill-col-label {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--reign-text-light); background: var(--reign-bg-iron-light);
+  padding: 2px 8px;
+}
+.cs-skill-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-bottom: var(--reign-border-light);
+  transition: background 0.1s;
+}
+.cs-skill-row:last-child { border-bottom: none; }
+.cs-skill-row:hover { background: var(--reign-bg-vellum); }
+.cs-skill-name {
+  flex: 1; font-family: var(--reign-font-flavor); font-size: 11px;
+  color: var(--reign-text-dark);
+}
+.cs-skill-val {
+  font-family: var(--reign-font-data); font-weight: 700; font-size: 13px;
+  color: var(--reign-text-dark); min-width: 22px; text-align: center;
+}
+.reign-badge-md { color: var(--reign-color-arcane); }
+.reign-badge-ed { color: var(--reign-color-blood); }
+
+/* Roll buttons */
+.cs-roll-btn {
+  background: none; border: 1px solid transparent; border-radius: 3px;
+  cursor: pointer; color: var(--reign-text-muted);
+  padding: 2px 5px; font-size: 10px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.cs-roll-btn:hover {
+  color: var(--reign-color-blood); border-color: var(--reign-color-blood);
+  background: var(--reign-bg-danger);
+}
+.cs-roll-btn-attack {
+  border-color: var(--reign-bg-iron); color: var(--reign-text-light);
+  background: var(--reign-bg-iron); font-weight: 700;
+}
+.cs-roll-btn-attack:hover { background: #333; border-color: #333; color: #fff; }
+
+/* ── Attacks ── */
+.cs-attack-list { display: flex; flex-direction: column; }
+.cs-attack-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-bottom: var(--reign-border-light);
+  transition: background 0.1s;
+}
+.cs-attack-row:last-child { border-bottom: none; }
+.cs-attack-row:hover { background: var(--reign-bg-vellum); }
+.cs-attack-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cs-attack-name {
+  font-family: var(--reign-font-display); font-weight: bold; font-size: 12px;
+  color: var(--reign-color-blood);
+}
+.cs-attack-notes {
+  font-family: var(--reign-font-flavor); font-size: 10px; color: var(--reign-text-muted);
+  font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cs-attack-damage {
+  font-family: var(--reign-font-data); font-size: 11px; font-weight: 600;
+  color: var(--reign-text-dark); white-space: nowrap;
+}
+.cs-slow-badge {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 700;
+  background: var(--reign-bg-warn); color: var(--reign-burnt-orange);
+  border: 1px solid var(--reign-color-brass); border-radius: 3px;
+  padding: 1px 5px; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Hit-location die-face heat map ── */
+.cs-facemap {
+  display: flex; gap: 3px; padding: 6px 10px;
+  background: var(--reign-bg-vellum); border-bottom: var(--reign-border-light);
+  align-items: center;
+}
+.cs-facemap::before {
+  content: "Hit:"; font-family: var(--reign-font-data); font-size: 9px;
+  color: var(--reign-text-muted); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-right: 2px; flex-shrink: 0;
+}
+.cs-face-pip {
+  width: 24px; height: 24px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; font-family: var(--reign-font-data);
+  cursor: default; transition: transform 0.1s; flex-shrink: 0;
+}
+.cs-face-pip:hover { transform: scale(1.2); z-index: 1; }
+.cs-face-empty { background: var(--reign-bg-iron-light); color: rgba(255,255,255,0.2); }
+/* Per-location pip colours */
+.cs-face-loc-blood   { background: var(--cs-blood);   color: #fff; }
+.cs-face-loc-brass   { background: var(--cs-brass);   color: #fff; }
+.cs-face-loc-emerald { background: var(--cs-emerald); color: #fff; }
+.cs-face-loc-blue    { background: var(--cs-blue);    color: #fff; }
+.cs-face-loc-purple  { background: var(--cs-purple);  color: #fff; }
+.cs-face-loc-teal    { background: var(--cs-teal);    color: #fff; }
+.cs-face-loc-ash     { background: var(--cs-ash);     color: #fff; }
+.cs-face-loc-amber   { background: var(--cs-amber);   color: #fff; }
+
+/* ── Location list ── */
+.cs-loc-list { display: flex; flex-direction: column; }
+.cs-loc-row { border-bottom: var(--reign-border-light); transition: background 0.1s; }
+.cs-loc-row:last-child { border-bottom: none; }
+.cs-loc-row.status-shock   { background: #fffdf0; }
+.cs-loc-row.status-killing { background: #fff7f7; }
+.cs-loc-row.status-destroyed { opacity: 0.55; }
+.theme-dark .cs-loc-row.status-shock   { background: #201900; }
+.theme-dark .cs-loc-row.status-killing { background: #200808; }
+
+/* Location header row */
+.cs-loc-header {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 8px 3px 6px; min-height: 28px;
+}
+.cs-loc-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+.cs-loc-name {
+  font-family: var(--reign-font-flavor); font-weight: 700; font-size: 11px;
+  min-width: 64px; color: var(--reign-text-dark);
+}
+.cs-loc-heights { display: flex; gap: 2px; flex-wrap: wrap; }
+.cs-height-badge {
+  width: 17px; height: 17px; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; font-family: var(--reign-font-data);
+  opacity: 0.75;
+}
+.cs-loc-redir { font-size: 10px; color: var(--reign-text-muted); font-style: italic; }
+.cs-ar-tag {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 700;
+  background: var(--reign-bg-vellum); border: var(--reign-border-light);
+  border-radius: 2px; padding: 1px 4px; color: var(--reign-text-muted); flex-shrink: 0;
+}
+.cs-loc-right {
+  display: flex; align-items: center; gap: 5px; margin-left: auto;
+}
+.cs-dmg-count {
+  font-family: var(--reign-font-data); font-size: 10px; font-weight: 600;
+  color: var(--reign-text-muted); white-space: nowrap;
+}
+.cs-dmg-killing { color: var(--reign-color-blood); }
+.cs-dmg-shock   { color: var(--reign-burnt-orange); }
+
+/* Status tag */
+.cs-status-tag {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  border-radius: 3px; padding: 2px 5px; flex-shrink: 0;
+}
+.cs-status-status-healthy   { color: var(--reign-text-muted); }
+.cs-status-status-shock     { background: var(--reign-bg-warn); color: var(--reign-burnt-orange); }
+.cs-status-status-killing   { background: #ffecec; color: var(--reign-color-blood); }
+.cs-status-status-destroyed { background: var(--reign-bg-iron); color: #fff; }
+.theme-dark .cs-status-status-shock    { background: #2c1f00; }
+.theme-dark .cs-status-status-killing  { background: #2a0a0a; color: #ef9a9a; }
+
+/* Icon buttons */
+.cs-icon-btn {
+  background: none; border: none; cursor: pointer; color: var(--reign-text-muted);
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  border-radius: 3px; font-size: 10px; flex-shrink: 0;
+  transition: color 0.12s, background 0.12s;
+}
+.cs-icon-btn:hover          { color: var(--reign-text-dark); background: var(--reign-bg-vellum); }
+.cs-icon-btn-danger:hover   { color: var(--reign-color-blood); }
+
+/* ── Wound track ── */
+.cs-wound-track {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  padding: 3px 8px 7px 20px;
+}
+.cs-wound-box {
+  width: 18px; height: 18px;
+  border: 1px solid #bbb; border-radius: 2px;
+  background: var(--reign-bg-vellum);
+  cursor: pointer; user-select: none;
+  transition: background 0.08s, transform 0.08s, border-color 0.08s;
+  flex-shrink: 0;
+}
+.cs-wound-box:hover { transform: scale(1.18); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.cs-wound-box[data-state="shock"] {
+  background: var(--reign-bg-warn); border-color: var(--reign-color-brass);
+}
+.cs-wound-box[data-state="shock"]::after {
+  content: "/"; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--reign-burnt-orange);
+  width: 100%; height: 100%;
+}
+.cs-wound-box[data-state="killing"] {
+  background: var(--cs-blood); border-color: #560a0a;
+}
+.cs-wound-box[data-state="killing"]::after {
+  content: "✕"; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.85);
+  width: 100%; height: 100%;
+}
+.theme-dark .cs-wound-box                       { background: #2a2a2a; border-color: #4a4a4a; }
+.theme-dark .cs-wound-box[data-state="shock"]   { background: #2c1f00; border-color: #7a5200; }
+.theme-dark .cs-wound-box[data-state="killing"] { background: #5a0a0a; border-color: #3a0505; }
+
+/* ── Location config row ── */
+.cs-loc-config {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  padding: 5px 8px 7px 20px;
+  border-top: 1px dashed #ddd; background: var(--reign-bg-vellum);
+}
+.cs-config-label {
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 600;
+  color: var(--reign-text-muted); text-transform: uppercase; white-space: nowrap;
+}
+.cs-config-input {
+  flex: 1; min-width: 80px; max-width: 160px;
+  border: var(--reign-border-light); background: var(--reign-bg-paper);
+  border-radius: 3px; padding: 3px 5px;
+  font-family: var(--reign-font-data); font-size: 11px; color: var(--reign-text-dark);
+  box-shadow: var(--reign-shadow-inset);
+}
+.cs-config-num {
+  width: 40px; text-align: center;
+  border: var(--reign-border-light); background: var(--reign-bg-paper);
+  border-radius: 3px; padding: 3px;
+  font-family: var(--reign-font-data); font-size: 11px; color: var(--reign-text-dark);
+  box-shadow: var(--reign-shadow-inset);
+}
+
+/* ── Special rules textarea ── */
+.cs-special-textarea {
+  display: block; width: 100%; min-height: 56px;
+  border: none; background: var(--reign-bg-paper);
+  padding: 7px 10px; box-sizing: border-box;
+  font-family: var(--reign-font-flavor); font-size: 11px;
+  color: var(--reign-text-dark); resize: vertical;
+}
+
+/* ── Special abilities panel ── */
+.cs-abilities { display: flex; flex-direction: column; }
+.cs-ability-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-bottom: var(--reign-border-light);
+}
+.cs-ability-row:last-child { border-bottom: none; }
+.cs-ability-icon { color: var(--reign-text-muted); width: 14px; flex-shrink: 0; font-size: 11px; }
+.cs-ability-icon-danger { color: var(--reign-color-blood); }
+.cs-ability-label {
+  font-family: var(--reign-font-display); font-weight: 700; font-size: 11px;
+  min-width: 120px; color: var(--reign-text-dark);
+}
+.cs-ability-detail {
+  font-family: var(--reign-font-data); font-size: 10px; color: var(--reign-text-muted); flex: 1;
+}
+.cs-ability-detail.cs-ability-active { color: var(--reign-color-blood); font-weight: 700; }
+
+.cs-ability-btn, .cs-ability-btn-secondary, .cs-ability-btn-danger-sm {
+  font-family: var(--reign-font-data); font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 3px; cursor: pointer;
+  border: 1px solid; transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
+}
+.cs-ability-btn {
+  background: var(--reign-bg-iron); border-color: var(--reign-bg-iron); color: #fff;
+}
+.cs-ability-btn:hover { background: #2a2a2a; border-color: #2a2a2a; }
+.cs-ability-btn-used {
+  background: var(--reign-bg-vellum); border-color: #ccc;
+  color: var(--reign-text-muted); cursor: not-allowed;
+}
+.cs-ability-btn-secondary {
+  background: transparent; border-color: var(--reign-bg-iron); color: var(--reign-text-dark);
+}
+.cs-ability-btn-secondary:hover { background: var(--reign-bg-vellum); }
+.cs-ability-btn-danger-sm {
+  background: transparent; border-color: var(--reign-color-blood); color: var(--reign-color-blood);
+}
+.cs-ability-btn-danger-sm:hover { background: var(--reign-bg-danger); }
+
+/* ── Configure panel ── */
+.cs-configure-panel { border-top: 2px solid var(--reign-bg-vellum); }
+.cs-configure-summary {
+  padding: 6px 10px; cursor: pointer; list-style: none;
+  font-family: var(--reign-font-data); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--reign-text-muted); background: var(--reign-bg-vellum);
+  display: flex; align-items: center; gap: 6px; user-select: none;
+  transition: color 0.12s;
+}
+.cs-configure-summary:hover { color: var(--reign-text-dark); }
+.cs-configure-summary::marker, .cs-configure-summary::-webkit-details-marker { display: none; }
+.cs-configure-body { padding: 10px; }
+.cs-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Misc ── */
+.cs-empty-note {
+  padding: 12px 10px; text-align: center;
+  color: var(--reign-text-muted); font-style: italic; font-size: 11px;
+}

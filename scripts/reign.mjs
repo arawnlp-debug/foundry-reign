@@ -68,18 +68,19 @@ Hooks.once("init", async () => {
   });
   // ------------------------------
 
-  // --- PACKAGE E: POST-COMBAT RECOVERY ---
+  // RAW: After combat, half the Shock taken during that specific fight immediately disappears,
+  // rounded up. "All" and "None" are optional GM variants; "Half" is the rules-as-written default.
   game.settings.register("reign", "postCombatRecovery", {
     name: "Post-Combat Shock Recovery",
-    hint: "How much Shock damage sustained during a fight is recovered when combat ends. 'Half' (default) heals half the Shock taken this fight, rounded up. 'All' clears all sustained Shock. 'None' leaves all damage for natural healing — a grittier, more lethal game.",
+    hint: "RAW: Half the Shock sustained in a fight disappears immediately when combat ends, rounded up (default). 'All' is a heroic house rule. 'None' is a lethal house rule.",
     scope: "world",
     config: true,
     type: String,
     default: "half",
     choices: {
-      none: "None (Lethal — no automatic recovery)",
-      half: "Half (Default — recover 50% of sustained Shock)",
-      all: "All (Heroic — recover all sustained Shock)"
+      half: "Half — rounded up (RAW default)",
+      all:  "All — full recovery (House Rule: heroic)",
+      none: "None — no recovery (House Rule: lethal)"
     }
   });
   // ------------------------------
@@ -412,23 +413,20 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     }
 });
 
-Hooks.on("updateActiveEffect", async (effect, changes, options, userId) => {
-    if (game.user.id !== userId) return;
-    if (changes.disabled !== false) return; 
-
+// ISSUE-036 FIX: Shared helper — deactivates all other active non-passive technique/discipline
+// AEs on the actor. Called both when an AE is newly created (enabled) AND when it is re-enabled
+// after being disabled.
+async function _enforceTechniqueMutualExclusion(effect) {
     const actor = effect.parent;
     if (!actor || actor.type !== "character") return;
-    if (!effect.origin) return;
+    if (!effect.origin || effect.disabled) return;
 
     const originItem = fromUuidSync(effect.origin);
-    
     if (!originItem || (originItem.type !== "technique" && originItem.type !== "discipline") || originItem.system.isPassive) return;
 
     const otherStancesToDisable = [];
-
     for (const otherEffect of actor.effects) {
         if (otherEffect.id === effect.id || otherEffect.disabled) continue;
-        
         if (otherEffect.origin) {
             const otherOriginItem = fromUuidSync(otherEffect.origin);
             if (otherOriginItem && (otherOriginItem.type === "technique" || otherOriginItem.type === "discipline") && !otherOriginItem.system.isPassive) {
@@ -441,6 +439,19 @@ Hooks.on("updateActiveEffect", async (effect, changes, options, userId) => {
         await actor.updateEmbeddedDocuments("ActiveEffect", otherStancesToDisable);
         ui.notifications.info(`Entered ${originItem.name} stance. Previous active techniques deactivated.`);
     }
+}
+
+Hooks.on("createActiveEffect", async (effect, options, userId) => {
+    if (game.user.id !== userId) return;
+    // Fire on creation only if the AE is created already-enabled (not disabled)
+    if (effect.disabled) return;
+    await _enforceTechniqueMutualExclusion(effect);
+});
+
+Hooks.on("updateActiveEffect", async (effect, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (changes.disabled !== false) return; // Only fire when transitioning disabled → enabled
+    await _enforceTechniqueMutualExclusion(effect);
 });
 
 Hooks.on("renderChatMessageHTML", (message, html) => {
@@ -540,13 +551,18 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const dmgFormula = btn.dataset.dmgString || btn.dataset.dmg || "Width Shock";
       
       const ap = parseInt(btn.dataset.ap) || 0;
-      const isMassive = btn.dataset.massive === "true";
       const areaDice = parseInt(btn.dataset.areaDice) || 0;
       
-      // ✅ Retrieve serialized advanced mods directly from the chat card flags
+      // ISSUE-017 FIX: Read isMassive from server-side message flags, not from the DOM
+      // attribute, which a player could spoof with browser DevTools.
       const advancedMods = msg.flags?.reign?.rollFlags?.advancedMods || {};
+      const isMassive = !!(advancedMods.isMassive);
 
-      await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice, null, advancedMods);
+      // ISSUE-038 FIX: Derive attacker from the message speaker rather than using null,
+      // which fell back to whatever token the GM had selected at apply-time.
+      const attackerActor = msg?.speaker?.actor ? game.actors.get(msg.speaker.actor) : null;
+
+      await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice, attackerActor, advancedMods);
     });
   });
 
@@ -1025,7 +1041,27 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
                   });
               }
           } else {
-              if (!Number.isNumeric(c.initiative) && !initDiv.querySelector(".reign-waiting")) {
+              // ISSUE-029 FIX: Display initiative as "W×H" rather than the raw decimal
+              // (e.g. "3×7" instead of "37.07") so players can read it at a glance.
+              if (Number.isNumeric(c.initiative)) {
+                  const initNum = c.initiative;
+                  // Strip the defence/minion fractional offsets to extract Width and Height.
+                  // Formula: Width = Math.floor(initNum / 10), Height = Math.round((initNum % 10) * 100) % 100
+                  // Stored as: Width*10 + Height + fractional_offset (≤0.99)
+                  const rawBase = Math.floor(initNum); // e.g. 37 from 37.07
+                  const w = Math.floor(rawBase / 10);
+                  const h = rawBase % 10;
+                  const isDefence = (initNum - rawBase) >= 0.9;
+                  const isMinion  = (initNum - rawBase) < 0 || (initNum < rawBase);
+                  const icon = isDefence ? "🛡" : "⚔";
+                  if (!initDiv.querySelector(".reign-init-label")) {
+                      const span = document.createElement("span");
+                      span.className = "reign-init-label";
+                      span.title = `Initiative: ${initNum}`;
+                      span.textContent = `${w}×${h}${isDefence ? " 🛡" : ""}`;
+                      initDiv.appendChild(span);
+                  }
+              } else if (!initDiv.querySelector(".reign-waiting")) {
                   initDiv.insertAdjacentHTML('beforeend', `<span class="reign-waiting" title="Waiting for action...">--</span>`);
               }
           }
@@ -1073,4 +1109,48 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
           });
       }
   }
+});
+
+// G4: Clear per-combat creature flags when a combat encounter ends.
+// These flags are intentionally NOT cleared between rounds — only at combat end:
+//   elephantTrumpetUsed  — Morale Attack once per combat (RAW Ch13)
+//   chargeRunWidest      — Rhino's accumulated Run Width resets when combat ends
+//   freeGobbleDice       — Big Cat free pool (seeded fresh each round by nextRound;
+//                          cleared here in case combat ends mid-round with dice remaining)
+Hooks.on("deleteCombat", async (combat, options, userId) => {
+  if (game.user.id !== userId) return;
+
+  const creatureCombatants = combat.combatants.filter(c => {
+    const actor = c.actor;
+    return actor?.type === "threat" && actor.system.creatureMode;
+  });
+
+  await Promise.all(creatureCombatants.map(async combatant => {
+    const actor = combatant.actor;
+    if (!actor) return;
+
+    const updates = {};
+    if (actor.getFlag("reign", "elephantTrumpetUsed")) updates["flags.reign.-=elephantTrumpetUsed"] = null;
+    if (actor.getFlag("reign", "freeGobbleDice"))      updates["flags.reign.-=freeGobbleDice"]      = null;
+
+    // chargeRunWidest lives in system data, not a flag — reset via system update
+    const chargeWidth = actor.system.creatureFlags?.chargeRunWidest || 0;
+    const constrictActive = actor.system.creatureFlags?.constrictActive || false;
+
+    const systemUpdates = {};
+    if (chargeWidth > 0)     systemUpdates["system.creatureFlags.chargeRunWidest"] = 0;
+    if (constrictActive) {
+      systemUpdates["system.creatureFlags.constrictActive"]   = false;
+      systemUpdates["system.creatureFlags.constrictTargetId"] = "";
+      // Release any pinned target
+      const targetId = actor.system.creatureFlags.constrictTargetId;
+      if (targetId) {
+        const targetActor = game.actors.get(targetId);
+        if (targetActor) await targetActor.toggleStatusEffect("restrained", { active: false });
+      }
+    }
+
+    if (!foundry.utils.isEmpty(updates))       await actor.update(updates);
+    if (!foundry.utils.isEmpty(systemUpdates)) await actor.update(systemUpdates);
+  }));
 });

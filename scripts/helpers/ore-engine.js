@@ -159,10 +159,13 @@ export function calculateInitiative(parsedSets, isDefense = false, isAttack = fa
 // ==========================================
 
 /**
- * RAW Ch6 "Out of the Action": Checks if an attack set can eliminate an unworthy opponent.
- * A minion is removed from the fight if the attack's Width OR Height >= their Threat rating.
+ * RAW Ch6 "Out of the Action" (p.117): Checks if an attack set eliminates an unworthy opponent.
  *
- * Threat 1-2: Any successful set eliminates (minimum 2×1 has Width 2 >= 2, Height 1 >= 1).
+ * "Each set that hits with a Width or Height equal to or greater than their Threat rating
+ *  takes one of them out of the action."  (Rules Ch6 p.117)
+ *
+ * ISSUE-007 CITATION CONFIRMED: Width OR Height ≥ Threat removes one fighter.
+ * Threat 1-2: Any successful set eliminates (minimum 2×1 has Width 2 ≥ 2, Height 1 ≥ 1).
  * Threat 3:   Needs 3× Width, OR Height 3+ (e.g. 2×3 works, 2×2 does not).
  * Threat 4:   Needs 4× Width, OR Height 4+ (e.g. 2×4 works, 3×3 does not).
  *
@@ -179,11 +182,14 @@ export function checkThreatElimination(width, height, threatRating) {
 }
 
 /**
- * RAW Ch6 "Morale Attacks": Calculates how many unworthies flee from a Morale Attack.
+ * RAW Ch6 "Morale Attacks" (p.118): Calculates how many unworthies flee from a Morale Attack.
  *
- * A number of unworthies equal to the Morale Attack's rating cut and run.
- * The ONLY exception: if the group's Threat is EQUAL TO or GREATER than the Morale Attack
- * value, they resist entirely. (Ties go to the mooks.)
+ * "A number of unworthies equal to the Morale Attack's rating cut and run…
+ *  The only exception is if their Threat is equal to or greater than the Morale Attack
+ *  value, in which case none of them flee." (Rules Ch6 p.118 — ties go to the mooks.)
+ *
+ * ISSUE-008 CITATION CONFIRMED: Threat ≥ MA → full resistance; otherwise exactly MA fighters flee
+ * (capped at the current group size).
  *
  * @param {number} moraleAttackValue - The strength of the Morale Attack (1-10).
  * @param {number} threatRating - The group's Threat rating (1-4).
@@ -195,8 +201,27 @@ export function calculateMoraleAttackRemoval(moraleAttackValue, threatRating, cu
   const t = parseInt(threatRating) || 1;
   const gs = parseInt(currentGroupSize) || 0;
 
-  // RAW: "The only exception is if their Threat is equal to or greater than the Morale Attack."
+  // RAW Ch6 p.118: "The only exception is if their Threat is equal to or greater than the Morale Attack."
   if (t >= ma) return 0;
 
   return Math.min(ma, gs);
+}
+
+/**
+ * G3.3: Resolves a die-face height to one or more creature location keys using the
+ * creature's pre-built heightLocationMap (constructed in prepareDerivedData).
+ *
+ * Returns an array because some creatures (e.g. Elephant) map the same height to two
+ * different locations depending on the attacker's position. The caller is responsible for
+ * adjudicating the correct location when multiple keys are returned — typically the first
+ * matching location is used for automated damage and the GM may redirect via triage controls.
+ *
+ * @param {number} height - The die face result (1-10).
+ * @param {Object} heightLocationMap - Derived map from ReignThreatData.prepareDerivedData().
+ * @returns {string[]} Array of matching location keys (usually length 1, may be 2 for overlapping heights).
+ */
+export function getCreatureHitLocation(height, heightLocationMap) {
+  const h = parseInt(height);
+  if (!heightLocationMap || isNaN(h)) return [];
+  return heightLocationMap[h] || [];
 }

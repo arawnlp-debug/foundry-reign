@@ -95,7 +95,14 @@ export async function applyCompanyDamageToTarget(width, qualityKeyRaw, attackerA
         });
     }
     
-    // A Company collapses if 2 Qualities hit zero (incl Territory/Sovereignty) OR if Sovereignty alone hits zero
+    // RAW: A Company collapses under two conditions:
+    //   1. Sovereignty drops to exactly 0 → immediate dissolution.
+    //   2. Total Conquest: an enemy reduces TWO Qualities to 0 in a single month,
+    //      provided at least one of those is Sovereignty or Territory.
+    // Implementation note: condition 2 checks current zeroed-quality state after each
+    // damage application. It does not track *when* each quality hit zero, so two qualities
+    // zeroed across different months could theoretically trigger this. Tracking per-month
+    // timing would require stamping each quality with a "zeroed-in-month" flag on the actor.
     let isCollapse = (zeroCount >= 2 && criticalZero) || (qualityKey === "sovereignty" && newValue === 0);
     
     if (isCollapse) {
@@ -109,20 +116,24 @@ export async function applyCompanyDamageToTarget(width, qualityKeyRaw, attackerA
             
             rewardHtml = `<p><strong>Enemy Size:</strong> ${targetSize} | <strong>Your Size:</strong> ${attackerSize}</p><hr>`;
             
+            // RAW conquest rewards (compared against conqueror's total Qualities):
+            //   ≤ half the winner's total → no reward.
+            //   > half but < equal → permanently raise any ONE Quality by 1.
+            //   ≥ equal → permanently raise any TWO Qualities by 1 each.
             if (targetSize <= (attackerSize / 2)) {
-                rewardHtml += `<p class="reign-text-muted">Because the enemy was half your size or less, you gain <strong>no permanent Quality increases</strong>.</p>`;
+                rewardHtml += `<p class="reign-text-muted">The enemy was half your size or less — you gain <strong>no permanent Quality increases</strong>.</p>`;
             } else if (targetSize < attackerSize) {
-                rewardHtml += `<p class="reign-text-success">Because the enemy was smaller but more than half your size, you may <strong>permanently increase any ONE Quality by 1</strong>.</p>`;
+                rewardHtml += `<p class="reign-text-success">The enemy was smaller but more than half your size — you may <strong>permanently increase any ONE Quality by 1</strong>.</p>`;
             } else {
-                rewardHtml += `<p class="reign-text-info">Because the enemy was equal to or larger than your Company, you may <strong>permanently increase any TWO Qualities by 1</strong> (or one Quality by 2, with GM permission).</p>`;
+                rewardHtml += `<p class="reign-text-info">The enemy was equal to or larger than your Company — you may <strong>permanently increase any TWO Qualities by 1</strong> each.</p>`;
             }
         } else {
             rewardHtml = `
               <p><strong>Enemy Size (Total Qualities): ${targetSize}</strong></p>
-              <p class="reign-text-small reign-text-muted">Compare this to the conqueror's Total Size:<br>
-              • <em>Less than half:</em> No reward.<br>
-              • <em>More than half (but &lt; equal):</em> +1 to any Quality.<br>
-              • <em>Equal to or greater:</em> +2 to Qualities.</p>
+              <p class="reign-text-small reign-text-muted">Compare to the conqueror's Total Size:<br>
+              • <em>Half or less:</em> No reward.<br>
+              • <em>More than half, less than equal:</em> +1 to any one Quality.<br>
+              • <em>Equal or larger:</em> +1 to any two Qualities.</p>
             `;
         }
 

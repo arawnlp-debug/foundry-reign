@@ -255,6 +255,14 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
     context.shieldArmOptions = { armL: "REIGN.ArmL", armR: "REIGN.ArmR" };
     context.attributeOptions = { body: "REIGN.AttrBody", coordination: "REIGN.AttrCoordination", sense: "REIGN.AttrSense", knowledge: "REIGN.AttrKnowledge", command: "REIGN.AttrCommand", charm: "REIGN.AttrCharm" };
 
+    // ISSUE-037: Expose derivedWeight (auto-computed from coverage + AR per RAW Ch6 p.113)
+    // so the armor sheet can warn authors when it diverges from their manual armorWeight entry.
+    // The roller uses derivedWeight for encumbrance; armorWeight is cosmetic only.
+    if (context.isArmor) {
+        context.derivedWeight = this.document.system.derivedWeight;
+        context.armorWeightMismatch = context.derivedWeight !== this.document.system.armorWeight;
+    }
+
     // Spell: compute detection radius from intensity for display
     if (context.isSpell) {
         const DETECTION_RADIUS = ["—", "—", "5 ft", "10 ft", "50 ft", "1,000 ft", "1 mile", "10 miles", "25 miles", "50 miles", "100 miles"];

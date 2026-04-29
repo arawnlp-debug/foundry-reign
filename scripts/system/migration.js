@@ -87,6 +87,10 @@ export async function migrateWorld() {
     await pack.configure({ locked: wasLocked });
   }
 
+  if (failureCount > 0) {
+    ui.notifications.error(`Reign System Migration encountered ${failureCount} failure(s)! Check the console for details.`, { permanent: true });
+  }
+
   if (migrationCount > 0) {
     ui.notifications.info(`Reign System Migration complete! Migrated ${migrationCount} entities.`, { permanent: true });
   } else if (failureCount === 0) {
@@ -285,6 +289,17 @@ function migrateThreat(source) {
 
   if (system.parentCompany === null || system.parentCompany === undefined) {
     updateData["system.parentCompany"] = "";
+  }
+
+  // G3.1 (v2.9.0): Creature mode fields — new schema, all default via schema definition.
+  // No data remapping required; existing threat actors remain in mob mode (creatureMode: false).
+  // creatureFlags sub-schema: ensure legacy actors without the field are initialised safely.
+  if (system.creatureFlags === null || system.creatureFlags === undefined) {
+    updateData["system.creatureFlags"] = {
+      freeGobbleDicePerRound: 0, moraleAttackOnce: false,
+      constrictActive: false, constrictTargetId: "",
+      chargeRunWidest: 0, venomPotency: 0, venomType: ""
+    };
   }
 
   return updateData;

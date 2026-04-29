@@ -26,7 +26,7 @@
         {{#if @root.progressionMode}}
           <h2 class="upgrade-btn" data-action="upgradeStat" data-type="attribute" data-key="{{block.key}}" data-label="{{block.label}}">{{block.label}} <i class="fas fa-arrow-up"></i></h2>
         {{else}}
-          <h2 class="rollable" data-action="rollStat" data-type="attribute" data-key="{{block.key}}" data-label="{{block.label}}">{{block.label}} <i class="fas fa-dice"></i></h2>
+          <h2 class="rollable" data-action="rollStat" data-type="attribute" data-key="{{block.key}}" data-label="{{block.label}}">{{block.label}} <i class="fas fa-dice-d10"></i></h2>
         {{/if}}
         <input type="number" name="system.attributes.{{block.key}}.value" value="{{block.value}}"/>
       </div>
@@ -39,7 +39,7 @@
               {{#if @root.progressionMode}}
                 <label class="upgrade-btn" data-action="upgradeStat" data-type="customSkill" data-key="{{skill.key}}" data-label="{{skill.customLabel}}"><i class="fas fa-arrow-up"></i></label>
               {{else}}
-                <label class="rollable" data-action="rollStat" data-type="customSkill" data-key="{{skill.key}}" data-label="{{skill.customLabel}}"><i class="fas fa-dice"></i></label>
+                <label class="rollable" data-action="rollStat" data-type="customSkill" data-key="{{skill.key}}" data-label="{{skill.customLabel}}"><i class="fas fa-dice-d10"></i></label>
               {{/if}}
               <input type="text" name="system.customSkills.{{skill.key}}.customLabel" value="{{skill.customLabel}}" placeholder="Skill Name..."/>
             </div>
@@ -47,7 +47,7 @@
             {{#if @root.progressionMode}}
               <label class="upgrade-btn" data-action="upgradeStat" data-type="skill" data-key="{{skill.key}}" data-label="{{skill.label}}">{{skill.label}} <i class="fas fa-arrow-up"></i></label>
             {{else}}
-              <label class="rollable" data-action="rollStat" data-type="skill" data-key="{{skill.key}}" data-label="{{skill.label}}">{{skill.label}} <i class="fas fa-dice"></i></label>
+              <label class="rollable" data-action="rollStat" data-type="skill" data-key="{{skill.key}}" data-label="{{skill.label}}">{{skill.label}} <i class="fas fa-dice-d10"></i></label>
             {{/if}}
           {{/if}}
           <div class="em-toggles">

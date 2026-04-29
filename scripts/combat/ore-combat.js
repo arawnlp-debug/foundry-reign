@@ -49,7 +49,13 @@ export class ReignCombat extends Combat {
       // Primary Sort: Initiative Descending
       if (initA !== initB) return initB - initA;
 
-      // Tie-breaker: Falling back to Sense (Descending) in resolution
+      // ISSUE-010 — Tiebreaker for truly simultaneous resolution (identical W×H):
+      // RAW Ch6 describes identical sets as happening simultaneously. For cases where the
+      // system requires an ordering (e.g. damage sequencing), RAW suggests a die roll.
+      // We use Sense (descending) as a stable deterministic tiebreaker to avoid re-rolls.
+      // This is a system design choice, not a RAW rule. Consider a coin-flip dialog for
+      // strict RAW if simultaneous resolution is needed.
+      // RAW citation needed: exact wording of "truly simultaneous" resolution tie resolution.
       const resSenseA = a.actor?.system?.attributes?.sense?.value || 0;
       const resSenseB = b.actor?.system?.attributes?.sense?.value || 0;
       if (resSenseA !== resSenseB) return resSenseB - resSenseA;
@@ -84,51 +90,87 @@ export class ReignCombat extends Combat {
     await this.updateEmbeddedDocuments("Combatant", updates);
     await this.setFlag("reign", "phase", "declaration");
 
-    // PACKAGE C: Process aim and shield state for each combatant's actor
-    for (const combatant of this.combatants) {
+    // ISSUE-030 FIX: Process all combatant actors in parallel (Promise.all) rather than
+    // sequential await calls. For a 20-combatant encounter this reduces ~60 DB writes to
+    // ~20 parallel writes.
+    await Promise.all(this.combatants.map(async combatant => {
       const actor = combatant.actor;
-      if (!actor || actor.type !== "character") continue;
+      if (!actor || actor.type !== "character") return;
 
-      // Shield Coverage: Clear per-round assignments so players must re-declare
-      if (actor.getFlag("reign", "shieldCoverage")) {
-        await actor.unsetFlag("reign", "shieldCoverage");
-      }
+      const actorUpdates = {};
 
-      // Dodge Cover: Clear dive-for-cover protection from previous round
-      if (actor.getFlag("reign", "dodgeCover")) {
-        await actor.unsetFlag("reign", "dodgeCover");
-        // Also remove prone status that was applied by the dive (if still present)
-        // The player may have already stood up, so only remove if it exists
-        if (actor.statuses.has("prone")) {
-          await actor.toggleStatusEffect("prone", { active: false });
+      // Shield Coverage: Clear per-round assignments so players must re-declare.
+      // ISSUE-027 FIX: After clearing, whisper a reminder to the owning player(s) if the
+      // character has a shield equipped but hadn't declared coverage this round.
+      const hadCoverage = !!actor.getFlag("reign", "shieldCoverage");
+      const hasShieldEquipped = actor.items.some(i => i.type === "shield" && i.system.equipped);
+
+      if (hadCoverage) {
+        actorUpdates["flags.reign.-=shieldCoverage"] = null;
+      } else if (hasShieldEquipped && game.combat?.round > 1) {
+        // Shield equipped but no coverage was declared this past round — whisper a reminder
+        const whisperTargets = game.users.filter(u => actor.testUserPermission(u, "OWNER") && u.active).map(u => u.id);
+        if (whisperTargets.length > 0) {
+          await ChatMessage.create({
+            content: `<div class="reign-chat-card"><p><i class="fas fa-exclamation-triangle reign-text-warning"></i> <strong>${foundry.utils.escapeHTML(actor.name)}</strong> had a shield equipped but no <strong>Shield Coverage</strong> was declared last round — the shield fell back to its static default locations. Declare coverage at the start of the new round.</p></div>`,
+            whisper: whisperTargets,
+            speaker: { alias: "⚔ Combat" }
+          });
         }
       }
 
-      // Aim State: If the character aimed this round, preserve their bonus.
-      // If they didn't aim (took another action or did nothing), clear the bonus.
+      // Dodge Cover: Clear dive-for-cover protection from previous round.
+      if (actor.getFlag("reign", "dodgeCover")) {
+        actorUpdates["flags.reign.-=dodgeCover"] = null;
+      }
+
+      // Aim State: Preserve bonus only if the character aimed this round.
       const aimedThisRound = actor.getFlag("reign", "aimedThisRound") || false;
       if (!aimedThisRound) {
-        // They didn't aim this round — any accumulated bonus is lost
         if (actor.getFlag("reign", "aimBonus")) {
-          await actor.unsetFlag("reign", "aimBonus");
+          actorUpdates["flags.reign.-=aimBonus"] = null;
         }
       }
-      // Reset the per-round flag for next round's tracking
       if (aimedThisRound) {
-        await actor.unsetFlag("reign", "aimedThisRound");
+        actorUpdates["flags.reign.-=aimedThisRound"] = null;
       }
+
+      // Commit all actor flag changes in one write per actor.
+      if (!foundry.utils.isEmpty(actorUpdates)) {
+        await actor.update(actorUpdates);
+      }
+
+      // Prone from dive-for-cover: toggle separately as it uses a status effect API call.
+      if (actor.getFlag("reign", "dodgeCover") === null && actor.statuses.has("prone")) {
+        await actor.toggleStatusEffect("prone", { active: false });
+      }
+    }));
+
+    // C1: Clear Shove bonus and Iron Kiss flags from all combatants in one batch.
+    const combatantFlagUpdates = this.combatants
+      .filter(c => c.getFlag("reign", "shoveBonusAgainst") || c.getFlag("reign", "ironKissSetup"))
+      .map(c => {
+        const u = { _id: c.id };
+        if (c.getFlag("reign", "shoveBonusAgainst")) u["flags.reign.-=shoveBonusAgainst"] = null;
+        if (c.getFlag("reign", "ironKissSetup")) u["flags.reign.-=ironKissSetup"] = null;
+        return u;
+      });
+
+    if (combatantFlagUpdates.length > 0) {
+      await this.updateEmbeddedDocuments("Combatant", combatantFlagUpdates);
     }
 
-    // C1: Clear Shove bonus flags from all combatants — the window is one round only
-    for (const combatant of this.combatants) {
-      if (combatant.getFlag("reign", "shoveBonusAgainst")) {
-        await combatant.unsetFlag("reign", "shoveBonusAgainst");
+    // G4.1: Seed free Gobble Dice for creature-mode threats that have freeGobbleDicePerRound > 0.
+    // RAW Ch13 Big Cat: "1–3 free Dodge Gobble Dice per round, usable at any time, with a value of 10."
+    // The pool is stored as an actor flag so consumeGobbleDie can read it as a fallback.
+    await Promise.all(this.combatants.map(async combatant => {
+      const actor = combatant.actor;
+      if (!actor || actor.type !== "threat" || !actor.system.creatureMode) return;
+      const freeCount = actor.system.creatureFlags?.freeGobbleDicePerRound || 0;
+      if (freeCount > 0) {
+        await actor.setFlag("reign", "freeGobbleDice", Array(freeCount).fill(10));
       }
-      // C2: Clear Iron Kiss setup if unused — blade opportunity expires at round end
-      if (combatant.getFlag("reign", "ironKissSetup")) {
-        await combatant.unsetFlag("reign", "ironKissSetup");
-      }
-    }
+    }));
 
     return super.nextRound();
   }

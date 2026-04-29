@@ -69,10 +69,18 @@
       {{#if isArmor}}
       <div class="form-group-grid">
         <div class="form-group">
-          <label>{{localize 'REIGN.ArmorWeight'}}</label>
+          <label>{{localize 'REIGN.ArmorWeight'}} <span class="reign-text-muted reign-text-small">(cosmetic)</span></label>
           <select name="system.armorWeight" class="cm-w100">
             {{selectOptions armorWeightOptions selected=system.armorWeight localize=true}}
           </select>
+          {{!-- ISSUE-037: Show RAW-derived weight computed from coverage + AR. Encumbrance uses this. --}}
+          <div class="reign-derived-weight-row reign-text-small {{#if armorWeightMismatch}}reign-text-warning{{else}}reign-text-muted{{/if}}">
+            <i class="fas fa-{{#if armorWeightMismatch}}exclamation-triangle{{else}}check-circle{{/if}}"></i>
+            RAW-derived: <strong>{{derivedWeight}}</strong>
+            {{#if armorWeightMismatch}}
+              — encumbrance uses <strong>{{derivedWeight}}</strong>, not the label above
+            {{/if}}
+          </div>
         </div>
         <div class="form-group">
           <label>{{localize 'REIGN.ArmorRating'}}</label>

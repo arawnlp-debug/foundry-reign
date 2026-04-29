@@ -45,7 +45,7 @@
             </h2>
           {{else}}
             <h2 class="rollable reign-m0 reign-border-none" data-action="rollStat" data-type="esoterica" data-key="sorcery" data-label="Sorcery">
-              {{localize 'REIGN.Sorcery'}} <i class="fas fa-dice"></i>
+              {{localize 'REIGN.Sorcery'}} <i class="fas fa-dice-d10"></i>
             </h2>
           {{/if}}
 
@@ -192,7 +192,7 @@
               <div class="item-row reign-spell-row flexrow">
                 <span class="reign-spell-col-name reign-bold">
                   <label class="rollable" data-action="rollStat" data-type="item" data-key="{{item.id}}" data-label="{{item.name}}" title="Cast {{item.name}}">
-                    <i class="fas fa-dice reign-mr5"></i>
+                    <i class="fas fa-dice-d10 reign-mr5"></i>
                   </label>
                   {{#if item.isLocked}}<i class="fas fa-lock reign-spell-lock" title="Attunement required — you are not attuned"></i>{{/if}}
                   {{#if item.isAttunementSpell}}<i class="fas fa-link-simple reign-spell-attune-icon" title="This is an attunement spell"></i>{{/if}}
@@ -221,7 +221,7 @@
             <div class="item-row reign-spell-row flexrow">
               <span class="reign-spell-col-name reign-bold">
                 <label class="rollable" data-action="rollStat" data-type="item" data-key="{{item.id}}" data-label="{{item.name}}" title="Cast {{item.name}}">
-                  <i class="fas fa-dice reign-mr5"></i>
+                  <i class="fas fa-dice-d10 reign-mr5"></i>
                 </label>
                 {{#if item.isLocked}}<i class="fas fa-lock reign-spell-lock" title="Attunement required — you are not attuned"></i>{{/if}}
                 {{#if item.isAttunementSpell}}<i class="fas fa-link-simple reign-spell-attune-icon" title="This is an attunement spell"></i>{{/if}}
