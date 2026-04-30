@@ -1,0 +1,35 @@
+{
+  "name": "Surging Undertow (Example)",
+  "type": "technique",
+  "system": {
+    "path": "Path of the Crashing Wave (Example)",
+    "associatedSkill": "parry",
+    "rank": 2,
+    "effect": "Second technique. If you form a set wider than 2x when rolling to Parry, your attacker suffers a -1d penalty on their next action. Requires Ebbing Tide (Example).",
+    "pool": "",
+    "page": "",
+    "isPassive": false
+  },
+  "_id": "ytHVfitGU3NPeULV",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608126,
+    "modifiedTime": 1777294608126,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ytHVfitGU3NPeULV"
+}

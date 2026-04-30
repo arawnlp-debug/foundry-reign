@@ -1,0 +1,43 @@
+{
+  "name": "Ignite the Inner Fire (Example)",
+  "type": "spell",
+  "system": {
+    "school": "Flame Weavers (Example)",
+    "intensity": 3,
+    "castingTime": 1,
+    "slow": 0,
+    "duration": "Width in rounds",
+    "castingStat": "knowledge",
+    "attunementRequired": true,
+    "isAttunementSpell": false,
+    "dodgeable": false,
+    "parriable": false,
+    "armorBlocks": false,
+    "effect": "Fills the target with sudden, burning stamina. The target gains +1d to all Vigor and Endurance rolls for the duration of the spell.",
+    "damage": "",
+    "pool": "",
+    "page": ""
+  },
+  "_id": "UYIOWboQEDorqaSs",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608102,
+    "modifiedTime": 1777294608102,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!UYIOWboQEDorqaSs"
+}

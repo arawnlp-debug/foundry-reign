@@ -1,0 +1,257 @@
+/* ====================================================
+   REIGN: REALITIES OF LORDS AND LEADERS 
+   Base Styles & Utility Classes
+==================================================== */
+
+/* -----------------------------------------
+    CORE SHEET STYLING
+----------------------------------------- */
+.reign.sheet.actor, .reign.sheet.item {
+  background: var(--reign-bg-parchment);
+  background-image: var(--reign-grain);
+  color: var(--reign-text-dark);
+  font-family: var(--reign-font-flavor);
+}
+
+.reign * {
+  box-sizing: border-box;
+}
+
+.reign-sheet-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding: 5px 10px;
+}
+
+.reign.sheet .window-content {
+  padding: 0;
+  overflow: hidden;
+  background: var(--reign-bg-parchment);
+}
+
+.reign.sheet form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* -----------------------------------------
+    STRUCTURAL UTILITY CLASSES
+----------------------------------------- */
+.reign-p10 { padding: 10px; }
+.reign-p15 { padding: 15px; }
+.reign-p8-15 { padding: 8px 15px; }
+.reign-p5-15 { padding: 5px 15px; }
+.reign-pb10 { padding-bottom: 10px; }
+.reign-mb5 { margin-bottom: 5px; }
+.reign-mb10 { margin-bottom: 10px; }
+.reign-mb20 { margin-bottom: 20px; }
+.reign-mt5 { margin-top: 5px; }
+.reign-mt10 { margin-top: 10px; }
+.reign-mt20 { margin-top: 20px; }
+.reign-ml15 { margin-left: 15px; }
+.reign-mr10 { margin-right: 10px; }
+.reign-m0 { margin: 0; }
+.reign-pt5 { padding-top: 5px; }
+
+/* Colors & Backgrounds */
+.bg-white, .reign-bg-white { background: var(--reign-bg-paper); }
+.bg-crimson { background: var(--reign-color-blood); color: var(--reign-text-light); }
+.bg-teal { background: var(--reign-color-teal); color: var(--reign-text-light); }
+
+/* Typography */
+.reign-bold { font-weight: bold; }
+.reign-text-center { text-align: center; }
+.reign-text-xl { font-size: 1.5em; }
+.reign-text-lg { font-size: 1.1em; }
+.reign-text-sm { font-size: 0.9em; }
+.reign-item-subtext { font-size: 0.85em; color: var(--reign-text-muted); }
+.reign-text-muted { color: var(--reign-text-muted); font-style: italic; }
+.reign-text-light { color: var(--reign-text-light) !important; }
+.reign-capitalize { text-transform: capitalize; }
+.reign-color-success { color: var(--reign-color-emerald); }
+
+/* Flexbox Layouts */
+.reign-flex-center { display: flex; align-items: center; justify-content: center; }
+.reign-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.reign-flex-around { display: flex; align-items: center; justify-content: space-around; gap: 20px; padding: 15px; }
+.reign-flex-gap5 { display: flex; gap: 5px; }
+.reign-flex-gap12 { display: flex; gap: 12px; }
+.reign-flex-col { display: flex; flex-direction: column; }
+.reign-flex-col-gap8 { display: flex; flex-direction: column; gap: 8px; }
+.reign-flex-center-gap4 { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.reign-flex-center-gap15 { display: flex; align-items: center; justify-content: center; gap: 15px; }
+.reign-flex1 { flex: 1; }
+.align-center { align-items: center; justify-content: space-between; }
+
+/* Grid Layouts */
+.reign-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+/* Flexible Column Proportions (Used in Item Lists) */
+.reign-col-1 { flex: 1; text-align: center; }
+.reign-col-2 { flex: 2; }
+.reign-col-3 { flex: 3; }
+.reign-col-4 { flex: 4; }
+.reign-col-5 { flex: 5; }
+
+/* Elements & Containers */
+.reign-block { display: block; }
+.reign-circle { border-radius: 50%; }
+.reign-scroll-y { overflow-y: auto; padding-right: 5px; }
+.reign-opacity-50 { opacity: 0.5; }
+.reign-cursor-pointer { cursor: pointer; }
+.reign-border-none { border: none !important; }
+.reign-border-top { border-top: var(--reign-border-dashed); }
+
+/* Common Input/Textarea Overrides */
+.reign textarea {
+  border: none;
+  padding: 8px;
+  width: 100%;
+  font-family: var(--reign-font-flavor);
+  resize: vertical;
+  background: transparent;
+  color: var(--reign-text-dark);
+}
+
+.reign-textarea { 
+    height: 150px; 
+    border: var(--reign-border-light); 
+    padding: 10px; 
+    resize: vertical; 
+    width: 100%; 
+    font-family: var(--reign-font-flavor); 
+    background: var(--reign-bg-paper); 
+    box-shadow: var(--reign-shadow-inset); 
+    color: var(--reign-text-dark); 
+}
+
+.reign-textarea-120 { 
+    height: 120px; 
+    border: var(--reign-border-light); 
+    padding: 10px; 
+    resize: vertical; 
+    width: 100%; 
+    font-family: var(--reign-font-flavor); 
+    background: var(--reign-bg-paper); 
+    box-shadow: var(--reign-shadow-inset); 
+    color: var(--reign-text-dark); 
+}
+
+/* -----------------------------------------
+    V14 BLANK GHOST WINDOW FIX
+----------------------------------------- */
+/* Instantly hide ApplicationV2 windows on close to prevent the blank background fade-out bug */
+.app-v2.closing {
+    display: none !important;
+    opacity: 0 !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* -----------------------------------------
+    ADDITIONAL UTILITIES (Phase 1 Cleanup)
+----------------------------------------- */
+.reign-mt-0 { margin-top: 0 !important; }
+.reign-scroll-y { overflow-y: auto; }
+
+/* Item Sheet: Effects Tab Elements */
+.item-effects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--reign-font-flavor);
+  border-bottom: 2px solid var(--reign-bg-iron);
+  padding-bottom: 5px;
+  margin-bottom: var(--reign-space-md);
+  font-weight: bold;
+  font-size: var(--reign-text-lg);
+}
+
+.item-effects-add-btn {
+  cursor: pointer;
+  color: var(--reign-color-blood);
+  font-size: var(--reign-text-sm);
+  transition: color 0.2s;
+}
+
+.item-effects-add-btn:hover {
+  color: var(--reign-color-blood-dark);
+  text-shadow: 0 0 5px rgba(139,31,31,0.3);
+}
+
+.item-effects-empty {
+  text-align: center;
+  padding: 20px;
+  border: var(--reign-border-dashed);
+  color: var(--reign-text-muted);
+  font-style: italic;
+  border-radius: 4px;
+}
+
+/* -----------------------------------------
+    ROLL DIALOG UTILITIES
+----------------------------------------- */
+.reign-pool-value { color: var(--reign-color-emerald); }
+.reign-passion-group { display: flex; flex-direction: column; gap: 2px; }
+.reign-passion-group label { font-size: var(--reign-text-xs); text-transform: none; }
+.reign-passion-group select { font-size: var(--reign-text-sm); padding: 2px; }
+.reign-wealth-display { font-size: var(--reign-text-3xl); font-weight: bold; color: var(--reign-color-blood); font-family: var(--reign-font-data); }
+.reign-color-brass { color: var(--reign-color-brass); }
+
+/* -----------------------------------------
+    JS DIALOG UTILITY CLASSES
+----------------------------------------- */
+.reign-dialog-intro { text-align: center; font-size: var(--reign-text-lg); margin-bottom: 10px; }
+.reign-dialog-subtitle { text-align: center; font-size: var(--reign-text-sm); color: var(--reign-text-muted); margin-bottom: 10px; }
+.reign-dialog-callout { text-align: center; font-weight: bold; }
+.reign-dialog-section-divider { margin-bottom: 10px; border-top: var(--reign-border-dashed); padding-top: 10px; }
+.reign-dialog-advanced-link { font-size: var(--reign-text-sm); text-decoration: underline; color: var(--reign-color-blood); cursor: pointer; }
+.reign-dialog-advanced-link:hover { color: var(--reign-color-blood-dark); }
+.reign-improve-label { display: block; }
+.reign-improve-value { color: var(--reign-color-emerald); }
+.reign-font-display { font-family: var(--reign-font-display); }
+
+/* Cover & Layout Utilities */
+.reign-cover-checkboxes { display: flex; flex-direction: column; gap: 4px; padding: 0 20px; }
+.reign-cover-btn-wrapper { padding: 6px 10px 2px; text-align: center; }
+.reign-flex-col { display: flex; flex-direction: column; }
+.reign-flex-gap4 { gap: 4px; }
+.reign-flex-gap12 { gap: 12px; }
+.reign-mb-small { margin-bottom: 5px; }
+.reign-text-warning { color: var(--reign-color-brass); }
+
+/* Sidebar Dashboard Button */
+.reign-btn-dashboard { background: var(--reign-color-blood); color: var(--reign-text-light); border: 1px solid var(--reign-color-blood-dark); cursor: pointer; transition: filter 0.2s; }
+.reign-btn-dashboard:hover { filter: brightness(1.15); }
+/* Utility: JS-toggled visibility (replaces inline style="display:none") */
+.reign-hidden { display: none; }
+/* -----------------------------------------
+    TOKEN HUD: STATUS EFFECTS GRID
+    Reign uses exactly 9 curated statuses.
+    Force a clean 3×3 grid so the panel
+    always renders as a tidy square.
+----------------------------------------- */
+#token-hud .status-effects {
+    display: grid !important;
+    grid-template-columns: repeat(3, 36px) !important;
+    grid-auto-rows: 36px !important;
+    gap: 3px !important;
+    padding: 5px !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+#token-hud .status-effects .effect-control {
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 2px !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    object-fit: contain !important;
+}

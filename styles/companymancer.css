@@ -1,0 +1,265 @@
+/* ====================================================
+   REIGN: COMPANYMANCER STYLES
+   Blood & Iron Theme - Dedicated Faction Styles
+==================================================== */
+
+.companymancer-wrapper, .cp-wrapper {
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: var(--reign-font-primary, 'Georgia', serif);
+    color: var(--reign-text-dark, #111);
+    background: var(--reign-bg-parchment);
+}
+
+/* ====================================================
+   LAYOUT SKELETONS
+==================================================== */
+
+.cp-oneroll-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 20px;
+    overflow: hidden;
+}
+
+.cp-results-left {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--reign-bg-paper);
+    border: 1px solid var(--reign-border-light, #ccc);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+.cp-summary-right {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    background: var(--reign-bg-paper);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: 1px solid var(--reign-border-light, #ccc);
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+/* ====================================================
+   LANDING PAGE
+==================================================== */
+
+.cp-landing {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: url('../assets/reign-splash.webp') center/cover no-repeat;
+    border: 2px solid var(--reign-bg-iron);
+    border-radius: 8px;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+}
+
+.cp-landing-box {
+    background: var(--reign-bg-parchment);
+    padding: 40px;
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 800px;
+    border: 2px solid var(--reign-color-emerald);
+}
+
+.cp-landing-title {
+    font-family: var(--reign-font-display);
+    color: var(--reign-color-emerald);
+    font-size: 2.5em;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid var(--reign-bg-iron);
+    padding-bottom: 10px;
+}
+
+.cp-landing-subtitle {
+    font-size: 1.2em;
+    color: var(--reign-text-dark);
+    opacity: 0.8;
+    margin-bottom: 30px;
+    font-style: italic;
+}
+
+.cp-path-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    justify-content: center;
+}
+
+.cp-card {
+    background: var(--reign-bg-paper);
+    border: 2px solid var(--reign-bg-iron);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    border-color: var(--reign-color-emerald);
+}
+
+.cp-card h3 {
+    margin: 0 0 10px 0;
+    font-family: var(--reign-font-display);
+    border-bottom: 1px solid var(--reign-border-light, #ccc);
+    padding-bottom: 5px;
+}
+
+.cp-card-desc {
+    font-size: 0.9em;
+    color: var(--reign-text-dark);
+    opacity: 0.8;
+    flex: 1;
+    margin: 0 0 15px 0;
+}
+
+/* ====================================================
+   SUMMARY LISTS & TEXT
+==================================================== */
+
+.cp-summary-title {
+    font-family: var(--reign-font-display);
+    color: var(--reign-color-emerald);
+    border-bottom: 2px solid var(--reign-bg-iron);
+    margin: 0 0 10px 0;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 1.2em;
+}
+
+.cp-summary-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--reign-text-dark);
+}
+
+.cp-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--reign-bg-iron-light);
+    font-size: 1.1em;
+}
+
+.cp-summary-val {
+    font-weight: bold;
+    color: var(--reign-color-emerald);
+}
+
+.cp-text-italic { font-style: italic; }
+.cp-color-muted { color: var(--reign-text-dark); opacity: 0.8; }
+.cp-color-blood { color: var(--reign-color-blood); }
+
+/* ====================================================
+   BUTTONS
+==================================================== */
+
+.cp-btn-oneroll, .cp-btn-manual, .cp-btn-forge {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-family: var(--reign-font-display);
+    font-weight: bold;
+    font-size: 1.1em;
+    text-transform: uppercase;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: filter 0.2s, box-shadow 0.2s;
+    border: none;
+    margin-top: auto;
+}
+
+.cp-btn-oneroll {
+    background: var(--reign-color-emerald);
+    border: 1px solid #1b3818;
+    color: white;
+}
+
+.cp-btn-oneroll:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+.cp-btn-forge {
+    background: var(--reign-color-blood);
+    border: 1px solid var(--reign-color-blood-dark);
+    color: white;
+}
+
+.cp-btn-forge:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+.cp-btn-manual {
+    background: var(--reign-bg-iron-light);
+    border: 1px solid var(--reign-bg-iron);
+    color: white;
+}
+
+.cp-btn-manual:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+/* ====================================================
+   ADDITIONAL CLASSES (Phase 6 Cleanup)
+==================================================== */
+
+.cp-section-title {
+    font-family: var(--reign-font-display);
+    color: var(--reign-color-blood);
+    border-bottom: 2px solid var(--reign-border-light, #ccc);
+    margin-top: 0;
+    padding-bottom: 5px;
+}
+.cp-section-title-mt { margin-top: 20px; }
+
+.cp-history-list { list-style-type: square; padding-left: 20px; }
+.cp-history-item { margin-bottom: 6px; line-height: 1.4; }
+
+.cp-asset-list { padding-left: 15px; font-size: var(--reign-text-sm); color: var(--reign-text-dark); max-height: 150px; overflow-y: auto; }
+.cp-asset-item { margin-bottom: 5px; }
+
+.cp-dice-config { margin-top: 15px; text-align: left; }
+.cp-dice-label { font-weight: bold; color: var(--reign-text-muted); }
+.cp-dice-row { display: flex; gap: 10px; align-items: center; margin-top: 5px; }
+.cp-dice-input { width: 60px; padding: 5px; text-align: center; border: var(--reign-border-light); font-family: var(--reign-font-data); background: var(--reign-bg-paper); color: var(--reign-text-dark); border-radius: 3px; }
+.cp-dice-guide { font-size: var(--reign-text-sm); color: var(--reign-text-muted); line-height: 1.3; }
+
+.cp-reroll-panel { margin-top: 15px; text-align: center; background: var(--reign-bg-vellum); border: var(--reign-border-light); padding: 10px; border-radius: 4px; }
+.cp-reroll-label { font-weight: bold; color: var(--reign-text-muted); font-size: var(--reign-text-sm); }
+.cp-reroll-input { width: 50px; text-align: center; margin-left: 5px; border: var(--reign-border-light); background: var(--reign-bg-paper); font-family: var(--reign-font-data); border-radius: 3px; }
+
+.cp-mt15 { margin-top: 15px; }
+.cp-mb15 { margin-bottom: 15px; }
+.cp-text-center { text-align: center; }
+.cp-row-last { border-bottom: none !important; }
+.cp-btn-full { width: 100%; margin-top: 10px; }

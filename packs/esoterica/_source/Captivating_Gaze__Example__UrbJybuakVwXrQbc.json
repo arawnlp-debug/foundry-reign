@@ -1,0 +1,35 @@
+{
+  "name": "Captivating Gaze (Example)",
+  "type": "discipline",
+  "system": {
+    "path": "Way of the Silver Tongue (Example)",
+    "associatedSkill": "fascinate",
+    "rank": 1,
+    "effect": "First tier of the Silver Tongue path. When making a Fascinate roll to command the attention of a crowd, you may ignore up to -1d of penalties caused by hostile or noisy environments.",
+    "pool": "",
+    "page": "",
+    "isPassive": false
+  },
+  "_id": "UrbJybuakVwXrQbc",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608111,
+    "modifiedTime": 1777294608111,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!UrbJybuakVwXrQbc"
+}

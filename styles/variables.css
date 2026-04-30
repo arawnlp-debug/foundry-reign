@@ -1,0 +1,157 @@
+/* ====================================================
+   REIGN: REALITIES OF LORDS AND LEADERS 
+   Variables & Theme Architecture
+==================================================== */
+
+:root {
+  /* The Palette: Blood, Iron, and Parchment (Light Mode Defaults) */
+  --reign-bg-parchment: #f4f1ea;       /* Base sheet background */
+  --reign-bg-vellum: #e8e0d0;          /* Secondary panels, zebra rows, callouts */
+  --reign-bg-paper: #fdfdfc;           /* Inputs and text areas */
+  --reign-bg-ash: #4a4540;             /* Soft structural, secondary headers */
+  --reign-bg-iron: #2b2b2b;            /* Headers and heavy structural elements */
+  --reign-bg-iron-light: #3a3a3a;      /* Hover states for iron */
+  
+  --reign-color-blood: #8b1f1f;        /* Primary accent: Health, Attacks, Danger */
+  --reign-color-blood-dark: #6a1616;   /* Hover states for blood */
+  --reign-color-emerald: #2d5a27;      /* Success, Healing, Gobble Dice */
+  --reign-color-brass: #d97706;        /* Sovereignty, Armor, Shields */
+  
+  /* Semantic Colors for V14 Chat/Dialogs */
+  --reign-red: #8b1f1f;
+  --reign-green: #2d5a27;
+  --reign-blue: #0277bd;
+  --reign-orange: #d97706;
+  --reign-critical: #c62828;
+  --reign-purple: #ab47bc;
+  
+  /* Status Banners */
+  --reign-dark-red: #4a0000;
+  --reign-navy: #1a237e;
+  --reign-burnt-orange: #e65100;
+
+  /* Semantic UI Colours — Chat Cards & Banners */
+  /* Teal: success confirmations, manoeuvre effects, healing */
+  --reign-color-teal: #00695c;
+  --reign-color-teal-light: #00897b;
+  --reign-color-teal-border: #4db6ac;
+  --reign-bg-teal: #e0f2f1;
+  /* Danger: failed rolls, critical wounds */
+  --reign-bg-danger: #ffebee;
+  --reign-color-danger: #c62828;
+  --reign-color-danger-border: #ef5350;
+  /* Warning: cautions, partial results */
+  --reign-bg-warn: #fff3e0;
+  --reign-color-warn-border: #ffb74d;
+  /* Info: gobble dice, deflect, blue callouts */
+  --reign-bg-info: #e3f2fd;
+  --reign-color-blue-dark: #1565c0;
+  --reign-color-info-border: #90caf9;
+  /* Amber: mid-intensity spells, temporary attunement */
+  --reign-color-amber: #c88b00;
+  --reign-bg-amber: #fff8e1;
+  /* Arcane: extreme-intensity spells, esoteric power */
+  --reign-color-arcane: #4a1a6e;
+  --reign-color-arcane-light: #e2d4ff;
+  
+  --reign-text-dark: #111111;          /* Standard reading text */
+  --reign-text-muted: #555555;         /* Helper text and hints */
+  --reign-text-light: #ffffff;         /* Text on iron/blood backgrounds */
+
+  --reign-border-iron: 2px solid var(--reign-bg-iron);
+  --reign-border-brass: 1px solid var(--reign-color-brass);
+  --reign-border-light: 1px solid #ccc;
+  --reign-border-dashed: 1px dashed #aaa;
+
+  /* Typography Hierarchy */
+  --reign-font-display: 'Cinzel', 'Book Antiqua', Palatino, serif;
+  --reign-font-flavor: "Book Antiqua", Palatino, serif;
+  --reign-font-data: var(--font-primary), sans-serif;
+  --reign-font-mono: "Courier New", Courier, monospace;
+
+  /* Typographic Scale (Major Second ~1.125) */
+  --reign-text-xs: 0.75em;
+  --reign-text-sm: 0.85em;
+  --reign-text-base: 1em;
+  --reign-text-lg: 1.15em;
+  --reign-text-xl: 1.4em;
+  --reign-text-2xl: 1.8em;
+  --reign-text-3xl: 2.5em;
+
+  /* Spacing Scale */
+  --reign-space-xs: 4px;
+  --reign-space-sm: 8px;
+  --reign-space-md: 16px;
+  --reign-space-lg: 24px;
+  --reign-space-xl: 32px;
+
+  /* Shadows & Depth */
+  --reign-shadow-inset: inset 0 1px 3px rgba(0,0,0,0.1);
+  --reign-shadow-drop: 0 2px 4px rgba(0,0,0,0.15);
+
+  /* Motif: Diamond Divider (inline SVG) */
+  --reign-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cline x1='0' y1='4' x2='90' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3Cpolygon points='100,0.5 106,4 100,7.5 94,4' fill='%238b1f1f' fill-opacity='0.3' stroke='%232b2b2b' stroke-opacity='0.25' stroke-width='0.5'/%3E%3Cline x1='110' y1='4' x2='200' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3C/svg%3E");
+
+  /* Texture: Parchment Grain (subtle warm noise) */
+  --reign-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* -----------------------------------------
+    DARK MODE COMPATIBILITY (Foundry VTT)
+----------------------------------------- */
+.theme-dark .reign.sheet,
+.theme-dark .reign-chat-card,
+.theme-dark .reign-dialog-window .window-content {
+  --reign-bg-parchment: #1e1e1e;
+  --reign-bg-vellum: #252525;
+  --reign-bg-paper: #2a2a2a;
+  --reign-bg-ash: #333330;
+  --reign-bg-iron: #111111;
+  --reign-bg-iron-light: #1a1a1a;
+  
+  --reign-color-blood: #a53232;
+  --reign-color-blood-dark: #cc4444;
+  --reign-color-emerald: #3a8a33;
+  --reign-color-brass: #e68a00;
+  
+  --reign-red: #ff5252;
+  --reign-green: #4caf50;
+  --reign-blue: #42a5f5;
+  --reign-orange: #ffb300;
+  --reign-critical: #ff1744;
+  --reign-purple: #ce93d8;
+  
+  --reign-dark-red: #660000;
+  --reign-navy: #3949ab;
+  --reign-burnt-orange: #f57c00;
+
+  /* Semantic UI Colours — Dark Mode */
+  --reign-color-teal: #009688;
+  --reign-color-teal-light: #00bfa5;
+  --reign-color-teal-border: #00897b;
+  --reign-bg-teal: #004d40;
+  --reign-bg-danger: #3b1010;
+  --reign-color-danger: #ef5350;
+  --reign-color-danger-border: #ff1744;
+  --reign-bg-warn: #3e2723;
+  --reign-color-warn-border: #d84315;
+  --reign-bg-info: #001e36;
+  --reign-color-blue-dark: #42a5f5;
+  --reign-color-info-border: #0d47a1;
+  --reign-color-amber: #e6a800;
+  --reign-bg-amber: #2e2200;
+  --reign-color-arcane: #9c6dbf;
+  --reign-color-arcane-light: #d4b8f0;
+  
+  --reign-text-dark: #e0e0e0;
+  --reign-text-muted: #999999;
+  --reign-text-light: #ffffff;
+  
+  --reign-border-iron: 2px solid var(--reign-bg-iron);
+  --reign-border-brass: 1px solid var(--reign-color-brass);
+  --reign-border-light: 1px solid #444;
+  --reign-border-dashed: 1px dashed #555;
+  
+  --reign-shadow-inset: inset 0 1px 3px rgba(0,0,0,0.4);
+  --reign-shadow-drop: 0 2px 4px rgba(0,0,0,0.5);
+}

@@ -1,0 +1,451 @@
+<div class="reign-chat-card">
+    <header class="reign-roll-title">
+        <i class="fas fa-dice-d10"></i> Rolling {{label}}
+    </header>
+
+    {{#if (gt multiActions 1)}}
+        <div class="reign-banner reign-banner-warning">
+            ATTEMPTING {{multiActions}} ACTIONS<br>
+            <small>(Requires {{multiActions}} matched sets)</small>
+        </div>
+    {{/if}}
+
+    {{#if (gt calledShot 0)}}
+        <div class="reign-banner reign-banner-info">
+            <i class="fas fa-crosshairs"></i> CALLED SHOT: Height {{calledShot}}
+        </div>
+    {{/if}}
+
+    <details class="reign-pool-breakdown">
+        <summary>
+            Pool: {{totalPool}}d10 {{#if wasCapped}}<span class="reign-text-danger">(Capped)</span>{{/if}}
+        </summary>
+        {{#if poolBreakdown.length}}
+            <ul>
+                {{#each poolBreakdown as |b|}}
+                    <li><strong>{{b.label}}:</strong> <span class="{{#if b.isPenalty}}reign-text-critical{{else}}reign-text-success{{/if}}">{{b.value}}</span></li>
+                {{/each}}
+            </ul>
+        {{/if}}
+    </details>
+
+    <div class="sets-result">
+        <div class="reign-section-title">Matched Sets</div>
+        
+        {{#if sets.length}}
+            <div class="reign-flex-col-gap8 reign-mb-medium">
+                {{#each sets as |set|}}
+                    <div class="ore-set {{#if set.isSuccess}}reign-set-success{{else}}reign-set-fail{{/if}}">
+                        
+                        <div class="dice-tray wrap">
+                            {{#each set.dice as |die|}}
+                                <div class="reign-die {{die.cssClass}}" title="{{#if (eq die.cssClass 'matched')}}Matched Die{{else}}Waste Die{{/if}}">{{die.value}}</div>
+                            {{/each}}
+                        </div>
+                        
+                        <div class="set-details reign-mt-small">
+                            {{#if set.location}}
+                               <i class="fas fa-bullseye reign-text-success"></i> HIT: <strong>{{set.location}}</strong>
+                            {{else if set.isSuccess}}
+                               <i class="fas fa-check-circle reign-text-success"></i> <strong class="reign-text-success">Success</strong>
+                            {{/if}}
+
+                            {{#unless set.isSuccess}}
+                               <div class="reign-text-danger reign-text-bold reign-mt-small"><i class="fas fa-times-circle"></i> FAILED: {{set.failReason}}</div>
+                            {{/unless}}
+                        </div>
+
+                        {{!-- Gobble UI Block --}}
+                        {{#if ../isDefense}}
+                            <div class="reign-gobble-gen">
+                                <div><strong><i class="fas fa-shield-alt"></i> Generates {{set.width}} Gobble Dice of Height {{set.height}}</strong></div>
+                                <div class="reign-gobble-gen-defense">
+                                    Defense Type: <strong>{{../defenseTypeLabel}}</strong><br>
+                                    {{#if (eq ../defenseType "dodge")}}
+                                        <span class="reign-text-danger">(Can only protect yourself)</span>
+                                    {{else}}
+                                        <span class="reign-text-success">(Can protect yourself or allies)</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        {{!-- Damage Tags Block --}}
+                        {{#if set.dmg}}
+                            <div class="reign-dmg-tags">
+                                <div><strong>Damage:</strong> {{set.dmg.formula}}</div>
+                                <div class="dice-tray wrap">
+                                    {{#if set.dmg.ap}}<span class="reign-tag ap-tag">AP {{set.dmg.ap}}</span>{{/if}}
+                                    {{#if set.dmg.slow}}<span class="reign-tag">SLOW {{set.dmg.slow}}</span>{{/if}}
+                                    {{#if set.dmg.twoHanded}}<span class="reign-tag">2H</span>{{/if}}
+                                    {{#if set.dmg.massive}}<span class="reign-tag massive-tag">MASSIVE</span>{{/if}}
+                                    {{#if set.dmg.area}}<span class="reign-tag area-tag">AREA {{set.dmg.area}}d</span>{{/if}}
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        {{!-- Healing Block --}}
+                        {{#if set.heal}}
+                            <div class="reign-heal-tags">
+                                <span><strong>Healing:</strong> {{set.heal.formula}}</span>
+                            </div>
+                        {{/if}}
+
+                        {{!-- Ch7 Maneuver Outcome Block --}}
+                        {{#if set.maneuverOutcome}}
+                            <div class="reign-maneuver-outcome {{#if set.maneuverOutcome.isTier1}}tier1{{else}}tier2{{/if}}">
+                                <div class="reign-maneuver-title">
+                                    <i class="fas fa-{{#if set.maneuverOutcome.isTier1}}bolt{{else}}scroll{{/if}}"></i>
+                                    {{localize set.maneuverOutcome.maneuverLabel}} — {{set.maneuverOutcome.tierLabel}} Success
+                                </div>
+                                {{#if set.maneuverOutcome.description}}
+                                    <div>{{localize set.maneuverOutcome.description}}</div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.requiresKill}}
+                                    <div class="reign-text-danger reign-text-small reign-maneuver-detail">
+                                        <i class="fas fa-skull"></i> Must kill the target to trigger this effect.
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.bonusShock}}
+                                    <div class="reign-text-small reign-maneuver-detail">
+                                        <strong>Bonus Damage:</strong>
+                                        {{#if set.maneuverOutcome.bonusKilling}}+{{set.maneuverOutcome.bonusShock}} Shock, +{{set.maneuverOutcome.bonusKilling}} Killing{{else}}+{{set.maneuverOutcome.bonusShock}} Shock{{/if}}
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.convertKillingToShock}}
+                                    <div class="reign-text-small reign-maneuver-detail reign-text-info">
+                                        <i class="fas fa-exchange-alt"></i> All Killing damage converted to Shock.
+                                        {{#if set.maneuverOutcome.discardOverflow}} Overflow Shock discarded (non-lethal).{{/if}}
+                                    </div>
+                                {{/if}}
+                                {{#if set.maneuverOutcome.isTier2}}
+                                    <details class="reign-maneuver-rules">
+                                        <summary class="reign-text-muted reign-text-small">
+                                            <i class="fas fa-book"></i> {{localize 'REIGN.ManeuverTier2Notice'}}
+                                        </summary>
+                                        <div class="reign-maneuver-rules-text">
+                                            {{localize set.maneuverOutcome.rulesText}}
+                                        </div>
+                                    </details>
+                                    {{#if set.isSuccess}}
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary gm-resolve-maneuver-btn"
+                                        data-maneuver-key="{{set.maneuverOutcome.maneuverKey}}"
+                                        data-maneuver-label="{{localize set.maneuverOutcome.maneuverLabel}}"
+                                        data-width="{{set.width}}"
+                                        data-height="{{set.height}}"
+                                        title="GM: post a confirmation that this manoeuvre has been resolved">
+                                        <i class="fas fa-gavel"></i> GM: Resolve {{localize set.maneuverOutcome.maneuverLabel}}
+                                    </button>
+                                    {{/if}}
+                                {{/if}}
+                            </div>
+                        {{/if}}
+
+                        {{!-- ACTION BUTTONS — Primary actions full-width, secondary compact --}}
+                        <div class="reign-action-buttons">
+                            {{!-- Primary Actions: Damage / Heal / First Aid --}}
+                            <div class="reign-actions-primary">
+                                {{#if set.dmg}}
+                                    <button class="reign-btn-damage reign-btn-primary apply-dmg-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-dmg-string="{{set.dmg.formula}}" data-ap="{{set.dmg.ap}}" data-massive="{{set.dmg.massive}}" data-area-dice="{{set.dmg.area}}" title="Apply Primary Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-fist"></i> Apply Damage: {{set.dmg.formula}}
+                                    </button>
+                                {{/if}}
+
+                                {{#if set.heal}}
+                                    <button class="reign-btn-heal reign-btn-primary apply-heal-btn" data-width="{{set.width}}" data-height="{{set.height}}" data-heal-string="{{set.heal.formula}}" title="Apply Magical Healing" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-holding-medical"></i> Apply Healing: {{set.heal.formula}}
+                                    </button>
+                                {{/if}}
+
+                                {{#if ../isFirstAid}}
+                                    <button class="reign-btn-first-aid reign-btn-primary apply-first-aid-btn" data-width="{{set.width}}" title="Apply First Aid (Convert Killing to Shock)" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-notes-medical"></i> Apply First Aid
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C1: Manoeuvre status effect button (Pin, Restrain, Stand, Shove, Slam) --}}
+                                {{#if set.maneuverOutcome.hasStatusEffect}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-maneuver-status-btn"
+                                        data-maneuver-key="{{set.maneuverOutcome.maneuverKey}}"
+                                        data-apply-status="{{set.maneuverOutcome.applyStatus}}"
+                                        data-clear-status="{{set.maneuverOutcome.clearStatus}}"
+                                        data-set-flag="{{set.maneuverOutcome.setFlag}}"
+                                        data-status-target="{{set.maneuverOutcome.statusTarget}}"
+                                        data-slam-shock="{{set.maneuverOutcome.slamShock}}"
+                                        data-slam-multi-loc="{{set.maneuverOutcome.slamMultiLoc}}"
+                                        title="Apply {{localize set.maneuverOutcome.maneuverLabel}} Effect"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-magic"></i> Apply: {{localize set.maneuverOutcome.maneuverLabel}}
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Strangle — initial application + maintain hold --}}
+                                {{#if set.maneuverOutcome.hasStrangleSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-strangle-initial-btn"
+                                        data-shock="{{set.maneuverOutcome.strangleShock}}"
+                                        title="Apply {{set.maneuverOutcome.strangleShock}} Shock to target's head"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-hand-fist"></i> Apply: Strangle ({{set.maneuverOutcome.strangleShock}} Shock to Head)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary apply-strangle-maintain-btn"
+                                        data-shock="{{set.maneuverOutcome.strangleNextRound}}"
+                                        title="Maintain strangle: apply {{set.maneuverOutcome.strangleNextRound}} Shock next round (no roll needed)">
+                                        <i class="fas fa-repeat"></i> Maintain Strangle ({{set.maneuverOutcome.strangleNextRound}} Shock)
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Iron Kiss — setup this round, execute next round --}}
+                                {{#if set.maneuverOutcome.hasIronKissSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary setup-iron-kiss-btn"
+                                        data-virtual-width="{{set.maneuverOutcome.ironKissVirtualWidth}}"
+                                        title="Set up Iron Kiss: store {{set.maneuverOutcome.ironKissVirtualWidth}}×10 guaranteed attack for next round"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-knife"></i> Set Up: Iron Kiss ({{set.maneuverOutcome.ironKissVirtualWidth}}×10 ready)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary execute-iron-kiss-btn"
+                                        title="Execute Iron Kiss: fire the stored guaranteed attack (next round)">
+                                        <i class="fas fa-bolt"></i> Execute Iron Kiss
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Redirect — opens dialog for incoming attack parameters --}}
+                                {{#if set.maneuverOutcome.hasRedirectSetup}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-redirect-btn"
+                                        data-width-mod="{{set.maneuverOutcome.redirectWidthMod}}"
+                                        data-redirect-any="{{set.maneuverOutcome.redirectAny}}"
+                                        title="Apply Redirect: enter the attacker's damage and redirect to a new target"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-rotate"></i> Apply: Redirect
+                                    </button>
+                                {{/if}}
+
+                                {{!-- C2: Submission Hold — apply hold damage + wrench free option --}}
+                                {{#if set.maneuverOutcome.hasSubmissionHold}}
+                                    <button class="reign-btn-maneuver reign-btn-primary apply-submission-hold-btn"
+                                        data-shock="{{set.maneuverOutcome.holdShock}}"
+                                        data-hold-height="{{set.maneuverOutcome.holdHeight}}"
+                                        title="Apply Hold: {{set.maneuverOutcome.holdShock}} Shock to held limb"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-link"></i> Apply: Hold ({{set.maneuverOutcome.holdShock}} Shock)
+                                    </button>
+                                    <button class="reign-btn-maneuver-secondary reign-btn-primary apply-wrench-free-btn"
+                                        data-killing="{{set.maneuverOutcome.wrenchKilling}}"
+                                        data-hold-height="{{set.maneuverOutcome.holdHeight}}"
+                                        title="Wrench Free: target self-inflicts {{set.maneuverOutcome.wrenchKilling}} Killing to break the hold"
+                                        {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-person-running"></i> Wrench Free ({{set.maneuverOutcome.wrenchKilling}} Killing to self)
+                                    </button>
+                                {{/if}}
+                            </div>
+
+                            {{!-- Secondary Actions: Compact icon row --}}
+                            <div class="reign-actions-secondary">
+                                {{#if set.initBtn}}
+                                    <button class="reign-btn-small reign-btn-init set-init-btn" data-width="{{set.width}}" data-height="{{set.height}}" title="Use this set's speed for Combat Initiative">
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{#if ../needsGobbleSelection}}
+                                    <button class="reign-btn-small reign-btn-gobble select-gobble-set-btn" data-width="{{set.width}}" data-height="{{set.height}}" title="Select this set as your Gobble Dice">
+                                        <i class="fas fa-hand-pointer"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{!-- Dodge/Parry gobble: always on physical attacks; only on spells that are dodgeable/parriable --}}
+                                {{#unless ../isDefense}}
+                                    {{#if ../isSpell}}
+                                        {{#if ../spellDodgeable}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Dodge or Parry to cancel this {{../label}} set (Height {{set.height}})">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                        {{else if ../spellParriable}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Parry to cancel this {{../label}} set (Height {{set.height}})">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                        {{/if}}
+                                        {{!-- F1: Counterspell gobble — always available on spell cards --}}
+                                        <button class="reign-btn-small reign-btn-magic counterspell-gobble-btn" data-height="{{set.height}}" title="Gobble 1 Die — Counterspell this {{../label}} set (Height {{set.height}})">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    {{else}}
+                                        <button class="reign-btn-small reign-btn-gobble gobble-dmg-btn" data-height="{{set.height}}" title="Gobble 1 Die — use your Dodge or Parry to cancel this {{../label}} set (Height {{set.height}})">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                    {{/if}}
+                                {{/unless}}
+
+                                {{#if set.companyDmg}}
+                                    <button class="reign-btn-small reign-btn-company apply-company-dmg-btn" data-width="{{set.companyDmg.width}}" data-quality="{{set.companyDmg.quality}}" title="Apply Company Damage" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-chess-rook"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{#if ../hasEffects}}
+                                    <button class="reign-btn-small reign-btn-condition apply-condition-btn" data-item-uuid="{{../itemUuid}}" title="Apply Condition to Targets" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                {{/if}}
+
+                                {{#if set.maneuverOutcome.hasMoraleAttack}}
+                                    <button class="reign-btn-small reign-btn-morale apply-morale-btn" data-morale-value="{{set.maneuverOutcome.moraleAttack}}" data-source="{{localize set.maneuverOutcome.maneuverLabel}}" title="Apply Morale Attack {{set.maneuverOutcome.moraleAttack}} to targeted threat groups" {{#unless set.isSuccess}}disabled{{/unless}}>
+                                        <i class="fas fa-skull-crossbones"></i> MA {{set.maneuverOutcome.moraleAttack}}
+                                    </button>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+                {{/each}}
+            </div>
+        {{else}}
+            <div class="reign-banner reign-banner-fail">No Sets Found</div>
+        {{/if}}
+    </div>
+
+    {{!-- ── SPELL RESULT BLOCK ──────────────────────────────────────── --}}
+    {{#if isSpell}}
+    <div class="reign-spell-result">
+
+        {{!-- Intensity check: did the best set meet or beat the spell's Intensity? --}}
+        <div class="reign-spell-intensity-check {{#if spellFired}}fired{{else}}fizzled{{/if}}">
+            {{#if spellFired}}
+                <i class="fas fa-star"></i>
+                Spell Fires — set Width equals or exceeds Intensity {{spellIntensity}}
+            {{else}}
+                <i class="fas fa-times-circle"></i>
+                Spell Fizzled — no set wide enough for Intensity {{spellIntensity}}
+            {{/if}}
+        </div>
+
+        {{!-- Spell metadata tags --}}
+        <div class="reign-spell-meta">
+
+            {{!-- Detection radius (only shown if Intensity ≥ 2) --}}
+            {{#if spellDetectionRadius}}
+            {{#unless (eq spellDetectionRadius '—')}}
+            <span class="reign-spell-meta-tag detection" title="Any character within this range may make a Sense + Eerie roll to sense the casting — any match succeeds">
+                <i class="fas fa-eye"></i> Detectable: {{spellDetectionRadius}}
+            </span>
+            {{/unless}}
+            {{/if}}
+
+            {{!-- Slow rating --}}
+            {{#if (gt spellSlow 0)}}
+            <span class="reign-spell-meta-tag slow" title="Slow {{spellSlow}} — requires {{spellSlow}} round(s) of preparation before rolling">
+                <i class="fas fa-hourglass-half"></i> Slow {{spellSlow}}
+            </span>
+            {{/if}}
+
+            {{!-- School --}}
+            {{#if spellSchool}}
+            <span class="reign-spell-meta-tag" title="Magical school">
+                <i class="fas fa-hat-wizard"></i> {{spellSchool}}
+            </span>
+            {{/if}}
+
+            {{!-- Duration --}}
+            {{#if spellDuration}}
+            <span class="reign-spell-meta-tag" title="Spell duration">
+                <i class="fas fa-clock"></i> {{spellDuration}}
+            </span>
+            {{/if}}
+
+            {{!-- Interaction flags --}}
+            {{#if spellDodgeable}}
+            <span class="reign-spell-meta-tag flag" title="Targets may Dodge this spell">
+                <i class="fas fa-person-running"></i> Dodgeable
+            </span>
+            {{/if}}
+            {{#if spellParriable}}
+            <span class="reign-spell-meta-tag flag" title="Targets may Parry this spell">
+                <i class="fas fa-shield-halved"></i> Parriable
+            </span>
+            {{/if}}
+            {{#if spellArmorBlocks}}
+            <span class="reign-spell-meta-tag flag" title="The target's Armor Rating applies against this spell">
+                <i class="fas fa-shirt"></i> Armor Blocks
+            </span>
+            {{/if}}
+
+            {{!-- Attunement spell marker --}}
+            {{#if spellIsAttunementSpell}}
+            <span class="reign-spell-meta-tag attune-spell" title="Casting this spell grants temporary attunement for the next higher spell">
+                <i class="fas fa-link-simple"></i> Attunement Spell
+            </span>
+            {{/if}}
+
+        </div>
+    </div>
+    {{/if}}
+    {{!-- ── END SPELL RESULT BLOCK ──────────────────────────────────── --}}
+
+    {{!-- Gobble Dice counter or Selection Prompt on Defense cards --}}
+    {{#if isDefense}}
+        {{#if needsGobbleSelection}}
+            <div class="reign-gobble-tracker reign-gobble-warning">
+                <div class="reign-section-title reign-gobble-select-title">
+                    <i class="fas fa-exclamation-triangle"></i> Select Gobble Dice
+                </div>
+                <div class="reign-gobble-prompt">
+                    You rolled multiple sets! Click the <i class="fas fa-hand-pointer"></i> icon on a set above to lock it in as your active Gobble Dice.
+                </div>
+            </div>
+        {{else}}
+            <div class="reign-gobble-tracker">
+                <div class="reign-section-title reign-gobble-available-title">
+                    <i class="fas fa-shield-alt"></i> Available Gobble Dice ({{gobbleCount}})
+                    {{!-- ISSUE-034: Confirm auto-assignment so players know it happened --}}
+                    {{#if gobbleDiceAutoAssigned}}
+                        <span class="reign-text-muted reign-text-small"> — auto-assigned from your only set</span>
+                    {{/if}}
+                </div>
+                <div class="dice-tray wrap gobble-list">
+                    {{#if gobbleDice.length}}
+                        {{#each gobbleDice as |die|}}
+                            <div class="reign-die gobble-badge" title="Available Gobble Die">{{die}}</div>
+                        {{/each}}
+                    {{else}}
+                        <span class="reign-text-danger reign-text-bold reign-text-muted">All Gobble Dice Spent!</span>
+                    {{/if}}
+                </div>
+            </div>
+        {{/if}}
+    {{/if}}
+
+    <div class="reign-callout">
+        <div class="reign-section-title">Unmatched Dice (Waste)</div>
+        <div class="dice-tray wrap">
+            {{#if waste.length}}
+                {{#each waste as |die|}}
+                    <div class="reign-die waste" title="Waste Die">{{die.value}}</div>
+                {{/each}}
+            {{else}}
+                <span class="reign-text-muted">None</span>
+            {{/if}}
+        </div>
+        
+        {{!-- Waste Hit/Heal UI Block --}}
+        {{#if wasteDmg}}
+            <div class="reign-heal-tags">
+                <div class="{{#if wasteDmg.isHealing}}reign-waste-heal{{else}}reign-waste-dmg{{/if}}">
+                    <strong>Waste Effect:</strong><br>
+                    1 {{wasteDmg.type}} to {{wasteDmg.locations}}
+                </div>
+                <button class="reign-btn-small apply-waste-dmg-btn {{#if wasteDmg.isHealing}}reign-btn-heal{{else}}reign-btn-waste-dmg{{/if}}" data-faces="{{wasteDmg.faces}}" data-type="{{wasteDmg.type}}" data-ap="{{wasteDmg.ap}}" title="Apply Waste {{#if wasteDmg.isHealing}}Healing{{else}}Hits{{/if}}">
+                    <i class="fas {{#if wasteDmg.isHealing}}fa-heartbeat{{else}}fa-meteor{{/if}}"></i>
+                </button>
+            </div>
+        {{/if}}
+    </div>
+
+    {{#if (gt expertDie 0)}}
+        <div class="reign-ed-result">
+            <strong>Expert Die Face:</strong> <span class="reign-ed-badge">{{expertDie}}</span>
+        </div>
+    {{/if}}
+    {{#if (gt masterDiceCount 0)}}
+        <div class="reign-md-result">
+            <strong>Master Dice Used:</strong> <span>{{masterDiceCount}}</span>
+        </div>
+    {{/if}}
+</div>

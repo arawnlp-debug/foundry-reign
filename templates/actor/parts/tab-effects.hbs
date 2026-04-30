@@ -1,0 +1,38 @@
+<div class="tab effects {{tabs.effects}}" data-tab="effects">
+  <div class="reign-effects-tab-container">
+    <h3 class="reign-effects-header">
+      <span>Ongoing Effects & Conditions</span>
+      <a data-action="createEffect" title="Add Effect" class="reign-create-effect-btn">
+        <i class="fas fa-plus"></i> Create Effect
+      </a>
+    </h3>
+
+    {{#if effects.length}}
+      <div class="effects-list reign-flex-col-gap8">
+        {{#each effects as |effect|}}
+          <div class="effect-item reign-flex-between reign-effect-box" data-effect-id="{{effect.id}}">
+            <div class="reign-flex-center-gap15 {{#if effect.disabled}}reign-opacity-50{{/if}}">
+              <img src="{{effect.img}}" class="reign-effect-img"/>
+              <div class="reign-flex-col">
+                <span class="reign-effect-name">{{effect.name}}</span>
+                {{#if effect.disabled}}
+                  <span class="reign-effect-disabled-text">(Disabled)</span>
+                {{/if}}
+              </div>
+            </div>
+            <div class="effect-controls reign-flex-gap12">
+              <a data-action="toggleEffect" title="{{#if effect.disabled}}Enable{{else}}Disable{{/if}}" class="reign-cursor-pointer reign-text-lg">
+                <i class="fas {{#if effect.disabled}}fa-check-circle{{else}}fa-times-circle{{/if}}"></i>
+              </a>
+              <a data-action="editEffect" title="Quick Builder" class="reign-cursor-pointer reign-text-lg"><i class="fas fa-edit"></i></a>
+              <a data-action="advancedEditEffect" title="Advanced Editor" class="reign-cursor-pointer reign-text-lg"><i class="fas fa-cogs"></i></a>
+              <a data-action="deleteEffect" title="Delete" class="reign-cursor-pointer reign-text-lg reign-color-blood"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p class="reign-empty-effects-msg">No ongoing effects or conditions active on this character.</p>
+    {{/if}}
+  </div>
+</div>

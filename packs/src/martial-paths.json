@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Ebbing Tide (Example)",
+    "type": "technique",
+    "system": {
+      "path": "Path of the Crashing Wave (Example)",
+      "associatedSkill": "parry",
+      "rank": 1,
+      "effect": "First technique of the Crashing Wave path. When you successfully Parry an incoming attack, you may voluntarily reduce the Height of your Parry set by 1 to gain +1d on your next attack roll against that same opponent."
+    }
+  },
+  {
+    "name": "Surging Undertow (Example)",
+    "type": "technique",
+    "system": {
+      "path": "Path of the Crashing Wave (Example)",
+      "associatedSkill": "parry",
+      "rank": 2,
+      "effect": "Second technique. If you form a set wider than 2x when rolling to Parry, your attacker suffers a -1d penalty on their next action. Requires Ebbing Tide (Example)."
+    }
+  }
+]

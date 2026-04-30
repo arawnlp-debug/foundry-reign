@@ -1,0 +1,1511 @@
+[
+  {
+    "name": "Big Cat",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 5,
+        "coordination": 5,
+        "sense": 5
+      },
+      "creatureSkills": {
+        "bite": 3,
+        "claw": "MD",
+        "run": 2,
+        "scrutinize": 4,
+        "hearing": "MD",
+        "sight": 3
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 21,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            5,
+            6
+          ],
+          "woundBoxes": 8,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 8,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "8",
+      "tricks": 3,
+      "movement": "20-40' per round; Run roll adds 10' per Width point",
+      "specialRules": "RAW Ch13: Receives 1-3 free Dodge Gobble Dice per round (value 10, usable at any time). Adjust freeGobbleDicePerRound (2 = midpoint). Two claw attacks per round at Width+1 Killing, or one claw + one bite at Width+2 Killing.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 2,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Tigers at top of Body scale; cheetahs for speed; lynxes/pumas for Stealth. Wound boxes shown at maximum RAW values.",
+      "threatLevel": 3,
+      "damageFormula": "Width+1 Killing (claw) / Width+2 Killing (bite)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Claw",
+          "attribute": "coordination",
+          "skill": "claw",
+          "damage": "Width+1 Killing",
+          "notes": "Two claw attacks per round, or one claw + one bite",
+          "isSlow": 0
+        },
+        {
+          "name": "Bite",
+          "attribute": "body",
+          "skill": "bite",
+          "damage": "Width+2 Killing",
+          "notes": "One per round \u2014 replaces one claw",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Rhino",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 6,
+        "coordination": 3,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "fight": 2,
+        "run": 2,
+        "scrutinize": 2,
+        "hearing": 3,
+        "sight": 0
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 6,
+          "ar": 2,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 20,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            5,
+            6
+          ],
+          "woundBoxes": 9,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 9,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 9,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 9,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "Accelerates/decelerates 10' per round; max ~130' per round (30 mph). Corners well.",
+      "specialRules": "RAW Ch13: AR 1 all locations; AR 2 head. Gore: Body+Fight, Width+1 Killing. Charge: rolls Body+Run each round and keeps Widest result for bonus (Width 2: +1K; Width 3: +2S/+1K; Width 4+: +3S/+2K). Use 'Build Charge' / 'Gore with Charge' buttons.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": true,
+        "hasConstrict": false
+      },
+      "description": "Herbivore but aggressive; hates fire and charges it. Charge system uses ore-combat run-width accumulation.",
+      "threatLevel": 3,
+      "damageFormula": "Width+1 Killing (gore) + charge bonus",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Gore",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Killing",
+          "notes": "One per round. Add charge bonus if charged.",
+          "isSlow": 0
+        },
+        {
+          "name": "Build Charge",
+          "attribute": "body",
+          "skill": "run",
+          "damage": "",
+          "notes": "Roll Body+Run each round; keep Widest for charge bonus.",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Boa Constrictor",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 5,
+        "coordination": 2,
+        "sense": 2
+      },
+      "creatureSkills": {
+        "constrict": 4,
+        "climb": "MD",
+        "scrutinize": "MD",
+        "hearing": 2,
+        "sight": 1,
+        "stealth": "MD"
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 4,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 15,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "5-10' per round",
+      "specialRules": "RAW Ch13: Drops from trees onto prey (Scrutinize to detect passing below). Body+Constrict to grapple \u2014 success = Pinned. Each subsequent round: Area Shock attack vs pinned target (ignores flexible/chain/leather AR). Escape: contested Body+Endurance vs Constrict Width. Body wound boxes shown at midpoint of range (10-20).",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": true
+      },
+      "description": "Up to 20' long. Not fast or poisonous \u2014 relies entirely on the constriction loop.",
+      "threatLevel": 2,
+      "damageFormula": "Area Shock (Constrict Width) \u2014 ignores flexible armor",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Drop & Grab",
+          "attribute": "body",
+          "skill": "constrict",
+          "damage": "Pin target on success",
+          "notes": "Initiation roll \u2014 use Drop & Grab in Special Abilities panel",
+          "isSlow": 0
+        },
+        {
+          "name": "Constrict",
+          "attribute": "body",
+          "skill": "constrict",
+          "damage": "Width Shock (Area)",
+          "notes": "While target pinned. Ignores flexible armor AR.",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Elephant",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 7,
+        "coordination": 2,
+        "sense": 2
+      },
+      "creatureSkills": {
+        "fight": 2,
+        "grapple": 4,
+        "run": 1,
+        "scrutinize": 3,
+        "hearing": 2,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            9,
+            10
+          ],
+          "woundBoxes": 9,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "back",
+          "name": "Back",
+          "rollHeights": [
+            9,
+            10
+          ],
+          "woundBoxes": 1,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "woundBoxes": 40,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 13,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 13,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            1,
+            2
+          ],
+          "woundBoxes": 13,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            1,
+            2
+          ],
+          "woundBoxes": 13,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "1-3",
+      "tricks": 7,
+      "movement": "10-15' per round; 5' first round moving. Cannot corner well.",
+      "specialRules": "RAW Ch13: AR 1 all locations (AR 2-3 if armored). Overlapping heights 3-4 and 1-2 \u2014 GM adjudicates by position. Back location: damage goes to Body. Once per combat: Morale Attack 4 (or 10 vs those who've never seen one). Three attacks: Tusks (Width+3 Shock, Downed), Trunk Grab (grapple loop), Trample Slow 1 (Width+2 Killing, Waste Shock, Downed). Use special mechanics buttons.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": true,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Wound boxes at midpoint of RAW ranges. Back has 1 box \u2014 damage redirects to Body per RAW.",
+      "threatLevel": 4,
+      "damageFormula": "Width+3 Shock (tusks) / Width+2 Killing (trample)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 10,
+        "max": 10
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Tusks",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+3 Shock",
+          "notes": "Leaves target Downed",
+          "isSlow": 0
+        },
+        {
+          "name": "Trunk",
+          "attribute": "body",
+          "skill": "grapple",
+          "damage": "Width Shock",
+          "notes": "R1: Width Shock. R2+: 3 Shock torso auto unless escaped",
+          "isSlow": 0
+        },
+        {
+          "name": "Trample",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+2 Killing + Waste Shock",
+          "notes": "Slow 1. Leaves target Downed.",
+          "isSlow": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "Rattlesnake",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 2,
+        "coordination": 3,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "bite": 4,
+        "stealth": 3,
+        "scrutinize": 3,
+        "hearing": 1,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 2,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "10-15' per round",
+      "specialRules": "RAW Ch13: Rattle = Morale Attack 2 (warning before defensive strike; no warning when attacking prey). Bite: Width Shock + auto-venom injection. Venom: Potency 6-8. Major Effect: lose 1 Body/hour until treated or fatal. Minor Effect: -2d all actions for 1 day. Use 'Roll Venom' button after a successful bite. Body boxes at midpoint of range.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 7,
+        "venomType": "Rattlesnake Venom",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Slow, non-aggressive. Rattles as a Morale Attack 2 before defensive strikes.",
+      "threatLevel": 1,
+      "damageFormula": "Width Shock + Venom (Potency 7)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 3,
+        "max": 3
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite",
+          "attribute": "coordination",
+          "skill": "bite",
+          "damage": "Width Shock + Venom",
+          "notes": "Roll Venom (Potency 7) after a hit",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Viper",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 2,
+        "coordination": 5,
+        "sense": 2
+      },
+      "creatureSkills": {
+        "bite": 3,
+        "stealth": 1,
+        "scrutinize": 3,
+        "hearing": 1,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 1,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "10-15' per round",
+      "specialRules": "RAW Ch13: Bite does 1 Shock (danger is the venom). Venom: Potency 4-9. Major Effect: INSTANT DEATH. Minor Effect: heart hammers, violent shaking \u2014 no actions 5-6 minutes. Armor AR on the bitten limb protects completely (fangs too short for leather). Snake must maintain bite \u2014 pulling it off reduces potency -1 or -2. Use 'Roll Venom' after a bite hit.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 7,
+        "venomType": "Viper Toxin",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Includes cobras, turem vipers. Larger = more wound boxes and Body. Brightly colored coral snake is an exception to normal stealth.",
+      "threatLevel": 1,
+      "damageFormula": "1 Shock + Viper Toxin (Potency 7)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 3,
+        "max": 3
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite",
+          "attribute": "coordination",
+          "skill": "bite",
+          "damage": "1 Shock + Venom",
+          "notes": "Danger is the venom, not the bite. Potency 7.",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Great Ape",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 5,
+        "coordination": 4,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "fight": 3,
+        "dodge": "ED",
+        "athletics": 3,
+        "climb": 4,
+        "run": 1,
+        "scrutinize": 2,
+        "hearing": 2,
+        "sight": 3
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 4,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 12,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "armR",
+          "name": "Right Arm",
+          "rollHeights": [
+            5,
+            6
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "armL",
+          "name": "Left Arm",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "legR",
+          "name": "Right Leg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "legL",
+          "name": "Left Leg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "2",
+      "tricks": 8,
+      "movement": "15' per round; moves equally fast through tree branches",
+      "specialRules": "RAW Ch13: Dodge is an Expert Die (ED). Strikes for Width+1 Shock (fist) or Width+1 Killing (bite).",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Silverback / alpha gorilla stat block. Standard pack members use lower end of all ranges.",
+      "threatLevel": 2,
+      "damageFormula": "Width+1 Shock (fist) / Width+1 Killing (bite)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Strike",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Shock",
+          "notes": "",
+          "isSlow": 0
+        },
+        {
+          "name": "Bite",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Killing",
+          "notes": "",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Horse",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 6,
+        "coordination": 3,
+        "sense": 2
+      },
+      "creatureSkills": {
+        "kick": 3,
+        "run": 5,
+        "dodge": 1,
+        "athletics": 3,
+        "scrutinize": 2,
+        "hearing": 3,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 15,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            6
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            5
+          ],
+          "woundBoxes": 5,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            1,
+            2
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "3",
+      "tricks": 6,
+      "movement": "40-50' base; +5-10' per Width in Run roll up to quadruple movement",
+      "specialRules": "RAW Ch13: Bite does Width Shock. Kick does Width Killing (Body 6 or less), or Width+(Body-6) Killing for stronger horses. Stats shown at midpoints of RAW ranges.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Primary work animal worldwide. Bred for speed OR strength \u2014 rarely both at top values.",
+      "threatLevel": 2,
+      "damageFormula": "Width Shock (bite) / Width Killing (kick)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite",
+          "attribute": "body",
+          "skill": "bite",
+          "damage": "Width Shock",
+          "notes": "",
+          "isSlow": 0
+        },
+        {
+          "name": "Kick",
+          "attribute": "body",
+          "skill": "kick",
+          "damage": "Width Killing",
+          "notes": "Width+(Body-6) Killing for Body > 6",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Wolf",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 4,
+        "coordination": 3,
+        "sense": 5
+      },
+      "creatureSkills": {
+        "bite": 2,
+        "dodge": 3,
+        "run": 4,
+        "scrutinize": "MD",
+        "hearing": 3,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 3,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            5,
+            6
+          ],
+          "woundBoxes": 4,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 4,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 3,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 3,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "3 (1-2 for dog)",
+      "tricks": 5,
+      "movement": "20' per round; each die in Run set adds 5' to movement",
+      "specialRules": "RAW Ch13: Bite does Width Killing. Scrutinize is a Master Die (MD). Dodge is a mid-range pool.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Use lower Coordination/Sense values for dogs. Trained dogs have Trainability 1-2, Tricks 7-10.",
+      "threatLevel": 2,
+      "damageFormula": "Width Killing",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 4,
+        "max": 4
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite",
+          "attribute": "body",
+          "skill": "bite",
+          "damage": "Width Killing",
+          "notes": "",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Alligator / Crocodile",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 5,
+        "coordination": 3,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "fight": "MD",
+        "swim": 4,
+        "stealth": "MD",
+        "scrutinize": 2,
+        "hearing": 2,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            9,
+            10
+          ],
+          "woundBoxes": 5,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "woundBoxes": 18,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindR",
+          "name": "Right Hindleg",
+          "rollHeights": [
+            4
+          ],
+          "woundBoxes": 4,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "hindL",
+          "name": "Left Hindleg",
+          "rollHeights": [
+            3
+          ],
+          "woundBoxes": 4,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreR",
+          "name": "Right Foreleg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 4,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "foreL",
+          "name": "Left Foreleg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 4,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "20' per round",
+      "specialRules": "RAW Ch13: AR 1 all locations. Stealth/Fight are Master Dice (MD) \u2014 usable only in native aquatic environment. Bite from front: Width+1 Killing. Tail strike from behind: Width Shock. Adjust Body and wound boxes for size (6' gator at Body 5, 15 torso boxes).",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Ambush predators. Stealth/Fight MD usable only in native environment (water, swamp). Wound boxes at midpoint of RAW ranges.",
+      "threatLevel": 2,
+      "damageFormula": "Width+1 Killing (bite) / Width Shock (tail)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 4,
+        "max": 4
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite (front)",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Killing",
+          "notes": "Fight is MD \u2014 in native environment only",
+          "isSlow": 0
+        },
+        {
+          "name": "Tail (rear)",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width Shock",
+          "notes": "Fight is MD \u2014 in native environment only",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Great Ape (Alpha)",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 6,
+        "coordination": 5,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "fight": 3,
+        "dodge": "ED",
+        "athletics": 3,
+        "climb": 6,
+        "run": 1,
+        "scrutinize": 2,
+        "hearing": 2,
+        "sight": 3
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head",
+          "rollHeights": [
+            10
+          ],
+          "woundBoxes": 4,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            7,
+            8,
+            9
+          ],
+          "woundBoxes": 12,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "armR",
+          "name": "Right Arm",
+          "rollHeights": [
+            5,
+            6
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "armL",
+          "name": "Left Arm",
+          "rollHeights": [
+            3,
+            4
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "legR",
+          "name": "Right Leg",
+          "rollHeights": [
+            2
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "legL",
+          "name": "Left Leg",
+          "rollHeights": [
+            1
+          ],
+          "woundBoxes": 6,
+          "ar": 0,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "1",
+      "tricks": 9,
+      "movement": "15' per round; moves equally fast through tree branches",
+      "specialRules": "RAW Ch13: Dodge is an Expert Die (ED). Alpha has superior Body and Coordination vs standard pack member. Strikes for Width+1 Shock (fist) or Width+1 Killing (bite).",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Pack leader / silverback. Carnivorous primates (baboons) encircle prey and bite legs.",
+      "threatLevel": 3,
+      "damageFormula": "Width+1 Shock (fist) / Width+1 Killing (bite)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 5,
+        "max": 5
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Strike",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Shock",
+          "notes": "",
+          "isSlow": 0
+        },
+        {
+          "name": "Bite",
+          "attribute": "body",
+          "skill": "fight",
+          "damage": "Width+1 Killing",
+          "notes": "",
+          "isSlow": 0
+        }
+      ]
+    }
+  },
+  {
+    "name": "Shark",
+    "type": "threat",
+    "img": "icons/svg/mystery-man.svg",
+    "system": {
+      "creatureMode": true,
+      "creatureAttributes": {
+        "body": 5,
+        "coordination": 3,
+        "sense": 3
+      },
+      "creatureSkills": {
+        "bite": 4,
+        "ram": 0,
+        "swim": 4,
+        "scrutinize": 5,
+        "vigor": 2,
+        "hearing": 1,
+        "sight": 2
+      },
+      "customLocations": [
+        {
+          "key": "head",
+          "name": "Head / Jaw",
+          "rollHeights": [
+            9,
+            10
+          ],
+          "woundBoxes": 4,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "body",
+          "name": "Body",
+          "rollHeights": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "woundBoxes": 12,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        },
+        {
+          "key": "tail",
+          "name": "Tail",
+          "rollHeights": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "woundBoxes": 12,
+          "ar": 1,
+          "shock": 0,
+          "killing": 0
+        }
+      ],
+      "trainability": "not applicable",
+      "tricks": 0,
+      "movement": "20' per round",
+      "specialRules": "RAW Ch13: AR 1 all locations. Bite: Width+1 Killing (exceptional specimens Width+2). Ram: Width Shock \u2014 used to batter holes in boats. Scrutinize: tracks prey through water up to 100 yards; can scent blood for miles. Stat ranges scale with size \u2014 larger/deeper ocean sharks have higher Body.",
+      "creatureFlags": {
+        "freeGobbleDicePerRound": 0,
+        "moraleAttackOnce": false,
+        "constrictActive": false,
+        "constrictTargetId": "",
+        "chargeRunWidest": 0,
+        "venomPotency": 0,
+        "venomType": "",
+        "hasChargeAccumulation": false,
+        "hasConstrict": false
+      },
+      "description": "Ranges from tiny bioluminescent deep-ocean species to great white (ooloomek). Farther from shore = bigger. Wound boxes at midpoint of RAW ranges.",
+      "threatLevel": 2,
+      "damageFormula": "Width+1 Killing (bite) / Width Shock (ram)",
+      "magnitude": {
+        "value": 1,
+        "max": 1
+      },
+      "morale": {
+        "value": 4,
+        "max": 4
+      },
+      "parentCompany": "",
+      "creatureAttacks": [
+        {
+          "name": "Bite",
+          "attribute": "coordination",
+          "skill": "bite",
+          "damage": "Width+1 Killing",
+          "notes": "Exceptional specimens: Width+2",
+          "isSlow": 0
+        },
+        {
+          "name": "Ram",
+          "attribute": "body",
+          "skill": "ram",
+          "damage": "Width Shock",
+          "notes": "Used to batter boats",
+          "isSlow": 0
+        }
+      ]
+    }
+  }
+]
