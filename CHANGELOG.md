@@ -40,6 +40,22 @@ Detection radius values are the canonical RAW table (Intensity 1 = none, 2 = 5 f
 
 ---
 
+### F4 — Quick Dice Roller
+
+**Files:** `scripts/reign.mjs`, `styles/chat.css`, `lang/en.json`
+
+A standalone ORE dice roller button is injected into the chat sidebar controls bar via a `renderChatLog` hook. The button (d20 icon, blood-red accent) sits alongside the existing roll mode and speaker selectors, providing one-click access to an arbitrary dice pool roll without needing a character sheet open.
+
+Clicking the button opens a `reignDialog` with the following fields: roll label (free text), pool size (d10 count), difficulty (minimum Height), bonus dice, penalty dice, Expert Die face (0 = none), and a Master Die checkbox. A live pool preview at the top of the dialog reacts to all inputs in real time, using `calculateOREPool` from `character-roller.js` to display the effective dice count with special dice annotations and cap warnings.
+
+On confirm, normal dice are rolled via `new Roll(Nd10).evaluate()`, the Expert Die face is appended if active, and if a Master Die is enabled a second dialog prompts the user to assign its face value (showing the current results for context). The final results array is passed through `generateOREChatHTML` to produce a full ORE chat card with sets, waste, hit locations, and difficulty filtering — identical to cards produced by the character sheet roller.
+
+The speaker is resolved from the currently selected token, the user's assigned character, or falling back to the user's name. The `Roll` instance is attached to the message for Dice So Nice integration.
+
+The function is also exposed via `game.reign.openQuickDiceRoller()` for macro use. All UI strings are localised under the `REIGN.QR*` namespace.
+
+---
+
 ## v2.6.0 — Presentation Pass
 
 ### D1 — Sheet Consistency

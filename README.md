@@ -9,9 +9,12 @@ Built for Foundry V14. Automates the OneRoll Engine (ORE) in full — from perso
 
 - [Installation](#installation)
 - [The OneRoll Engine](#the-oneroll-engine)
+- [Quick Dice Roller](#quick-dice-roller)
 - [Characters](#characters)
 - [Combat](#combat)
 - [Sorcery](#sorcery)
+- [Creatures & Bestiary](#creatures--bestiary)
+- [Hazards](#hazards)
 - [Companies & Factions](#companies--factions)
 - [Character Creation](#character-creation)
 - [Company Creation](#company-creation)
@@ -19,7 +22,6 @@ Built for Foundry V14. Automates the OneRoll Engine (ORE) in full — from perso
 - [Active Effects](#active-effects)
 - [For Game Masters](#for-game-masters)
 - [Recent Changes](#recent-changes)
-- [Roadmap](#roadmap)
 - [Credits & Legal](#credits--legal)
 
 ---
@@ -37,7 +39,7 @@ Built for Foundry V14. Automates the OneRoll Engine (ORE) in full — from perso
    https://raw.githubusercontent.com/arawnlpdebug/foundryreign/main/system.json
    ```
 
-**Compatibility:** Foundry V14 · System version 2.3.0
+**Compatibility:** Foundry V14 · System version 3.0.0
 
 ---
 
@@ -62,6 +64,18 @@ The system handles all ORE mechanics automatically:
 **Waste dice** — dice that don't form sets. In Reign, waste can matter for threats and minions; the system tracks and displays them separately.
 
 **Environmental modifiers** — bonus and penalty dice from scene or situational context, added in the roll dialog.
+
+---
+
+## Quick Dice Roller
+
+A standalone ORE dice roller is available directly from the chat sidebar — the d20 icon button in the chat controls bar, next to the roll mode and speaker selectors.
+
+Click the button to open a dialog where you can set a roll label, pool size, difficulty, bonus and penalty dice, Expert Die face, and Master Die. A live pool preview updates as you adjust inputs. On confirm, the dice are rolled through the full ORE engine and posted as a standard chat card with sets, waste, and hit locations — identical to rolls made from a character sheet.
+
+The quick roller is useful for GMs rolling arbitrary pools (gate strength, environmental challenges, NPC checks) and players making rolls that don't map neatly to a character sheet stat. It resolves the speaker from the currently selected token or assigned character.
+
+Also available from macros: `game.reign.openQuickDiceRoller()`
 
 ---
 
@@ -95,7 +109,7 @@ The combat tab has three sections that update in real time during an encounter.
 
 **Combat Moves** — all declared actions for the round, including the **Aim** maneuver (which accumulates a bonus Width that carries into the next attack roll) and **Shield Coverage** (assigning which locations the shield protects this round).
 
-**Maneuvers** — the full ORE maneuver list is available from the roll dialog during combat. Maneuvers that produce deterministic outcomes (Charge, Disarm, Knockout, Trip, Threaten, Display Kill) resolve automatically from the roll result. Complex maneuvers (Pin, Restrain, Slam, Strangle, and others) post detailed rules text to chat for GM adjudication.
+**Maneuvers** — the full ORE maneuver list is available from the roll dialog during combat. Automated maneuvers (Charge, Disarm, Knockout, Trip, Threaten, Display Kill, Pin, Restrain, Stand, Shove, Slam, Strangle, Iron Kiss, Redirect, Submission Hold) resolve directly from the roll result and apply effects to targeted tokens via chat card buttons. Complex narrative maneuvers (Feint, Wait, Disfiguring Strike, Formation Charge) post rules text and a GM resolution button.
 
 #### Progression Mode
 
@@ -123,17 +137,33 @@ Click a weapon name on the combat tab to open the attack roll dialog. The pool i
 
 Click **Dodge** or **Parry** from the roll dialog or combat moves panel.
 
-**Dodge** — Coordination + Dodge. A successful set becomes Gobble Dice — one Gobble Die per die in the set. Each Gobble Die can cancel one opposing die from an attacker's set, provided the Gobble Die's face is equal to or higher than the opposing die's face. Removing a die from a set breaks it if it falls below two. A single successful dodge can therefore cancel multiple attacks. The system prompts selection when multiple attacker sets are present.
+**Dodge** — Coordination + Dodge. A successful set becomes Gobble Dice — one Gobble Die per die in the set. Each Gobble Die can cancel one opposing die from an attacker's set, provided the Gobble Die's face is equal to or higher than the opposing die's face. Removing a die from a set breaks it if it falls below two. A single successful dodge can therefore cancel multiple attacks. The system prompts selection when multiple attacker sets are present. The Redirect maneuver is available from the Dodge roll dialog.
+
+**Dive for Cover** — after a successful Dodge, a "Dive for Cover" button appears on the chat card. Clicking it sacrifices all Gobble Dice in exchange for location-based immunity behind an obstacle. The character is downed but protected.
 
 **Parry** — uses the best equipped weapon or shield. A shield adds its Parry Bonus to the pool. The system checks whether the character has an appropriate weapon for the attack type and applies unarmed parry redirect if bare-handed.
 
-**Counterspell** — Knowledge + Counterspell. Produces Gobble Dice against incoming magical attacks. Treated identically to Dodge in terms of gobble resolution.
+**Counterspell** — Knowledge + Counterspell. Produces Gobble Dice against incoming magical attacks. A "Counter This Spell" button appears on spell chat cards, applying the counterspeller's Gobble Dice against the caster's sets.
 
 **Shield Coverage** — before each round, assign which locations the shield protects via the Shield Coverage button. Declared coverage takes priority over the default arm location for that round.
 
 ### Gobble Dice
 
 When a defender rolls Dodge, Parry, or Counterspell successfully, the dice in their set become Gobble Dice — one per die in the set. Each Gobble Die can cancel one die from an attacker's set, as long as the Gobble Die's face is equal to or greater than the target die's face. Cancelling a die from a set breaks it if it falls below two. Because each Gobble Die acts individually, a single successful defense can break multiple attacks in the same round. When multiple attacker sets are present, the system prompts the defender to assign their Gobble Dice.
+
+### Maneuvers
+
+The system automates fifteen combat maneuvers across two tiers.
+
+**Tier 1 — Fully Automated:** The chat card resolves the maneuver outcome from the roll result and provides an "Apply" button that sets the appropriate status effect on the targeted token.
+
+Positional maneuvers: **Pin** (applies Pinned), **Restrain** (applies Restrained), **Stand** (clears Prone), **Shove** (grants +1d to next Trip/Slam against that target), **Slam** (applies Prone, Width 3+ adds Shock).
+
+Damage-modifying maneuvers: **Strangle** (initial Shock to head, Maintain button for continuation damage), **Iron Kiss** (set up guaranteed Width×10 attack, execute next round), **Redirect** (redirect gobbled attacks to other enemies), **Submission Hold** (Shock to held limb; target can wrench free for Killing).
+
+Standard combat maneuvers: **Charge**, **Disarm**, **Knockout**, **Trip**, **Threaten**, **Display Kill** — all resolve Width-based outcomes automatically.
+
+**Tier 2 — GM Resolution:** **Feint**, **Wait**, **Disfiguring Strike**, **Formation Charge** — the chat card posts rules text and a GM-only "Resolve" button that creates a resolution record in chat.
 
 ### Threats
 
@@ -191,6 +221,8 @@ The Attunement panel tracks the four states of attunement as radio buttons with 
 | Partial | Red | Permanently attuned but with unpleasant side effects (sandy texture, fragile bones, etc.) |
 | Perfect | Green | Perfectly attuned; full domain access and attunement benefits |
 
+When a character reaches Perfect Attunement, the system offers to create a labelled Active Effect for tracking mechanical attunement benefits (immunities, resistances, etc.).
+
 A notes textarea below the badges holds narrative descriptions of attunement effects and side effects, pre-seeded during character creation with the school's attunement description.
 
 ### The Spell List
@@ -228,6 +260,8 @@ Spell roll chat cards include a spell result block below the sets:
 
 - **Spell Fires** (green) if any set's Width equals or exceeds the spell's Intensity; **Spell Fizzled** (red) otherwise
 - **Detection radius** — how far away any character can detect the casting with a Sense + Eerie roll (any match succeeds; no Height/Width threshold)
+- **Roll Sense + Eerie** button — appears on successful spells at Intensity 2+, opening a pre-configured detection roll dialog for any nearby character
+- **Counter This Spell** button — applies Counterspell Gobble Dice against the caster's sets
 - **Slow** — reminder of preparation rounds required; a notification also posts when the next roll opportunity arrives
 - **School, Duration** — contextual tags
 - **Dodgeable / Parriable / Armor Blocks** — shown if the spell has attack properties
@@ -251,6 +285,42 @@ Each spell item tracks:
 | Dodgeable | Targets may attempt to Dodge |
 | Parriable | Targets may attempt to Parry |
 | Armor Blocks | Target's AR applies |
+
+---
+
+## Creatures & Bestiary
+
+### Creature Mode
+
+The threat sheet supports a **Creature Mode** toggle for individual monsters, beasts, and named adversaries — distinct from mob/minion hordes. In creature mode, the sheet displays custom hit locations with individually configurable wound boxes and AR, creature-specific attributes and skills, and named attacks with damage formulas.
+
+Creature skills can be set to numeric values, or to **ED** (Expert Die) or **MD** (Master Die) for special creatures with guaranteed proficiency. Skills are auto-paired with the correct attribute (Body for combat skills, Coordination for agility skills, Sense for perception skills) and displayed in a sorted, labelled layout.
+
+Special creature mechanics supported via flags include: free Gobble Dice per round (big cats), charge accumulation (rhinos), constriction holds (boas), morale attacks (elephants), and venom delivery. Per-combat flags are cleaned up automatically when a combat encounter ends.
+
+### Bestiary Compendium
+
+The system ships with a **Bestiary — Creatures** compendium pack containing representative creatures built using the full creature mode schema.
+
+---
+
+## Hazards
+
+### The Hazard Roller
+
+A GM-only **Hazard Roller** is accessible from the Token Controls toolbar (skull-and-crossbones icon). It opens a tabbed dialog covering three hazard types:
+
+**Falling** — set the fall height. The system calculates damage per RAW and applies it to targeted tokens.
+
+**Fire** — set the fire intensity. Damage is applied through the standard damage infrastructure.
+
+**Poison** — select a poison from the world item list. The system displays the poison's potency, major and minor effects, and delivery method. A "Resist" button prompts targeted tokens to roll the appropriate resistance check (typically Body + Vigor) against the poison's difficulty.
+
+### Poison Items
+
+Poisons are a dedicated item type tracking potency, major and minor effects, difficulty, and delivery method. Weapons can be flagged as poisoned with a reference to a specific poison item — when the weapon hits, the poison's effects are available for application.
+
+The system ships with a **Poisons** compendium pack containing representative poison items.
 
 ---
 
@@ -299,6 +369,8 @@ Roll once to determine the character's life path. The result is interpreted thro
 4. **Waste Dice** — waste maps to the Waste chart, granting small bonuses, background details, or complications
 5. **Apply** — the result is written directly to the character
 
+The biography output includes a "Gained:" summary for each life path stage and a final character summary block.
+
 ### Point Buy Creation
 
 Manual allocation within a point budget (default 85 points):
@@ -318,6 +390,10 @@ When any Sorcery investment is made, a **Magical School** picker appears. School
 On creation, the selected school writes its name, domain, method, and associated attribute to the character's esoterica fields. The attunement notes textarea is pre-seeded with the school's attunement description.
 
 Different worlds using custom One-Roll Table JSON files automatically get their own school lists. See **World Settings** below.
+
+### One-Roll Table Validation
+
+When the charactermancer loads a One-Roll Table JSON, it validates the file against the expected schema. Blocking errors (missing required keys, parse failures) halt loading and post a structured red error card to chat. Advisory warnings (missing optional keys like `schools`, malformed entries) post an amber card but allow loading to continue.
 
 ---
 
@@ -366,9 +442,9 @@ The point budget for company creation in the Companymancer. Default: varies by s
 ### Post-Combat Recovery
 
 Controls how Shock is recovered after combat ends. Options:
-- **Full Recovery** — all combat Shock clears
-- **Half Recovery** — Shock taken during combat is halved
-- **No Automatic Recovery** — GM handles recovery manually
+- **Half Recovery (RAW default)** — Shock taken during combat is halved, rounded up
+- **Full Recovery** — all combat Shock clears (heroic house rule)
+- **No Automatic Recovery** — GM handles recovery manually (lethal house rule)
 
 ---
 
@@ -391,6 +467,14 @@ Active Effects in Reign modify actor data through Foundry's standard Active Effe
 | Hit Redirection | `system.modifiers.hitRedirects.{location}` | Redirect hits from location |
 | Skill (per skill) | `system.modifiers.skills.{skill}.pool` | Bonus dice to skill pool |
 | Skill (per skill) | `system.modifiers.skills.{skill}.bonusWidth` | Bonus Width from equipment |
+| Sorcery | `system.modifiers.skills.sorcery.pool` | Bonus dice to Sorcery pool |
+| Sorcery | `system.modifiers.skills.sorcery.bonusWidth` | Bonus Width on spell rolls |
+| Sorcery | `system.modifiers.skills.sorcery.minHeight` | Minimum Height requirement |
+| Sorcery | `system.modifiers.skills.sorcery.squishLimit` | Width cap on spell sets |
+| Sorcery | `system.modifiers.skills.sorcery.bonusTiming` | Initiative bonus on spell rolls |
+| Action Economy | `system.modifiers.actionEconomy.ignoreMultiPenaltySkills` | Exempt skills from multi-action penalty (comma-separated) |
+| Hit Location | `system.modifiers.combat.forceHitLocation` | Override rolled hit location |
+| Hit Location | `system.modifiers.combat.shiftHitLocationUp` | Shift hit location up N steps |
 | Immunities | `system.modifiers.systemFlags.ignoreFatiguePenalties` | Ignore fatigue |
 | Immunities | `system.modifiers.systemFlags.ignoreHeavyArmorSwim` | Swim in heavy armor |
 | Immunities | `system.modifiers.systemFlags.cannotUseTwoHanded` | Block two-handed weapon use |
@@ -468,7 +552,7 @@ If a migration fails for a document, it is logged to the console with the docume
 
 ### Compendium Packs
 
-The system ships with five compendium packs:
+The system ships with seven compendium packs:
 
 | Pack | Contents |
 |---|---|
@@ -477,16 +561,52 @@ The system ships with five compendium packs:
 | Martial Techniques | Technique items for martial paths |
 | Spells & Esoteric Disciplines | Spell and discipline items |
 | Company Assets | Asset items for company sheets |
+| Bestiary — Creatures | Representative creatures using the full creature mode schema |
+| Poisons | Poison items with potency, effects, and delivery methods |
+
+### Macro API
+
+The `game.reign` global exposes core functions for macro use:
+
+| Function | Description |
+|---|---|
+| `openQuickDiceRoller()` | Open the standalone ORE dice roller dialog |
+| `parseORE(results)` | Parse an array of d10 results into ORE sets and waste |
+| `calculateInitiative(sets, ...)` | Calculate ORE initiative from parsed sets |
+| `applyDamageToTarget(...)` | Apply damage to targeted token |
+| `consumeGobbleDie(msg, height)` | Consume a Gobble Die from a defense message |
+| `diveForCover(msg)` | Execute Dive for Cover from a Dodge message |
+| `applyItemEffectsToTargets(uuid)` | Transfer Active Effects from a spell/item to targets |
+| `declareAim(actor)` | Declare the Aim maneuver for a character |
+| `assignShieldCoverage(actor)` | Open the Shield Coverage assignment dialog |
 
 ---
 
 ## Recent Changes
 
+### v3.0.0 — Creatures, Hazards & Poisons
+
+Creature Mode added to the threat sheet — a full bestiary system with custom hit locations, creature-specific attributes and skills (including ED/MD support), named attacks, and special mechanics (free Gobble Dice, charge accumulation, constriction, morale attacks, venom). Hazard Roller added as a GM-only toolbar button with tabbed dialogs for falling, fire, and poison hazards. Poisons added as a dedicated item type with potency, effects, difficulty, and delivery tracking. Weapons gain poison reference fields. Bestiary and Poisons compendium packs added.
+
+### v2.8.0 — Quality of Life
+
+Counterspell integration — a "Counter This Spell" gobble button on spell chat cards applying Gobble Dice against caster sets. Eerie detection prompt — a "Roll Sense + Eerie" button on successful spell cards opening a pre-configured detection roll dialog. One-Roll Table validation with structured error/warning cards posted to chat. Quick Dice Roller — standalone ORE roller button in the chat sidebar controls bar.
+
+### v2.6.0 — Presentation Pass
+
+Threat and company sheet consistency audit — all legacy CSS classes replaced with the shared utility system. Dark mode sweep — fourteen new semantic CSS variables with full light/dark mode values replacing ~35 hardcoded hex values. Charactermancer biography formatting rebuilt with "Gained:" summaries and a final character summary block. Redirect maneuver accessible from the Dodge roll dialog. Submission Hold called shot restricted to limb locations.
+
+### v2.5.0 — Combat Manoeuvre Automation
+
+Fifteen maneuvers fully automated across two tiers. Positional maneuvers (Pin, Restrain, Stand, Shove, Slam) apply status effects to targeted tokens via chat card buttons. Damage-modifying maneuvers (Strangle, Iron Kiss, Redirect, Submission Hold) track state across rounds via combatant flags. Tier 2 maneuvers gain a GM resolution button.
+
+### v2.4.0 — Active Effects Phase 2
+
+Sorcery group added to the Active Effect dictionary. New AE paths: `forceHitLocation`, `shiftHitLocationUp`, `appendManeuvers`, `minHeight`, `squishLimit`, `bonusTiming`, `ignoreMultiPenaltySkills`. Attunement-to-Perfect transition offers automatic AE creation.
+
 ### v2.3.0 — Sorcery Elevation & School System
 
-The magic system is fully rebuilt. Spells now track Intensity as a Width-based casting difficulty (the Width of any set must equal or exceed the spell's Intensity), Slow as a preparation mechanic (N rounds before the roll), duration, and a full set of interaction flags (dodgeable, parriable, armor blocks, attunement required). Roll chat cards include a spell result block showing whether the spell fired, detection radius, and all relevant flags. The esoterica tab is redesigned with structured school and attunement status panels (Not Attuned / Temporary / Partial / Perfect). Magical schools are defined in the One-Roll Table JSON — different worlds load different schools automatically. The charactermancer school picker appears whenever any Sorcery is purchased.
-
-The pre-existing `style="display:none"` inline styles on roll dialog custom fields have been replaced with a `.reign-hidden` CSS utility class.
+The magic system fully rebuilt. Spells track Intensity, Slow, duration, and interaction flags. Esoterica tab redesigned with structured school and attunement panels. Magical schools defined in One-Roll Table JSON. Charactermancer school picker added.
 
 ### v2.2.0 — Architecture & Chat Optimisation
 
@@ -495,25 +615,6 @@ DRY extraction of hit location constants, scroll mixin, effect dictionary, and d
 ### v2.1.0 — Critical Bug Fixes
 
 Company conquest reward pre-damage snapshot fix. Shock recovery respects preCombatShock flag. Double-deletion in custom skills/moves resolved.
-
----
-
-## Roadmap
-
-### v2.4.0 — Active Effects Phase 2
-Complete the Active Effects audit against RAW. Add sorcery to the effect dictionary. Surface the multi-action penalty exemption path (`ignoreMultiPenaltySkills`) used by certain esoteric disciplines. Verify all referenced modifier paths are reachable through the AE UI.
-
-### v2.5.0 — Combat Manoeuvre Automation
-Promote tractable Tier 2 manoeuvres to full automation: Pin, Restrain, Stand, Shove, Slam, Strangle, Iron Kiss, Redirect, Submission Hold. Each will set the appropriate status effect on the targeted token directly from the chat card. Complex narrative manoeuvres (Feint, Wait, Disfiguring Strike, Formation Charge) remain Tier 2 with a GM resolution button.
-
-### v2.6.0 — Presentation Pass
-Consistency audit across threat and company sheets to match the character sheet improvements. Dark mode sweep of all new CSS introduced in v2.3.0 — replace hardcoded hex values with CSS variable references. Charactermancer biography formatting improvements.
-
-### v2.7.0 — Compendium Content
-Seed compendium packs with representative content using the full schema: weapons with all qualities, armour types, one spell per default school (showcasing all new fields), two complete martial paths, two complete esoteric disciplines.
-
-### v2.8.0 — Quality of Life
-Counterspell integration — a "Counter This Spell" button on spell chat cards opening a pre-configured counterspell roll dialog. One-Roll Table validation with structured error reporting. Eerie detection prompt from spell cast chat cards.
 
 ---
 

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Viper Toxin",
+    "type": "poison",
+    "img": "icons/consumables/potions/vial-cork-red.webp",
+    "system": {
+      "potency": 7,
+      "majorEffect": "Instant death — heart and lung paralysis.",
+      "minorEffect": "Violent limb tremors. No actions can be taken for 5–6 minutes.",
+      "difficulty": 0,
+      "retainedDelivery": false,
+      "notes": "Cobra/viper venom. Fangs must maintain bite to deliver full potency. Pulling snake off early may reduce Potency by 1–2. Any armour rating on the bitten limb blocks completely. Potency range: 4–9 depending on snake age and bite duration.",
+      "wealthCost": 0
+    }
+  },
+  {
+    "name": "Rattlesnake Venom",
+    "type": "poison",
+    "img": "icons/consumables/potions/vial-cork-yellow.webp",
+    "system": {
+      "potency": 7,
+      "majorEffect": "–1 Body per hour until successfully treated. Fatal if Body reaches 0.",
+      "minorEffect": "Dizzy, nauseous, stomach cramps. All actions at –2d penalty for a full day.",
+      "difficulty": 0,
+      "retainedDelivery": true,
+      "notes": "Syringe-like fangs inject a full dose on every bite. Any form of armour (even AR 1) blocks the bite entirely. Potency range: 6–8.",
+      "wealthCost": 0
+    }
+  },
+  {
+    "name": "Güncruf's Distillate",
+    "type": "poison",
+    "img": "icons/consumables/potions/vial-cork-green.webp",
+    "system": {
+      "potency": 6,
+      "majorEffect": "Death.",
+      "minorEffect": "Automatically fails all Body+Vigor rolls for 7 days (does not apply to Vigor rolls resisting this poison).",
+      "difficulty": 9,
+      "retainedDelivery": true,
+      "notes": "Ingested poison. Muddy red paste, nearly undetectable in food (Difficulty 9 to taste/smell). Takes effect 14–24 hours after ingestion. Requires Herbalism or Expert: Poisoner (Difficulty 5) to produce. Capital offence to possess in Uldholm and Dindavara. Cost 7–8.",
+      "wealthCost": 8
+    }
+  },
+  {
+    "name": "Milk of the Gravedigger Queen",
+    "type": "poison",
+    "img": "icons/consumables/potions/vial-cork-purple.webp",
+    "system": {
+      "potency": 5,
+      "majorEffect": "As per cult description (GM discretion based on dosage).",
+      "minorEffect": "Localised numbness and tissue damage at wound site.",
+      "difficulty": 0,
+      "retainedDelivery": false,
+      "notes": "Applied to arrowheads. Slow to absorb — weapon must remain in flesh for 1 full round before Potency is rolled. If removed early, a successful Potency roll only produces Minor effect; failure produces no effect. Cultists use hooked arrows with breakaway shafts to prevent easy removal.",
+      "wealthCost": 6
+    }
+  }
+]

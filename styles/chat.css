@@ -472,3 +472,54 @@
 .reign-btn-info { background: rgba(66, 165, 245, 0.1); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
 .reign-btn-info:hover { background: rgba(66, 165, 245, 0.25); }
 .theme-dark .reign-btn-info { color: var(--reign-color-blue-dark); border-color: var(--reign-color-info-border); }
+
+/* -----------------------------------------
+    F4: QUICK DICE ROLLER — Chat Controls Button
+----------------------------------------- */
+.reign-quick-roller-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 8px;
+    flex: 0 0 auto;
+    border: 2px solid var(--reign-color-blood);
+    border-radius: 4px;
+    background: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    margin-right: 4px;
+}
+.reign-quick-roller-btn i {
+    font-size: 14px;
+}
+.reign-qr-label {
+    font-family: var(--reign-font-data, monospace);
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.reign-quick-roller-btn:hover {
+    background: var(--reign-color-blood-dark);
+    border-color: var(--reign-color-blood-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(139, 31, 31, 0.4);
+}
+.reign-quick-roller-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+.theme-dark .reign-quick-roller-btn {
+    border-color: var(--reign-red);
+    background: var(--reign-red);
+    color: var(--reign-text-light);
+}
+.theme-dark .reign-quick-roller-btn:hover {
+    background: #a52a2a;
+    border-color: #a52a2a;
+    box-shadow: 0 2px 6px rgba(200, 50, 50, 0.5);
+}

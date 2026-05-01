@@ -59,6 +59,24 @@
           <label><input type="number" name="system.qualities.area" value="{{system.qualities.area}}" class="cm-input-small"/> {{localize 'REIGN.AreaSplash'}}</label>
         </div>
       </div>
+
+      {{!-- G2: Weapon Poison Integration --}}
+      <div class="form-group reign-box-weapon">
+        <label class="reign-bold">{{localize 'REIGN.PoisonedWeapon'}}</label>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" name="system.isPoisoned" {{checked system.isPoisoned}}/>
+            <strong class="item-equipped-label">{{localize 'REIGN.PoisonedWeapon'}}</strong>
+          </label>
+        </div>
+        {{#if system.isPoisoned}}
+        <div class="form-group" style="margin-top: 8px;">
+          <label>Linked Poison (UUID)</label>
+          <input type="text" name="system.poisonRef" value="{{system.poisonRef}}" placeholder="Drag a poison item here or paste UUID"/>
+        </div>
+        {{/if}}
+      </div>
+
       <div class="form-group-stacked">
         <label>{{localize 'REIGN.NotesEffects'}}</label>
         <textarea name="system.notes">{{system.notes}}</textarea>
@@ -314,6 +332,45 @@
       <div class="form-group-stacked">
         <label>Description & Requirements</label>
         <textarea name="system.description">{{system.description}}</textarea>
+      </div>
+      {{/if}}
+
+      {{!-- G2: POISON ITEM UI --}}
+      {{#if isPoison}}
+      <div class="form-group-grid">
+        <div class="form-group">
+          <label>{{localize 'REIGN.Potency'}}</label>
+          <input type="number" name="system.potency" value="{{system.potency}}" min="1" max="15"/>
+        </div>
+        <div class="form-group">
+          <label>Resist Difficulty</label>
+          <input type="number" name="system.difficulty" value="{{system.difficulty}}" min="0" max="10"/>
+        </div>
+        <div class="form-group">
+          <label>Wealth Cost</label>
+          <input type="number" name="system.wealthCost" value="{{system.wealthCost}}" min="0"/>
+        </div>
+      </div>
+      <div class="form-group reign-box-weapon">
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" name="system.retainedDelivery" {{checked system.retainedDelivery}}/>
+            <strong class="item-equipped-label">{{localize 'REIGN.RetainedDelivery'}}</strong>
+            <span class="reign-text-small reign-text-muted">(weapon stays in wound — unchecked = –4 Potency)</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group-stacked">
+        <label>{{localize 'REIGN.MajorEffect'}} (on matched set)</label>
+        <textarea name="system.majorEffect" placeholder="e.g. Instant death">{{system.majorEffect}}</textarea>
+      </div>
+      <div class="form-group-stacked">
+        <label>{{localize 'REIGN.MinorEffect'}} (always applies)</label>
+        <textarea name="system.minorEffect" placeholder="e.g. Violent tremors for 5 minutes">{{system.minorEffect}}</textarea>
+      </div>
+      <div class="form-group-stacked">
+        <label>{{localize 'REIGN.NotesEffects'}}</label>
+        <textarea name="system.notes">{{system.notes}}</textarea>
       </div>
       {{/if}}
       

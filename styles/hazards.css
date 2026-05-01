@@ -1,0 +1,97 @@
+/* ====================================================
+   G1 + G2: HAZARD ROLLER — Tab Styles
+   Appended to styles/dialogs.css
+==================================================== */
+
+/* ── Tab Bar ─────────────────────────────────────── */
+.reign-hazard-roller .hazard-tab-bar {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--reign-bg-iron);
+}
+
+.reign-hazard-roller .hazard-tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--reign-bg-vellum);
+    border: 1px solid var(--reign-bg-iron-light);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    font-family: var(--reign-font-display);
+    font-size: var(--reign-text-sm);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--reign-text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reign-hazard-roller .hazard-tab-btn:hover {
+    background: var(--reign-bg-paper);
+    color: var(--reign-text-dark);
+}
+
+.reign-hazard-roller .hazard-tab-btn.active {
+    background: var(--reign-bg-parchment);
+    color: var(--reign-color-blood);
+    border-color: var(--reign-bg-iron);
+    border-bottom: 2px solid var(--reign-bg-parchment);
+    margin-bottom: -2px;
+}
+
+.reign-hazard-roller .hazard-tab-btn i {
+    margin-right: 4px;
+}
+
+/* ── Tab Panels ──────────────────────────────────── */
+.reign-hazard-roller .hazard-tab-panel {
+    display: none;
+}
+
+.reign-hazard-roller .hazard-tab-panel.active {
+    display: block;
+}
+
+/* ── Apply Buttons ───────────────────────────────── */
+.reign-hazard-roller .reign-btn-execute {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 16px;
+    background: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    border: 2px solid var(--reign-color-blood-dark);
+    border-radius: 4px;
+    font-family: var(--reign-font-display);
+    font-weight: bold;
+    font-size: var(--reign-text-base);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--reign-shadow-drop);
+}
+
+.reign-hazard-roller .reign-btn-execute:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+
+.reign-hazard-roller .reign-btn-execute i {
+    margin-right: 6px;
+}
+
+/* ── Poison Effects in Chat ──────────────────────── */
+.reign-poison-effects {
+    background: rgba(139,0,0,0.06);
+    border: 1px solid rgba(139,0,0,0.2);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 8px 0;
+}
+
+.reign-poison-effects p {
+    margin: 4px 0;
+    font-size: 0.9em;
+}

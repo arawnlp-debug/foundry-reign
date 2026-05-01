@@ -62,7 +62,6 @@ export async function migrateWorld() {
 
   // 4. Migrate System Compendium Packs
   for (let pack of game.packs) {
-    // Only migrate packs that belong to this system and hold Actors or Items
     if (pack.metadata.packageType !== "system" || pack.metadata.id.indexOf("reign.") !== 0) continue;
     if (!["Actor", "Item"].includes(pack.documentName)) continue;
 
@@ -137,6 +136,7 @@ function migrateItemData(item) {
   else if (item.type === "gear") updateData = migrateGear(source);
   else if (item.type === "advantage") updateData = migrateAdvantage(source);
   else if (item.type === "problem") updateData = migrateProblem(source);
+  // G2: Poison items use schema defaults — no migration needed for new items
 
   return updateData;
 }
@@ -176,53 +176,10 @@ function migrateCharacter(source) {
       updateData["system.modifiers.-=armor"] = null;
   }
 
-  const esoterica = system.esoterica || {};
-
-  // Pre-v2.3.0: attunement was a plain textarea; still the narrative notes field — ensure it exists
-  if (esoterica.attunement === null || esoterica.attunement === undefined) {
-    updateData["system.esoterica.attunement"] = "";
-  }
-
-  // v2.3.0: Structured school fields (new — default to empty string)
-  if (esoterica.schoolName === null || esoterica.schoolName === undefined) {
-    updateData["system.esoterica.schoolName"] = "";
-  }
-  if (esoterica.schoolDomain === null || esoterica.schoolDomain === undefined) {
-    updateData["system.esoterica.schoolDomain"] = "";
-  }
-  if (esoterica.schoolMethod === null || esoterica.schoolMethod === undefined) {
-    updateData["system.esoterica.schoolMethod"] = "";
-  }
-  if (esoterica.schoolStat === null || esoterica.schoolStat === undefined) {
-    updateData["system.esoterica.schoolStat"] = "";
-  }
-
-  // v2.3.0: Attunement status enum (new — existing characters default to "none").
-  // v2.3.1: Terminology corrected to match RAW — "imperfect" → "partial", "flawless" → "perfect".
-  //         Remap any values written under the old names so existing world data stays consistent.
-  const legacyAttunementMap = { "imperfect": "partial", "flawless": "perfect" };
-  if (legacyAttunementMap[esoterica.attunementStatus]) {
-    updateData["system.esoterica.attunementStatus"] = legacyAttunementMap[esoterica.attunementStatus];
-  } else if (!["none", "temporary", "partial", "perfect"].includes(esoterica.attunementStatus)) {
-    updateData["system.esoterica.attunementStatus"] = "none";
-  }
-
-  const xp = system.xp || {};
-  if (!Number.isInteger(xp.value)) updateData["system.xp.value"] = Number(xp.value) || 0;
-  if (!Number.isInteger(xp.spent)) updateData["system.xp.spent"] = Number(xp.spent) || 0;
-
-  const wealth = system.wealth || {};
-  if (!Number.isInteger(wealth.value)) updateData["system.wealth.value"] = Number(wealth.value) || 0;
-
+  // Health: ensure no legacy 'max' or 'armor' keys pollute the health sub-schema
   const health = system.health || {};
-  const expectedLocations = ["head", "torso", "armL", "armR", "legL", "legR"];
-
-  for (const loc of expectedLocations) {
+  for (const loc of ["head", "torso", "armL", "armR", "legL", "legR"]) {
     const current = health[loc] || {};
-    if (!Number.isInteger(current.shock)) updateData[`system.health.${loc}.shock`] = Number(current.shock) || 0;
-    if (!Number.isInteger(current.killing)) updateData[`system.health.${loc}.killing`] = Number(current.killing) || 0;
-    
-    // Explicitly delete deprecated schema fields ONLY if they exist in source.
     if ("max" in current) updateData[`system.health.${loc}.-=max`] = null;
     if ("armor" in current) updateData[`system.health.${loc}.-=armor`] = null;
   }
@@ -244,7 +201,6 @@ function migrateCompany(source) {
     if (!Number.isInteger(quality.damage)) updateData[`system.qualities.${key}.damage`] = Number(quality.damage) || 0;
     if (!Number.isInteger(quality.uses)) updateData[`system.qualities.${key}.uses`] = 0;
     
-    // Clean up old fields if they exist
     if ("permanent" in quality) updateData[`system.qualities.${key}.-=permanent`] = null;
     if ("current" in quality) updateData[`system.qualities.${key}.-=current`] = null;
 
@@ -327,6 +283,10 @@ function migrateWeapon(source) {
   if (typeof qualities.massive !== "boolean") updateData["system.qualities.massive"] = false;
   if (!Number.isInteger(qualities.area)) updateData["system.qualities.area"] = Number(qualities.area) || 0;
 
+  // G2 (v3.0.0): Weapon poison fields — default to unpoisoned
+  if (typeof system.isPoisoned !== "boolean") updateData["system.isPoisoned"] = false;
+  if (system.poisonRef === null || system.poisonRef === undefined) updateData["system.poisonRef"] = "";
+
   return updateData;
 }
 
@@ -384,7 +344,6 @@ function migrateSpell(source) {
   const updateData = {};
   const system = source.system || {};
 
-  // Pre-existing fields — type-coerce and default
   if (!Number.isInteger(system.intensity)) updateData["system.intensity"] = Number(system.intensity) || 1;
   if (!Number.isInteger(system.castingTime)) updateData["system.castingTime"] = Number(system.castingTime) || 0;
   if (!system.castingStat) updateData["system.castingStat"] = "knowledge";
@@ -392,14 +351,14 @@ function migrateSpell(source) {
   if (system.page === null || system.page === undefined) updateData["system.page"] = "";
   if (system.effect === null || system.effect === undefined) updateData["system.effect"] = "";
 
-  // v2.3.0: New numeric field — Slow rating (0 = not slow)
+  // v2.3.0: Slow rating
   if (!Number.isInteger(system.slow)) updateData["system.slow"] = 0;
 
   // v2.3.0: New string fields
   if (system.duration === null || system.duration === undefined) updateData["system.duration"] = "";
   if (system.school === null || system.school === undefined) updateData["system.school"] = "";
 
-  // v2.3.0: New boolean flags (all default false)
+  // v2.3.0: Boolean flags
   if (typeof system.attunementRequired !== "boolean") updateData["system.attunementRequired"] = false;
   if (typeof system.isAttunementSpell !== "boolean")  updateData["system.isAttunementSpell"] = false;
   if (typeof system.dodgeable !== "boolean")          updateData["system.dodgeable"] = false;

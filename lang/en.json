@@ -15,7 +15,8 @@
       "gear": "Gear",
       "advantage": "Advantage",
       "problem": "Problem",
-      "asset": "Company Asset"
+      "asset": "Company Asset",
+      "poison": "Poison"
     }
   },
   "REIGN": {
@@ -212,6 +213,7 @@
     "Goals": "Goals",
     "GroupDestroyed": "GROUP DESTROYED",
     "HistorySecrets": "History & Secrets",
+    "HazardRoller": "Hazard Roller",
     "HitLocationCoverageHint": "Describe Hit Location coverage here",
     "HitLocationInstruction": "(L-Click: Add, R-Click: Remove)",
     "ImprovementRoll": "Improvement Roll",
@@ -235,6 +237,7 @@
     "LongRest": "Long Rest",
     "Magnitude": "Magnitude",
     "MagnitudeDesc": "(Health / Number of Minions)",
+    "MajorEffect": "Major Effect",
     "MartialTechnique": "Martial Technique",
     "Massive": "Massive",
     "MasterDie": "Master Die",
@@ -247,6 +250,7 @@
     "MechanicalHook": "Mechanical Hook",
     "MechanicalHookPlaceholder": "e.g., head.max:+1",
     "Mission": "Mission",
+    "MinorEffect": "Minor Effect",
     "Mod": "Mod",
     "Morale": "Morale",
     "MoraleAttackResisted": "The horde stands firm!",
@@ -271,6 +275,8 @@
     "Path": "Path / School",
     "PermanentRating": "Permanent Rating",
     "Pool": "Pool",
+    "PoisonedWeapon": "Poisoned Weapon",
+    "Potency": "Potency",
     "PreferredMoves": "Preferred Moves",
     "Problem": "Problem",
     "ProgressionMode": "Progression Mode",
@@ -290,6 +296,7 @@
     "Rank": "Rank",
     "ReceiveMoraleAttack": "Receive Morale Attack",
     "RestAndRecover": "Rest & Recover",
+    "RetainedDelivery": "Retained Delivery",
     "RollImprovement": "Roll Improvement",
     "RollMorale": "Roll Morale Check",
     "RollThreatAction": "Roll Threat Action",
@@ -470,6 +477,22 @@
 
     "ManeuverFormationCharge": "Formation Charge",
     "ManeuverFormationChargeResult": "Choose: Evasion (impose Difficulty to ranged attacks), Superior Position (+1d next attack), or Clash and Chaos (Gobble Dice vs other vehicles).",
-    "ManeuverFormationChargeRules": "Ride skill. Requires 5+ mounts/vehicles. Multiple sets give multiple effects. Cannot be used on watercraft."
+    "ManeuverFormationChargeRules": "Ride skill. Requires 5+ mounts/vehicles. Multiple sets give multiple effects. Cannot be used on watercraft.",
+
+    "QRTitle": "Quick ORE Dice Roller",
+    "QRLabel": "Roll Label",
+    "QRLabelPlaceholder": "e.g. Perception Check, Gate Strength...",
+    "QRDefaultLabel": "Quick Roll",
+    "QRPoolSize": "Pool Size (d10s)",
+    "QRDifficulty": "Difficulty (Min Height)",
+    "QRBonusDice": "Bonus Dice (+d)",
+    "QRPenaltyDice": "Penalty Dice (-d)",
+    "QRExpertDie": "Expert Die (1-10, 0=None)",
+    "QRMasterDie": "Use Master Die?",
+    "QRRollButton": "Roll ORE",
+    "QRPoolTooLow": "Pool reduced below 1 — action fails.",
+    "QRMDYourRoll": "Your Roll so far",
+    "QRMDAssign": "Assign a face value to your Master Die.",
+    "QRFinalize": "Finalize Sets"
   }
 }

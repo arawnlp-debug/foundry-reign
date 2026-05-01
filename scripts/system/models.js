@@ -58,31 +58,31 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                 athletics: makeSkill(), endurance: makeSkill(), fight: makeSkill(), parry: makeSkill(), run: makeSkill(), vigor: makeSkill(),
                 climb: makeSkill(), dodge: makeSkill(), ride: makeSkill(), stealth: makeSkill(),
                 counterspell: makeSkill(), healing: makeSkill(), languageNative: makeSkill(), lore: makeSkill(), strategy: makeSkill(), tactics: makeSkill(),
-                haggle: makeSkill(), inspire: makeSkill(), intimidate: makeSkill(),
-                direction: makeSkill(), eerie: makeSkill(), empathy: makeSkill(), hearing: makeSkill(), scrutinize: makeSkill(), sight: makeSkill(), taste_touch_smell: makeSkill(),
-                fascinate: makeSkill(), graces: makeSkill(), jest: makeSkill(), lie: makeSkill(), plead: makeSkill()
+                eerie: makeSkill(), empathy: makeSkill(), hearing: makeSkill(), scrutinize: makeSkill(), sight: makeSkill(),
+                inspire: makeSkill(), intimidate: makeSkill(), jest: makeSkill(),
+                fascinate: makeSkill(), graces: makeSkill(), lie: makeSkill(), plead: makeSkill()
             }),
             customSkills: new ObjectField({ initial: {} }),
-            customMoves: new ObjectField({ initial: {} }),
+            esoterica: new SchemaField({
+                sorcery: new NumberField({ initial: 0, min: 0, integer: true }),
+                expert: new BooleanField({ initial: false }),
+                master: new BooleanField({ initial: false }),
+                attunement: new StringField({ initial: "" }),
+                attunementStatus: new StringField({ initial: "none", choices: ["none", "temporary", "partial", "perfect"] }),
+                schoolName: new StringField({ initial: "" }),
+                schoolDomain: new StringField({ initial: "" }),
+                schoolMethod: new StringField({ initial: "" }),
+                schoolStat: new StringField({ initial: "" })
+            }),
             health: new SchemaField({
                 head: makeHealthLoc(), torso: makeHealthLoc(),
                 armL: makeHealthLoc(), armR: makeHealthLoc(),
                 legL: makeHealthLoc(), legR: makeHealthLoc()
             }),
-            esoterica: new SchemaField({
-                sorcery: new NumberField({ initial: 0, min: 0, integer: true }),
-                expert: new BooleanField({ initial: false }), master: new BooleanField({ initial: false }),
-                // Legacy free-text field kept for backward compat — now used as narrative attunement notes
-                attunement: new StringField({ initial: "" }),
-                // Structured school data
-                schoolName: new StringField({ initial: "" }),
-                schoolDomain: new StringField({ initial: "" }),
-                schoolMethod: new StringField({ initial: "" }),
-                schoolStat: new StringField({ initial: "" }),
-                // Attunement status: none | temporary | partial | perfect
-                attunementStatus: new StringField({ initial: "none" })
+            xp: new SchemaField({ 
+                value: new NumberField({ initial: 0, min: 0, integer: true }), 
+                spent: new NumberField({ initial: 0, min: 0, integer: true }) 
             }),
-            xp: new SchemaField({ value: new NumberField({ initial: 0, min: 0, integer: true }), spent: new NumberField({ initial: 0, min: 0, integer: true }) }),
             wealth: new SchemaField({ value: new NumberField({ initial: 0, min: 0, integer: true }) }),
             
             // ACTIVE EFFECT CATCH-BASINS
@@ -112,14 +112,6 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                     legL: new NumberField({ initial: 0, integer: true }),
                     legR: new NumberField({ initial: 0, integer: true })
                 }),
-                hitRedirects: new SchemaField({
-                    head: new StringField({ initial: "" }),
-                    torso: new StringField({ initial: "" }),
-                    armL: new StringField({ initial: "" }),
-                    armR: new StringField({ initial: "" }),
-                    legL: new StringField({ initial: "" }),
-                    legR: new StringField({ initial: "" })
-                }),
                 combat: new SchemaField({
                     bonusDamageShock: new NumberField({ initial: 0, integer: true }),
                     bonusDamageKilling: new NumberField({ initial: 0, integer: true }),
@@ -130,82 +122,41 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                     crossBlockActive: new BooleanField({ initial: false }),
                     appendManeuvers: new ArrayField(new StringField())
                 }),
+                hitRedirects: new ObjectField({ initial: {} }),
                 systemFlags: new SchemaField({
-                    ignoreHeadShock: new BooleanField({ initial: false }),
-                    ignoreTorsoPenalties: new BooleanField({ initial: false }),
                     ignoreFatiguePenalties: new BooleanField({ initial: false }),
-                    // General-purpose flag: allows swimming in Heavy Armor at a mandatory −4d penalty
-                    // instead of auto-failing. RAW use case: Whale Blessed Advantage (Rules Ch4).
-                    // GMs may also apply this for supernatural creatures, special circumstances, etc.
                     ignoreHeavyArmorSwim: new BooleanField({ initial: false }),
-                    cannotUseTwoHanded: new BooleanField({ initial: false }),
-                    immuneToBeauty: new BooleanField({ initial: false })
+                    cannotUseTwoHanded: new BooleanField({ initial: false })
                 })
             })
         };
     }
 
-    /**
-     * Dynamically calculates maximum health boxes per location,
-     * factoring in Active Effect Basin Modifiers (Thick Headed, etc.).
-     */
-    get effectiveMax() {
-        const maxes = { head: 4, torso: 10, armL: 5, armR: 5, legL: 5, legR: 5 };
-        
-        for (const loc of Object.keys(maxes)) {
-            let max = maxes[loc];
-            max += (this.modifiers?.healthMax?.[loc] || 0);
-            maxes[loc] = Math.max(1, max);
-        }
-        return maxes;
-    }
-
-    get effectiveArmor() {
-        const ar = { head: 0, torso: 0, armL: 0, armR: 0, legL: 0, legR: 0 };
-        const equippedArmors = this.parent?.items?.filter(i => i.type === "armor" && i.system.equipped) || [];
-
-        for (const loc of Object.keys(ar)) {
-            let itemAr = 0;
-            for (const armor of equippedArmors) {
-                if (armor.system.protectedLocations?.[loc]) {
-                    itemAr = Math.max(itemAr, armor.system.ar || 0);
-                }
-            }
-            ar[loc] = itemAr + (this.modifiers?.naturalArmor?.[loc] || 0);
-        }
-        return ar;
-    }
-
     prepareDerivedData() {
-        this.validCustomMoves = {};
-        if (this.customMoves) {
-            for (const [key, move] of Object.entries(this.customMoves)) {
-                let safeMove = foundry.utils.deepClone(move);
-                if (safeMove.skillKey && safeMove.skillKey !== "none") {
-                    const existsInStatic = this.skills && this.skills[safeMove.skillKey];
-                    const existsInCustom = this.customSkills && this.customSkills[safeMove.skillKey];
-                    if (!existsInStatic && !existsInCustom) safeMove.skillKey = "none";
+        const LOCATIONS = ["head", "torso", "armL", "armR", "legL", "legR"];
+        const BASE_MAX = { head: 4, torso: 10, armL: 5, armR: 5, legL: 5, legR: 5 };
+
+        this.effectiveMax = {};
+        this.effectiveArmor = {};
+
+        for (const loc of LOCATIONS) {
+            this.effectiveMax[loc] = BASE_MAX[loc] + (this.modifiers?.healthMax?.[loc] || 0);
+            
+            let totalAR = this.modifiers?.naturalArmor?.[loc] || 0;
+            const items = this.parent?.items || [];
+            for (const item of items) {
+                if (item.type === "armor" && item.system.equipped && item.system.protectedLocations?.[loc]) {
+                    totalAR += item.system.ar || 0;
                 }
-                this.validCustomMoves[key] = safeMove;
             }
+            this.effectiveArmor[loc] = totalAR;
         }
 
-        const body = this.attributes?.body?.value || 0;
-        const coord = this.attributes?.coordination?.value || 0;
-        const parry = this.skills?.parry?.value || 0;
-        const dodge = this.skills?.dodge?.value || 0;
-        
-        this.baseParryPool = body + parry;
-        this.baseDodgePool = coord + dodge;
-
-        const equippedTower = this.parent?.items?.find(i => i.type === "shield" && i.system.equipped && i.system.shieldSize === "tower");
-        this.hasTowerShieldPenalty = !!equippedTower;
-        
-        // ISSUE-020 FIX: Tower Shield speed penalty was previously mutating this.modifiers.globalSpeed
-        // inside prepareDerivedData, which pollutes schema data and causes phantom update events.
-        // Instead, expose it as a read-only transient property. Any code needing the penalty
-        // should read actor.system.towerShieldSpeedPenalty (−2 when moving, 0 when stationary).
-        this.towerShieldSpeedPenalty = (equippedTower && !equippedTower.system.isStationary) ? -2 : 0;
+        // Tower Shield speed penalty — exposed as a transient property
+        const equippedTower = (this.parent?.items || []).find(i => 
+            i.type === "shield" && i.system.equipped && i.system.shieldSize === "tower" && !i.system.isStationary
+        );
+        this.towerShieldSpeedPenalty = equippedTower ? -2 : 0;
     }
 }
 
@@ -230,30 +181,20 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
                 globalPool: new NumberField({ initial: 0, integer: true }),
                 preventAllDegradation: new BooleanField({ initial: false })
             }),
-            // NEW: XP Support for Companies
             xp: new SchemaField({ 
                 value: new NumberField({ initial: 0, min: 0, integer: true }), 
                 spent: new NumberField({ initial: 0, min: 0, integer: true }) 
             }),
-
-            // D7: Chronicle Ledger — tracks the rise and fall of a Company over time.
-            // Each entry records a month number, event type, and description.
-            // Appended automatically by advanceMonth; GMs can add manual entries via the dashboard.
             chronicle: new ArrayField(new SchemaField({
                 month:     new NumberField({ initial: 1, min: 1, integer: true }),
-                type:      new StringField({ initial: "advance" }), // advance | event | damage | conquest
+                type:      new StringField({ initial: "advance" }),
                 text:      new StringField({ initial: "" }),
-                timestamp: new NumberField({ initial: 0 })          // Date.now() for sort stability
+                timestamp: new NumberField({ initial: 0 })
             }))
         };
     }
 
     prepareDerivedData() {
-        // ISSUE-021 NOTE: `effective` is defined in makeQuality() so Foundry V14's schema
-        // validation accepts it, but its value on disk is always stale. The authoritative
-        // value is computed here every time the document is prepared. Macros and external
-        // integrations must read actor.system.qualities[key].effective at runtime, not from
-        // raw stored data.
         for (const key of Object.keys(this.qualities)) {
             const q = this.qualities[key];
             q.effective = Math.max(0, q.value - (q.damage || 0) - (q.uses || 0));
@@ -264,7 +205,6 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
 export class ReignThreatData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return {
-            // ── Mob fields (existing) ──────────────────────────────────────────────
             threatLevel:   new NumberField({ initial: 3, min: 0, integer: true }),
             damageFormula: new StringField({ initial: "Width Shock" }),
             magnitude: new SchemaField({
@@ -278,12 +218,8 @@ export class ReignThreatData extends foundry.abstract.TypeDataModel {
             description:   new StringField({ initial: "" }),
             parentCompany: new StringField({ initial: "" }),
 
-            // ── G3.1: Creature Mode ────────────────────────────────────────────────
-            // When true: individual creature with wound boxes; false: mob (default).
+            // G3.1: Creature Mode
             creatureMode: new BooleanField({ initial: false }),
-
-            // Custom hit locations. Each entry: key, display name, roll heights (1-10),
-            // wound box count, armor rating, and current damage state.
             customLocations: new ArrayField(new SchemaField({
                 key:         new StringField({ initial: "" }),
                 name:        new StringField({ initial: "" }),
@@ -293,58 +229,35 @@ export class ReignThreatData extends foundry.abstract.TypeDataModel {
                 shock:       new NumberField({ initial: 0, min: 0, integer: true }),
                 killing:     new NumberField({ initial: 0, min: 0, integer: true })
             })),
-
-            // Creature attributes — Body, Coordination, Sense (animals have no Charm/Knowledge/Command)
             creatureAttributes: new SchemaField({
                 body:         new NumberField({ initial: 3, min: 0, integer: true }),
                 coordination: new NumberField({ initial: 2, min: 0, integer: true }),
                 sense:        new NumberField({ initial: 2, min: 0, integer: true })
             }),
-
-            // Creature skills as a flexible key/value map. Values are numbers (dice pool).
-            // Master Dice are stored as negative numbers (−1 = 1 MD), per convention.
             creatureSkills: new ObjectField({ initial: {} }),
-
-            // Bestiary display fields
-            trainability: new StringField({ initial: "" }),
-            tricks:       new NumberField({ initial: 0, min: 0, integer: true }),
-            movement:     new StringField({ initial: "" }),
-            specialRules: new StringField({ initial: "" }),
-
-            // Defined attacks — each is a rollable action with a pool and damage formula.
             creatureAttacks: new ArrayField(new SchemaField({
-                name:      new StringField({ initial: "Attack" }),
-                attribute: new StringField({ initial: "body" }),    // "body"|"coordination"|"sense"
-                skill:     new StringField({ initial: "" }),         // key from creatureSkills
+                name:      new StringField({ initial: "Bite" }),
+                attribute: new StringField({ initial: "body" }),
+                skill:     new StringField({ initial: "fight" }),
                 damage:    new StringField({ initial: "Width Shock" }),
-                notes:     new StringField({ initial: "" }),         // "Two per round", "Slow 1" etc.
-                isSlow:    new NumberField({ initial: 0, min: 0, integer: true }) // Slow N
+                notes:     new StringField({ initial: "" }),
+                isSlow:    new NumberField({ initial: 0, min: 0, integer: true })
             })),
-
-            // G4: Per-combat special mechanics flags
             creatureFlags: new SchemaField({
-                // G4.1 Big Cat: free Gobble Dice per round (value 10)
                 freeGobbleDicePerRound: new NumberField({ initial: 0, min: 0, integer: true }),
-                // G4.2 Elephant: Morale Attack once per combat
-                moraleAttackOnce:       new BooleanField({ initial: false }),
-                // G4.3 Boa: whether the creature has a constrict ability
-                hasConstrict:           new BooleanField({ initial: false }),
-                constrictActive:        new BooleanField({ initial: false }),
-                constrictTargetId:      new StringField({ initial: "" }),
-                // G4.4 Rhino: whether the creature uses charge accumulation (NOT all 'run' creatures)
-                hasChargeAccumulation:  new BooleanField({ initial: false }),
-                chargeRunWidest:        new NumberField({ initial: 0, min: 0, integer: true }),
-                // G4.5 Venom
-                venomPotency:           new NumberField({ initial: 0, min: 0, integer: true }),
-                venomType:              new StringField({ initial: "" })
+                moraleAttackOnce: new BooleanField({ initial: false }),
+                constrictActive: new BooleanField({ initial: false }),
+                constrictTargetId: new StringField({ initial: "" }),
+                chargeRunWidest: new NumberField({ initial: 0, min: 0, integer: true }),
+                venomPotency: new NumberField({ initial: 0, min: 0, integer: true }),
+                venomType: new StringField({ initial: "" }),
+                hasChargeAccumulation: new BooleanField({ initial: false }),
+                hasConstrict: new BooleanField({ initial: false })
             })
         };
     }
 
     prepareDerivedData() {
-        // Build a height→location-key lookup for fast hit resolution in the damage pipeline.
-        // Example: { 1: ["leftForeLeg"], 2: ["rightForeLeg"], 9: ["head","back"], 10: ["head","back"] }
-        // Multiple keys per height occur on creatures like the Elephant where positions overlap.
         if (this.creatureMode && this.customLocations?.length > 0) {
             this.heightLocationMap = {};
             for (const loc of this.customLocations) {
@@ -381,7 +294,10 @@ export class ReignWeaponData extends foundry.abstract.TypeDataModel {
                 area: new NumberField({ initial: 0, integer: true })
             }),
             notes: new StringField({ initial: "" }),
-            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }) 
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true }),
+            // G2: Weapon Poison Integration
+            isPoisoned: new BooleanField({ initial: false }),
+            poisonRef: new StringField({ initial: "" })
         };
     }
 }
@@ -406,7 +322,6 @@ export class ReignArmorData extends foundry.abstract.TypeDataModel {
         };
     }
 
-    // V14 FIX: Transformed from mutating derived data to a native getter
     get derivedWeight() {
         const locs = this.protectedLocations || {};
         const covered = Object.values(locs).filter(v => v).length;
@@ -485,19 +400,18 @@ export class ReignSpellData extends foundry.abstract.TypeDataModel {
             school: new StringField({ initial: "" }),
             intensity: new NumberField({ initial: 1, min: 1, max: 10, integer: true }),
             castingTime: new NumberField({ initial: 0, min: 0, integer: true }),
-            slow: new NumberField({ initial: 0, min: 0, integer: true }),        // Slow rating (fire every Slow+1 rounds)
-            duration: new StringField({ initial: "" }),                           // e.g. "Width hours", "Instant", "Permanent"
+            slow: new NumberField({ initial: 0, min: 0, integer: true }),
+            duration: new StringField({ initial: "" }),
             castingStat: new StringField({ initial: "knowledge", choices: ["body", "coordination", "sense", "knowledge", "command", "charm"] }), 
             damage: new StringField({ initial: "" }), 
             pool: new StringField({ initial: "" }),
             page: new StringField({ initial: "" }),
             effect: new StringField({ initial: "" }),
-            // Casting properties
-            attunementRequired: new BooleanField({ initial: false }),            // Requires attunement to cast
-            isAttunementSpell: new BooleanField({ initial: false }),             // This spell IS an attunement spell
-            dodgeable: new BooleanField({ initial: false }),                     // Can be dodged if an attack spell
-            parriable: new BooleanField({ initial: false }),                     // Can be parried if an attack spell
-            armorBlocks: new BooleanField({ initial: false })                    // Armor AR applies against this spell
+            attunementRequired: new BooleanField({ initial: false }),
+            isAttunementSpell: new BooleanField({ initial: false }),
+            dodgeable: new BooleanField({ initial: false }),
+            parriable: new BooleanField({ initial: false }),
+            armorBlocks: new BooleanField({ initial: false })
         };
     }
 }
@@ -535,6 +449,24 @@ export class ReignAssetData extends foundry.abstract.TypeDataModel {
         return { 
             description: new StringField({ initial: "" }),
             cost: new NumberField({ initial: 10, integer: true, min: 0 }) 
+        };
+    }
+}
+
+// ==========================================
+// G2: POISON ITEM DATA MODEL
+// ==========================================
+
+export class ReignPoisonData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        return {
+            potency: new NumberField({ initial: 5, min: 1, max: 15, integer: true }),
+            majorEffect: new StringField({ initial: "" }),
+            minorEffect: new StringField({ initial: "" }),
+            difficulty: new NumberField({ initial: 0, min: 0, max: 10, integer: true }),
+            retainedDelivery: new BooleanField({ initial: true }),
+            notes: new StringField({ initial: "" }),
+            wealthCost: new NumberField({ initial: 0, min: 0, integer: true })
         };
     }
 }

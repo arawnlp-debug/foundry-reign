@@ -16,7 +16,6 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
         minimizable: true
       },
       form: { submitOnChange: true, closeOnSubmit: false },
-      // V14 ARCHITECTURE FIX: All actions strictly bound to the prototype
       actions: {
         changeTab: this.prototype._onChangeTab,
         editImage: this.prototype._onEditImage,
@@ -92,7 +91,6 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
 
   /**
    * The Master Dictionary that bridges the UI dropdowns to the `models.js` catch-basins.
-   * [PRUNED FOR V2.0.1: Only active, engine-wired fields remain]
    */
   _getEffectDictionary() {
     return [...getEffectDictionary(), ...getItemEffectExtras()];
@@ -135,29 +133,27 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
               <div class="form-group">
                   <label>What does this modify?</label>
                   <select name="effKey" id="effKeySelect">
-                      <option value="custom" ${!dict.find(d => d.value === change.key) ? "selected" : ""}>-- Custom / Unlisted Database Path --</option>
+                      <option value="custom" ${!dict.find(d => d.value === change.key) ? "selected" : ""}>— Custom Key —</option>
                       ${optionsHtml}
                   </select>
               </div>
-              <div class="form-group" id="customKeyGroup" class="reign-hidden">
-                  <label>Custom Attribute Key:</label>
-                  <input type="text" name="customKey" value="${change.key}"/>
+              <div class="form-group reign-hidden" id="customKeyGroup">
+                  <label>Custom Key Path:</label>
+                  <input type="text" name="customKey" value="${!dict.find(d => d.value === change.key) ? change.key : ""}" placeholder="system.modifiers.globalPool"/>
               </div>
               <div class="form-group">
-                  <label>Modifier Value:</label>
-                  <input type="text" name="effValue" id="effValueInput" value="${change.value}" required/>
-                  <small class="reign-text-muted reign-dialog-subtitle" id="effValueHint">Enter a numeric value (e.g., 1 or -1).</small>
+                  <label>Value:</label>
+                  <input type="text" name="effValue" value="${change.value}" placeholder="1 or -1"/>
+                  <p class="reign-text-small reign-text-muted" id="effValueHint">Type a number (e.g., 1 or -1).</p>
               </div>
-              <div class="form-group reign-text-center">
-                  <a id="advancedEditBtn" class="reign-dialog-advanced-link">
-                      <i class="fas fa-cogs"></i> Open Advanced Foundry AE Editor
-                  </a>
-              </div>
+              <p class="reign-text-small reign-text-center">
+                  <a id="advancedEditBtn" class="reign-cursor-help"><i class="fas fa-wrench"></i> Open Advanced Editor</a>
+              </p>
           </form>
       `;
 
       const result = await reignDialog(
-          effect ? "Edit Modifier" : "Create Modifier",
+          effectId ? "Edit Modifier" : "Create Modifier",
           content,
           (e, b, d) => {
               const form = d.element.querySelector("form");
@@ -248,6 +244,8 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
     context.isAdvantage = this.document.type === "advantage";
     context.isProblem = this.document.type === "problem";
     context.isAsset = this.document.type === "asset";
+    // G2: Poison item type
+    context.isPoison = this.document.type === "poison";
 
     context.armorWeightOptions = { light: "REIGN.ArmorLight", medium: "REIGN.ArmorMedium", heavy: "REIGN.ArmorHeavy" };
     context.shieldSizeOptions = { small: "REIGN.ShieldSmall", large: "REIGN.ShieldLarge", tower: "REIGN.ShieldTower" };
@@ -255,9 +253,7 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
     context.shieldArmOptions = { armL: "REIGN.ArmL", armR: "REIGN.ArmR" };
     context.attributeOptions = { body: "REIGN.AttrBody", coordination: "REIGN.AttrCoordination", sense: "REIGN.AttrSense", knowledge: "REIGN.AttrKnowledge", command: "REIGN.AttrCommand", charm: "REIGN.AttrCharm" };
 
-    // ISSUE-037: Expose derivedWeight (auto-computed from coverage + AR per RAW Ch6 p.113)
-    // so the armor sheet can warn authors when it diverges from their manual armorWeight entry.
-    // The roller uses derivedWeight for encumbrance; armorWeight is cosmetic only.
+    // ISSUE-037: Expose derivedWeight
     if (context.isArmor) {
         context.derivedWeight = this.document.system.derivedWeight;
         context.armorWeightMismatch = context.derivedWeight !== this.document.system.armorWeight;
@@ -290,6 +286,21 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
     // Coerce numeric spell fields to integers (empty string → 0)
     if (this.document.type === "spell") {
         const numericFields = ["system.intensity", "system.slow", "system.castingTime"];
+        const flat = foundry.utils.flattenObject(submitData);
+        let changed = false;
+        for (const field of numericFields) {
+            if (field in flat) {
+                const parsed = parseInt(flat[field]);
+                flat[field] = isNaN(parsed) ? 0 : Math.max(0, parsed);
+                changed = true;
+            }
+        }
+        return changed ? foundry.utils.expandObject(flat) : submitData;
+    }
+
+    // G2: Coerce numeric poison fields to integers
+    if (this.document.type === "poison") {
+        const numericFields = ["system.potency", "system.difficulty", "system.wealthCost"];
         const flat = foundry.utils.flattenObject(submitData);
         let changed = false;
         for (const field of numericFields) {

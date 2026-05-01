@@ -13,10 +13,12 @@ import { applyCompanyDamageToTarget } from "./combat/company-damage.js";
 import { consumeGobbleDie, diveForCover } from "./combat/defense.js";
 import { ReignCombat } from "./combat/ore-combat.js";
 import { parseORE, calculateInitiative } from "./helpers/ore-engine.js";
-import { CharacterRoller } from "./helpers/character-roller.js";
+import { CharacterRoller, calculateOREPool } from "./helpers/character-roller.js";
 import { ReignCharactermancer } from "./generators/charactermancer.js";
 import { ReignCompanymancer } from "./generators/companymancer.js";
 import { FactionDashboard } from "./apps/faction-dashboard.js";
+import { openHazardRoller, handlePoisonResist } from "./combat/hazards.js";
+import { reignDialog } from "./helpers/dialog-util.js";
 
 import { migrateWorld } from "./system/migration.js";
 import * as models from "./system/models.js";
@@ -119,7 +121,8 @@ Hooks.once("init", async () => {
     gear: models.ReignGearData,
     advantage: models.ReignAdvantageData,
     problem: models.ReignProblemData,
-    asset: models.ReignAssetData
+    asset: models.ReignAssetData,
+    poison: models.ReignPoisonData
   };
 
   const templatePaths = [
@@ -168,7 +171,8 @@ Hooks.once("init", async () => {
     declareAim: CharacterRoller.declareAim,               // Package C: Aim maneuver
     assignShieldCoverage: CharacterRoller.assignShieldCoverage, // Package C: Shield assignment
     ReignCharactermancer,
-    ReignCompanymancer
+    ReignCompanymancer,
+    openQuickDiceRoller                                      // F4: Quick Dice Roller
   };
 });
 
@@ -452,6 +456,37 @@ Hooks.on("updateActiveEffect", async (effect, changes, options, userId) => {
     if (game.user.id !== userId) return;
     if (changes.disabled !== false) return; // Only fire when transitioning disabled → enabled
     await _enforceTechniqueMutualExclusion(effect);
+});
+
+// G1: Hazard Roller — GM-only button in Token Controls
+Hooks.on("getSceneControlButtons", (controls) => {
+  if (!game.user.isGM) return;
+  // V14 compatibility: controls may be an array (older builds) or an object/Map (newer builds)
+  let tokenGroup;
+  if (Array.isArray(controls)) {
+    tokenGroup = controls.find(c => c.name === "tokens" || c.name === "token");
+  } else {
+    tokenGroup = controls.tokens || controls.token;
+  }
+  if (!tokenGroup) return;
+  const tools = tokenGroup.tools;
+  if (Array.isArray(tools)) {
+    tools.push({
+      name: "hazardRoller",
+      title: "REIGN.HazardRoller",
+      icon: "fas fa-skull-crossbones",
+      button: true,
+      onChange: () => openHazardRoller()
+    });
+  } else if (tools && typeof tools === "object") {
+    tools.hazardRoller = {
+      name: "hazardRoller",
+      title: "REIGN.HazardRoller",
+      icon: "fas fa-skull-crossbones",
+      button: true,
+      onChange: () => openHazardRoller()
+    };
+  }
 });
 
 Hooks.on("renderChatMessageHTML", (message, html) => {
@@ -817,6 +852,28 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       });
     });
   });
+
+  // G2: POISON — Resist buttons on poison chat cards
+  element.querySelectorAll(".poison-resist-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!game.user.isGM && !msg?.isAuthor) return;
+      const resistType = btn.dataset.resistType || "vigor";
+      const targetIds = btn.dataset.targetIds || "";
+      const difficulty = parseInt(btn.dataset.difficulty) || 0;
+      await handlePoisonResist(resistType, targetIds, difficulty);
+    });
+  });
+
+  // G2: VENOM — Resist buttons on creature venom chat cards (unified handler)
+  element.querySelectorAll(".venom-resist-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const resistType = btn.dataset.resistType || "vigor";
+      const targetId = btn.dataset.targetId || "";
+      await handlePoisonResist(resistType, targetId, 0);
+    });
+  });
 });
 
 Hooks.on("preCreateItem", (item, data, options, userId) => {
@@ -1154,4 +1211,233 @@ Hooks.on("deleteCombat", async (combat, options, userId) => {
     if (!foundry.utils.isEmpty(updates))       await actor.update(updates);
     if (!foundry.utils.isEmpty(systemUpdates)) await actor.update(systemUpdates);
   }));
+});
+
+// ==========================================
+// F4: QUICK DICE ROLLER — Chat Sidebar Button
+// ==========================================
+// A standalone ORE dice roller accessible from the chat controls bar.
+// Rolls an arbitrary d10 pool through the ORE engine and posts a full
+// chat card with sets, waste, and optional Expert/Master dice — without
+// requiring a character sheet to be open.
+
+/**
+ * Opens the Quick Dice Roller dialog and posts the result to chat.
+ */
+async function openQuickDiceRoller() {
+  const content = `
+    <div class="reign-dialog-pool-preview">
+      Expected Pool: <span id="qr-pool-value" class="reign-pool-value">...</span>
+    </div>
+    <form class="reign-dialog-form">
+      <div class="form-group">
+        <label>${game.i18n.localize("REIGN.QRLabel")}:</label>
+        <input type="text" name="label" value="" placeholder="${game.i18n.localize("REIGN.QRLabelPlaceholder")}"/>
+      </div>
+      <div class="dialog-grid dialog-grid-2">
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRPoolSize")}:</label>
+          <input type="number" name="poolSize" value="4" min="1" max="20"/>
+        </div>
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRDifficulty")}:</label>
+          <input type="number" name="difficulty" value="0" min="0" max="10"/>
+        </div>
+      </div>
+      <div class="dialog-grid dialog-grid-2">
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRBonusDice")}:</label>
+          <input type="number" name="bonus" value="0" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRPenaltyDice")}:</label>
+          <input type="number" name="penalty" value="0" min="0"/>
+        </div>
+      </div>
+      <div class="dialog-grid dialog-grid-2 reign-dialog-section">
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRExpertDie")}:</label>
+          <input type="number" name="ed" value="0" min="0" max="10"/>
+        </div>
+        <div class="form-group">
+          <label>${game.i18n.localize("REIGN.QRMasterDie")}:</label>
+          <input type="checkbox" name="md" value="1"/>
+        </div>
+      </div>
+    </form>
+  `;
+
+  const rollData = await reignDialog(
+    game.i18n.localize("REIGN.QRTitle"),
+    content,
+    (e, b, d) => {
+      const f = d.element.querySelector("form");
+      return {
+        label:    f.querySelector('[name="label"]')?.value?.trim() || game.i18n.localize("REIGN.QRDefaultLabel"),
+        poolSize: Math.max(1, parseInt(f.querySelector('[name="poolSize"]')?.value) || 1),
+        difficulty: parseInt(f.querySelector('[name="difficulty"]')?.value) || 0,
+        bonus:    parseInt(f.querySelector('[name="bonus"]')?.value) || 0,
+        penalty:  parseInt(f.querySelector('[name="penalty"]')?.value) || 0,
+        ed:       parseInt(f.querySelector('[name="ed"]')?.value) || 0,
+        md:       f.querySelector('[name="md"]')?.checked ? 1 : 0
+      };
+    },
+    {
+      defaultLabel: game.i18n.localize("REIGN.QRRollButton"),
+      width: 380,
+      render: (event, html) => {
+        const element = event?.target?.element ?? (event instanceof HTMLElement ? event : null);
+        if (!element) return;
+
+        const f = element.querySelector("form");
+        const poolPreview = element.querySelector("#qr-pool-value");
+        if (!f || !poolPreview) return;
+
+        const updatePreview = () => {
+          const poolSize = Math.max(1, parseInt(f.querySelector('[name="poolSize"]')?.value) || 1);
+          const bonus    = parseInt(f.querySelector('[name="bonus"]')?.value) || 0;
+          const penalty  = parseInt(f.querySelector('[name="penalty"]')?.value) || 0;
+          const ed       = parseInt(f.querySelector('[name="ed"]')?.value) || 0;
+          const md       = f.querySelector('[name="md"]')?.checked ? 1 : 0;
+
+          const rawTotal = poolSize + bonus;
+          const poolMath = calculateOREPool(rawTotal, ed, md, 0, penalty, 1, true);
+
+          if (poolMath.diceToRoll < 1) {
+            poolPreview.innerHTML = `<span class="reign-text-danger">${game.i18n.localize("REIGN.QRPoolTooLow")}</span>`;
+          } else {
+            let display = `${poolMath.normalDiceCount}d10`;
+            if (poolMath.actualEd > 0) display += ` <span class="reign-text-info">+ 1 ED (${poolMath.finalEdFace})</span>`;
+            if (poolMath.actualMd > 0) display += ` <span class="reign-text-magic">+ 1 MD</span>`;
+            if (poolMath.wasCapped) display += ` <span class="reign-text-small reign-text-muted">(Capped at 10)</span>`;
+            poolPreview.innerHTML = display;
+          }
+        };
+
+        f.querySelectorAll("input").forEach(input => {
+          input.addEventListener("input", updatePreview);
+          input.addEventListener("change", updatePreview);
+        });
+        updatePreview();
+      }
+    }
+  );
+
+  if (!rollData) return;
+
+  // --- Calculate the final pool ---
+  const rawTotal = rollData.poolSize + rollData.bonus;
+  const poolMath = calculateOREPool(rawTotal, rollData.ed, rollData.md, 0, rollData.penalty, 1, true);
+
+  if (poolMath.diceToRoll < 1) {
+    return ui.notifications.warn(game.i18n.localize("REIGN.QRPoolTooLow"));
+  }
+
+  // --- Roll the normal dice ---
+  let results = [];
+  let actualRoll = null;
+
+  if (poolMath.normalDiceCount > 0) {
+    actualRoll = new Roll(`${poolMath.normalDiceCount}d10`);
+    await actualRoll.evaluate();
+    results = actualRoll.dice[0]?.results.map(r => r.result) || [];
+  }
+
+  if (poolMath.actualEd > 0) results.push(poolMath.finalEdFace);
+
+  // --- Handle Master Die assignment ---
+  if (poolMath.actualMd > 0) {
+    results.sort((a, b) => b - a);
+    const mdHtml = `<form class="reign-dialog-form">
+      <p class="reign-text-large reign-mb-small reign-mt-0"><strong>${game.i18n.localize("REIGN.QRMDYourRoll")}:</strong> ${results.length > 0 ? results.join(", ") : "None"}</p>
+      <p class="reign-text-small reign-text-muted reign-mb-medium">${game.i18n.localize("REIGN.QRMDAssign")}</p>
+      <div class="form-group">
+        <label>MD Face:</label>
+        <input type="number" id="qrMdFace" value="10" min="1" max="10"/>
+      </div>
+    </form>`;
+
+    const mdResult = await reignDialog(
+      game.i18n.localize("REIGN.AssignMasterDice"),
+      mdHtml,
+      (e, b, d) => parseInt(d.element.querySelector("#qrMdFace").value) || 10,
+      { defaultLabel: game.i18n.localize("REIGN.QRFinalize"), width: 360 }
+    );
+    if (!mdResult) return;
+    results.push(mdResult);
+  }
+
+  // --- Determine the speaker ---
+  // Use the currently selected token/assigned character if available, otherwise the user.
+  const speakerActor = canvas?.tokens?.controlled?.[0]?.actor
+    || game.user.character
+    || null;
+  const speaker = speakerActor
+    ? ChatMessage.getSpeaker({ actor: speakerActor })
+    : ChatMessage.getSpeaker({ user: game.user });
+
+  // --- Generate the ORE chat card ---
+  const actorType = speakerActor?.type || "character";
+  const flavor = await generateOREChatHTML(
+    actorType,
+    foundry.utils.escapeHTML(rollData.label),
+    poolMath.diceToRoll,
+    results,
+    poolMath.actualEd > 0 ? poolMath.finalEdFace : 0,
+    poolMath.actualMd,
+    null,   // no item
+    { difficulty: rollData.difficulty }  // flags
+  );
+
+  const messageData = {
+    speaker,
+    content: flavor
+  };
+  if (actualRoll) messageData.rolls = [actualRoll];
+
+  await ChatMessage.create(messageData);
+}
+
+// Inject the Quick Dice Roller button into the Chat sidebar controls.
+// V14 compatibility: the ChatLog may be ApplicationV1 or V2 depending on the
+// Foundry build, so we try multiple hooks and a direct DOM query on ready.
+
+function _injectQuickRollerButton() {
+  // Already injected?
+  if (document.querySelector(".reign-quick-roller-btn")) return;
+
+  // Find the chat controls row — try several known V14 selectors
+  const chatControls = document.querySelector("#chat-controls")
+    || document.querySelector("#chat .chat-control-icon")?.parentElement
+    || document.querySelector("#chat form")?.previousElementSibling
+    || document.querySelector('[data-tab="chat"] #chat-controls');
+  if (!chatControls) return;
+
+  const btn = document.createElement("a");
+  btn.className = "reign-quick-roller-btn";
+  btn.title = game.i18n.localize("REIGN.QRTitle");
+  btn.innerHTML = `<svg viewBox="0 0 20 24" width="14" height="17" style="fill:currentColor;"><polygon points="10,0 20,12 10,24 0,12"/><text x="10" y="14" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="sans-serif">10</text></svg><span class="reign-qr-label">ORE</span>`;
+  btn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    openQuickDiceRoller();
+  });
+
+  chatControls.prepend(btn);
+}
+
+// Primary: fire on ChatLog render (ApplicationV1 builds)
+Hooks.on("renderChatLog", () => {
+  setTimeout(_injectQuickRollerButton, 50);
+});
+
+// Fallback: fire when the sidebar tab changes to chat
+Hooks.on("changeSidebarTab", (app) => {
+  if (app.tabName === "chat" || app.options?.id === "chat" || app.id === "chat") {
+    setTimeout(_injectQuickRollerButton, 50);
+  }
+});
+
+// Last resort: inject once the game is fully ready
+Hooks.once("ready", () => {
+  setTimeout(_injectQuickRollerButton, 500);
 });

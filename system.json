@@ -2,7 +2,7 @@
   "id": "reign",
   "title": "Reign: Realities of Lords and Leaders",
   "description": "An unofficial fan-made system for playing Reign (2nd Edition) on Foundry VTT, fully automating the One-Roll Engine (ORE).",
-  "version": "2.9.0",
+  "version": "3.0.0",
   "authors": [
     {
       "name": "Llew ap Hywel",
@@ -12,7 +12,7 @@
   ],
   "url": "https://github.com/arawnlp-debug/foundry-reign",
   "manifest": "https://raw.githubusercontent.com/arawnlp-debug/foundry-reign/main/system.json",
-  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v2.9.0/reign.zip",
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v3.0.0/reign.zip",
   "license": "MIT",
   "compatibility": {
     "minimum": "14",
@@ -29,7 +29,8 @@
     "styles/chat.css",
     "styles/dialogs.css",
     "styles/charactermancer.css",
-    "styles/companymancer.css"
+    "styles/companymancer.css",
+    "styles/hazards.css"
   ],
   "languages": [
     {
@@ -115,6 +116,11 @@
         "htmlFields": [
           "system.description"
         ]
+      },
+      "poison": {
+        "htmlFields": [
+          "system.notes"
+        ]
       }
     }
   },
@@ -159,6 +165,13 @@
       "label": "Bestiary — Creatures",
       "path": "packs/creatures.db",
       "type": "Actor",
+      "system": "reign"
+    },
+    {
+      "name": "poisons",
+      "label": "Poisons",
+      "path": "packs/poisons.db",
+      "type": "Item",
       "system": "reign"
     }
   ]
