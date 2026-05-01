@@ -258,6 +258,25 @@ function migrateThreat(source) {
     };
   }
 
+  // v3.0.1: Creature skills — convert flat values (number / "ED" / "MD") to structured
+  // objects { value, expert, master } so skills can have dice AND an ED/MD simultaneously.
+  const rawSkills = system.creatureSkills;
+  if (rawSkills && typeof rawSkills === "object") {
+    let needsMigration = false;
+    const migratedSkills = {};
+    for (const [key, val] of Object.entries(rawSkills)) {
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        migratedSkills[key] = val; // already structured
+      } else {
+        needsMigration = true;
+        if (val === "ED") migratedSkills[key] = { value: 0, expert: true, master: false };
+        else if (val === "MD") migratedSkills[key] = { value: 0, expert: false, master: true };
+        else migratedSkills[key] = { value: typeof val === "number" ? val : (parseInt(val) || 0), expert: false, master: false };
+      }
+    }
+    if (needsMigration) updateData["system.creatureSkills"] = migratedSkills;
+  }
+
   return updateData;
 }
 

@@ -2,6 +2,37 @@
 
 ---
 
+## v3.0.1 — Creature Sheet UX
+
+### UX — Creature Skill Management
+**Files:** `templates/actor/threat-sheet.hbs`, `scripts/sheets/threat-sheet.js`, `styles/actor-sheet.css`
+
+The Skills section on the creature mode threat sheet now supports full add/edit/delete from the sheet UI.
+
+- **Add skill** — the + button in the section header opens a dialog with a dropdown of all predefined combat and perception skills (already-added skills are filtered out), plus a "Custom" option for homebrew skill names. Set dice count, and optionally toggle Expert Die or Master Die.
+- **Edit skill** — the cog button on each skill row opens a dialog to change the dice count and ED/MD toggles.
+- **Delete skill** — the × button on each skill row removes the skill.
+- The section now always displays (previously hidden when no skills existed), showing an empty-state prompt with the + button.
+
+### DATA — Creature Skill Format Change
+**Files:** `scripts/sheets/threat-sheet.js`, `scripts/helpers/migration.js`
+
+Creature skills are now stored as structured objects `{ value, expert, master }` instead of flat values (number / "ED" / "MD"). This allows a creature to have dice in a skill AND an Expert or Master Die simultaneously (e.g. Fight 3 + ED), matching how character skills work in the rules.
+
+A migration step in `migrateThreat()` converts any legacy flat-format skills to the new structured format. All skill-reading code uses a `normalizeCreatureSkill()` helper that handles both old and new formats gracefully, so creatures work correctly even before migration runs.
+
+### UX — Creature Attack Editing
+**Files:** `templates/actor/threat-sheet.hbs`, `scripts/sheets/threat-sheet.js`, `styles/actor-sheet.css`
+
+Each attack row now has a cog button that toggles an inline config panel (same pattern as hit locations). The config panel exposes editable fields for: Name, Attribute (Body/Coordination/Sense dropdown), Skill (text key matching a creature skill), Damage formula, Slow rating, and Notes. All fields auto-save via `submitOnChange`.
+
+### BUG — GM Toolbar Creature Pool Calculation
+**File:** `scripts/gm-toolbar.js`
+
+The Token Peek pool preview for creature-mode threats was reading `creatureSkills?.[skill]?.value`, but `creatureSkills` stores values directly as numbers/"ED"/"MD", not as `{value: N}` objects. The skill contribution was silently always 0. Fixed to read the value directly and correctly count ED/MD as +1 die.
+
+---
+
 ## v2.8.0 — Quality of Life
 
 ### F1 — Counterspell Integration

@@ -898,7 +898,7 @@ export async function applyFirstAidToTarget(width) {
   const content = `
     <div class="reign-dialog-form">
       <p class="reign-text-center reign-text-large">Select the hit location to treat.</p>
-      <p class="reign-text-small reign-text-muted reign-text-center reign-mb-medium">Requires a Knowledge + Healing roll.<br>Converts <strong>1 Killing</strong> damage to Shock on success.</p>
+      <p class="reign-text-small reign-text-muted reign-text-center reign-mb-medium">Converts <strong>1 Killing</strong> damage to Shock on success.</p>
       <div class="form-group">
         <label>Body Part:</label>
         <select name="locKey">
@@ -917,45 +917,83 @@ export async function applyFirstAidToTarget(width) {
       "Apply First Aid",
       content,
       (e, b, d) => d.element.querySelector('[name="locKey"]').value,
-      { defaultLabel: "Attempt Treatment" }
+      { defaultLabel: "Apply Treatment" }
   );
 
   if (!locKey) return;
 
-  const knowledge = parseInt(healer.system.attributes.knowledge?.value) || 0;
-  const healingSkill = parseInt(healer.system.skills.healing?.value) || 0;
-  const expert = healer.system.skills.healing?.expert ? 1 : 0;
-  const master = healer.system.skills.healing?.master ? 1 : 0;
+  // When called from a chat card button, width > 0 from the pre-rolled set.
+  // The roll already succeeded (the button is disabled on failures), so skip re-rolling.
+  let setText;
 
-  let pool = knowledge + healingSkill;
-  if (pool < 1 && expert === 0 && master === 0) {
-      return ui.notifications.warn(`${healer.name} lacks the Knowledge or Healing skill to attempt First Aid.`);
-  }
+  if (width > 0) {
+    // Called from chat card — success already confirmed
+    setText = `${width}× set`;
+  } else {
+    // Standalone call (macro API) — need to roll Knowledge + Healing
+    const knowledge = parseInt(healer.system.attributes.knowledge?.value) || 0;
+    const healingSkill = parseInt(healer.system.skills.healing?.value) || 0;
+    const expert = healer.system.skills.healing?.expert ? 1 : 0;
+    const master = healer.system.skills.healing?.master ? 1 : 0;
 
-  const normalDice = Math.min(10, pool);
-  let rollStr = `${normalDice}d10`;
-  
-  const r = new Roll(rollStr);
-  await r.evaluate();
-  let results = r.dice[0].results.map(d => d.result);
+    let pool = knowledge + healingSkill;
+    if (pool < 1 && expert === 0 && master === 0) {
+        return ui.notifications.warn(`${healer.name} lacks the Knowledge or Healing skill to attempt First Aid.`);
+    }
 
-  if (master > 0) results.push(10);
-  if (expert > 0) {
-      if (results.length > 0) {
-          results.push(results[0]); 
-      } else {
-          results.push(10);
-      }
-  }
+    // Expert Die: RAW — set to a chosen face BEFORE rolling the other dice
+    let edFace = 0;
+    if (expert > 0) {
+        const edResult = await reignDialog(
+          "Set Expert Die",
+          `<form class="reign-dialog-form">
+            <p class="reign-text-small reign-text-muted reign-mb-medium">Choose the Expert Die face <strong>before</strong> rolling.</p>
+            <div class="form-group"><label>ED Face (1–10):</label><input type="number" id="faEdFace" value="10" min="1" max="10"/></div>
+          </form>`,
+          (e, b, d) => parseInt(d.element.querySelector("#faEdFace").value) || 10,
+          { defaultLabel: "Confirm", width: 360 }
+        );
+        if (!edResult) return;
+        edFace = edResult;
+    }
 
-  const parsed = parseORE(results);
+    // Roll the normal dice (pool minus the ED slot if active)
+    const normalDice = Math.min(10, pool) - (expert > 0 ? 1 : 0);
+    const r = normalDice > 0 ? new Roll(`${normalDice}d10`) : null;
+    if (r) await r.evaluate();
+    let results = r ? r.dice[0].results.map(d => d.result) : [];
 
-  if (parsed.sets.length === 0) {
-      await ChatMessage.create({
-          speaker: ChatMessage.getSpeaker({ actor: healer }),
-          content: `<div class="reign-chat-card"><h3 class="reign-text-danger">First Aid Failed</h3><p>${healer.name} attempted First Aid but found no matches.</p></div>`
-      });
-      return;
+    // Append the pre-set ED
+    if (expert > 0) results.push(edFace);
+
+    // Master Die: RAW — set to a chosen face AFTER rolling
+    if (master > 0) {
+        const sortedDisplay = [...results].sort((a, b) => b - a).join(", ") || "(none)";
+        const mdResult = await reignDialog(
+          "Assign Master Die",
+          `<form class="reign-dialog-form">
+            <p class="reign-text-large reign-mb-small"><strong>Roll so far:</strong> ${sortedDisplay}</p>
+            <p class="reign-text-small reign-text-muted reign-mb-medium">Assign the Master Die to form the best set.</p>
+            <div class="form-group"><label>MD Face:</label><input type="number" id="faMdFace" value="10" min="1" max="10"/></div>
+          </form>`,
+          (e, b, d) => parseInt(d.element.querySelector("#faMdFace").value) || 10,
+          { defaultLabel: "Confirm", width: 360 }
+        );
+        if (!mdResult) return;
+        results.push(mdResult);
+    }
+
+    const parsed = parseORE(results);
+
+    if (parsed.sets.length === 0) {
+        await ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: healer }),
+            content: `<div class="reign-chat-card"><h3 class="reign-text-danger">First Aid Failed</h3><p>${healer.name} attempted First Aid but found no matches.</p></div>`
+        });
+        return;
+    }
+
+    setText = `Rolled ${parsed.sets[0].text}`;
   }
 
   for (let target of targets) {
@@ -983,10 +1021,9 @@ export async function applyFirstAidToTarget(width) {
         
         const safeTargetName = foundry.utils.escapeHTML(targetActor.name);
         const locName = getHitLocationLabel(locKey).split(" (")[0];
-        const bestSet = parsed.sets[0];
         
         let chatHtml = `<div class="reign-chat-card"><h3 class="reign-text-info"><i class="fas fa-notes-medical"></i> First Aid Successful</h3>
-            <p class="reign-mb-small"><strong>Healer:</strong> ${healer.name} (Rolled ${bestSet.text})<br><strong>Patient:</strong> ${safeTargetName}</p>
+            <p class="reign-mb-small"><strong>Healer:</strong> ${healer.name} (${setText})<br><strong>Patient:</strong> ${safeTargetName}</p>
             <div class="reign-callout reign-callout-info"><strong>${locName}:</strong> Converted <strong>1 Killing</strong> damage to Shock.</div></div>`;
         
         await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: healer }), content: chatHtml });

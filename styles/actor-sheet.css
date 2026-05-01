@@ -2038,13 +2038,13 @@
 
 /* ── Attacks ── */
 .cs-attack-list { display: flex; flex-direction: column; }
+.cs-attack-row-wrap { border-bottom: var(--reign-border-light); transition: background 0.1s; }
+.cs-attack-row-wrap:last-child { border-bottom: none; }
+.cs-attack-row-wrap:hover { background: var(--reign-bg-vellum); }
 .cs-attack-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 7px 10px; border-bottom: var(--reign-border-light);
-  transition: background 0.1s;
+  padding: 7px 10px;
 }
-.cs-attack-row:last-child { border-bottom: none; }
-.cs-attack-row:hover { background: var(--reign-bg-vellum); }
 .cs-attack-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .cs-attack-name {
   font-family: var(--reign-font-display); font-weight: bold; font-size: 12px;
@@ -2063,6 +2063,26 @@
   background: var(--reign-bg-warn); color: var(--reign-burnt-orange);
   border: 1px solid var(--reign-color-brass); border-radius: 3px;
   padding: 1px 5px; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Attack config row (toggle-edit) ── */
+.cs-attack-config {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 6px 10px 8px 10px;
+  border-top: 1px dashed #ddd; background: var(--reign-bg-vellum);
+}
+.cs-attack-config-row {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+}
+.cs-config-select {
+  min-width: 80px;
+  border: var(--reign-border-light); background: var(--reign-bg-paper);
+  border-radius: 3px; padding: 3px 5px;
+  font-family: var(--reign-font-data); font-size: 11px; color: var(--reign-text-dark);
+  box-shadow: var(--reign-shadow-inset);
+}
+.cs-config-input-wide {
+  flex: 2; min-width: 120px; max-width: none;
 }
 
 /* ── Hit-location die-face heat map ── */

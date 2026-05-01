@@ -17,6 +17,19 @@ const SENSE_SKILLS = new Set(["hearing","sight","scrutinize","stealth","smell"])
 // Skills that pair with Coordination
 const COORD_SKILLS = new Set(["dodge","climb","swim","coordination","acrobatics"]);
 
+/**
+ * Normalise a creature skill value to structured format.
+ * Handles both the legacy flat format (number, "ED", "MD") and the new
+ * structured format { value, expert, master } so code works before and
+ * after migration.
+ */
+function normalizeCreatureSkill(val) {
+  if (val && typeof val === "object" && !Array.isArray(val)) return val;
+  if (val === "ED") return { value: 0, expert: true, master: false };
+  if (val === "MD") return { value: 0, expert: false, master: true };
+  return { value: typeof val === "number" ? val : (parseInt(val) || 0), expert: false, master: false };
+}
+
 export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2)) {
   static DEFAULT_OPTIONS = {
     tag: "form",
@@ -38,6 +51,10 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       // Attacks
       addCreatureAttack:      this.prototype._onAddCreatureAttack,
       removeCreatureAttack:   this.prototype._onRemoveCreatureAttack,
+      // Skills
+      addCreatureSkill:       this.prototype._onAddCreatureSkill,
+      removeCreatureSkill:    this.prototype._onRemoveCreatureSkill,
+      editCreatureSkill:      this.prototype._onEditCreatureSkill,
       // Creature rolling
       rollCreatureSkill:      this.prototype._onRollCreatureSkill,
       rollCreatureAttack:     this.prototype._onRollCreatureAttack,
@@ -101,7 +118,7 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       this._handleCreatureHealthClick(ev, box);
     });
 
-    // ── Edit-row toggle (config cog button)
+    // ── Edit-row toggle (config cog button) — Hit Locations
     html.addEventListener("click", ev => {
       const btn = ev.target.closest("[data-action-local='toggleEdit']");
       if (!btn) return;
@@ -112,6 +129,19 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       row.hidden = open;
       btn.querySelector("i").className = open ? "fas fa-cog" : "fas fa-times";
       btn.title = open ? "Configure location" : "Close";
+    });
+
+    // ── Edit-row toggle (config cog button) — Attacks
+    html.addEventListener("click", ev => {
+      const btn = ev.target.closest("[data-action-local='toggleAttackEdit']");
+      if (!btn) return;
+      const idx = btn.dataset.attackIndex;
+      const row = html.querySelector(`[data-attack-edit-index="${idx}"]`);
+      if (!row) return;
+      const open = !row.hidden;
+      row.hidden = open;
+      btn.querySelector("i").className = open ? "fas fa-cog" : "fas fa-times";
+      btn.title = open ? "Configure attack" : "Close";
     });
 
     // ── Heights input: parse comma string to number array on change/blur
@@ -308,6 +338,137 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
   }
 
   // =====================================================
+  // SKILL MANAGEMENT
+  // =====================================================
+
+  async _onAddCreatureSkill(event, target) {
+    event.preventDefault();
+    const existingSkills = this.document.system.creatureSkills || {};
+
+    // Build option lists excluding already-added skills
+    const COMBAT_SKILLS = ["fight","bite","claw","kick","ram","constrict","trample","grapple","dodge","parry","athletics","climb","swim","run","stealth"];
+    const PERCEPTION_SKILLS = ["hearing","sight","scrutinize","smell"];
+    const allPredefined = [...COMBAT_SKILLS, ...PERCEPTION_SKILLS];
+    const available = allPredefined.filter(k => !(k in existingSkills));
+
+    const optionsHtml = available.map(k => {
+      const label = k.charAt(0).toUpperCase() + k.slice(1);
+      return `<option value="${k}">${label}</option>`;
+    }).join("");
+
+    const content = `
+      <form class="reign-dialog-form">
+        <div class="form-group">
+          <label>Skill</label>
+          <select name="skillKey" id="cs-add-skill-select">
+            ${optionsHtml}
+            <option value="__custom__">— Custom —</option>
+          </select>
+        </div>
+        <div class="form-group" id="cs-custom-skill-group" style="display:none;">
+          <label>Custom Skill Name</label>
+          <input type="text" name="customKey" placeholder="e.g. tailSwipe"/>
+        </div>
+        <div class="form-group">
+          <label>Dice</label>
+          <input type="number" name="skillValue" value="2" min="0" max="10" style="width:60px;"/>
+        </div>
+        <div class="reign-grid-2col reign-gap-small">
+          <div class="form-group">
+            <label><input type="checkbox" name="hasEd"/> Expert Die (ED)</label>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" name="hasMd"/> Master Die (MD)</label>
+          </div>
+        </div>
+        <p class="reign-text-small reign-text-muted">RAW: You cannot have both ED and MD in the same pool. If both are checked, only MD applies.</p>
+      </form>`;
+
+    const result = await reignDialog("Add Creature Skill", content,
+      (e, b, d) => {
+        const f = d.element.querySelector("form");
+        let key = f.querySelector('[name="skillKey"]')?.value;
+        if (key === "__custom__") key = f.querySelector('[name="customKey"]')?.value?.trim().replace(/\s+/g, "");
+        const numVal = parseInt(f.querySelector('[name="skillValue"]')?.value) || 0;
+        const hasEd = f.querySelector('[name="hasEd"]')?.checked || false;
+        const hasMd = f.querySelector('[name="hasMd"]')?.checked || false;
+        return {
+          key,
+          value: { value: numVal, expert: hasMd ? false : hasEd, master: hasMd }
+        };
+      },
+      {
+        defaultLabel: "Add Skill",
+        render: (context, el) => {
+          const select = el.querySelector("#cs-add-skill-select");
+          const customGroup = el.querySelector("#cs-custom-skill-group");
+          select?.addEventListener("change", () => {
+            customGroup.style.display = select.value === "__custom__" ? "" : "none";
+          });
+        }
+      }
+    );
+
+    if (!result || !result.key) return;
+    if (result.key in existingSkills) return ui.notifications.warn(`Skill "${result.key}" already exists.`);
+
+    const update = { [`system.creatureSkills.${result.key}`]: result.value };
+    await this.document.update(update);
+  }
+
+  async _onRemoveCreatureSkill(event, target) {
+    event.preventDefault();
+    const key = target.dataset.skillKey;
+    if (!key) return;
+    // ObjectField keys are removed by setting them to -=null via Foundry's delete syntax
+    await this.document.update({ [`system.creatureSkills.-=${key}`]: null });
+  }
+
+  async _onEditCreatureSkill(event, target) {
+    event.preventDefault();
+    const key = target.dataset.skillKey;
+    if (!key) return;
+    const rawVal = this.document.system.creatureSkills?.[key];
+    const sk = normalizeCreatureSkill(rawVal);
+    const label = key.replace(/([A-Z])/g, " $1").trim();
+    const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
+
+    const content = `
+      <form class="reign-dialog-form">
+        <div class="reign-dialog-callout">
+          <strong>${labelCap}</strong>
+        </div>
+        <div class="form-group">
+          <label>Dice</label>
+          <input type="number" name="skillValue" value="${sk.value}" min="0" max="10" style="width:60px;" autofocus/>
+        </div>
+        <div class="reign-grid-2col reign-gap-small">
+          <div class="form-group">
+            <label><input type="checkbox" name="hasEd" ${sk.expert ? "checked" : ""}/> Expert Die (ED)</label>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" name="hasMd" ${sk.master ? "checked" : ""}/> Master Die (MD)</label>
+          </div>
+        </div>
+        <p class="reign-text-small reign-text-muted">RAW: You cannot have both ED and MD in the same pool. If both are checked, only MD applies.</p>
+      </form>`;
+
+    const result = await reignDialog(`Edit Skill — ${labelCap}`, content,
+      (e, b, d) => {
+        const f = d.element.querySelector("form");
+        const numVal = parseInt(f.querySelector('[name="skillValue"]')?.value) || 0;
+        const hasEd = f.querySelector('[name="hasEd"]')?.checked || false;
+        const hasMd = f.querySelector('[name="hasMd"]')?.checked || false;
+        return { value: numVal, expert: hasMd ? false : hasEd, master: hasMd };
+      },
+      { defaultLabel: "Save" }
+    );
+
+    if (result === null || result === undefined) return;
+    await this.document.update({ [`system.creatureSkills.${key}`]: result });
+  }
+
+  // =====================================================
   // CREATURE ROLLING — FIX BUG-001 (MD), BUG-007 (cap 15)
   // =====================================================
 
@@ -319,10 +480,10 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
   async _rollCreaturePoolSilent(actor, attrKey, skillKey) {
     const attrs    = actor.system.creatureAttributes || {};
     const skills   = actor.system.creatureSkills     || {};
-    const skillVal = skills[skillKey];
-    const isMd     = skillVal === "MD";
-    const isEd     = skillVal === "ED";
-    const numVal   = typeof skillVal === "number" ? skillVal : 0;
+    const sk       = normalizeCreatureSkill(skills[skillKey]);
+    const isMd     = sk.master;
+    const isEd     = sk.expert;
+    const numVal   = sk.value;
     const attrVal  = parseInt(attrs[attrKey]) || 0;
 
     const specialCount = (isMd || isEd) ? 1 : 0;
@@ -370,14 +531,24 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
   async _rollCreaturePool(actor, attrKey, skillKey, labelOverride = null, itemData = null) {
     const attrs    = actor.system.creatureAttributes || {};
     const skills   = actor.system.creatureSkills     || {};
-    const skillVal = skills[skillKey];
-    const isMd     = skillVal === "MD";
-    const isEd     = skillVal === "ED";
-    const numVal   = typeof skillVal === "number" ? skillVal : 0;
+    const sk       = normalizeCreatureSkill(skills[skillKey]);
+    const isMd     = sk.master;
+    const isEd     = sk.expert;
+    const numVal   = sk.value;
     const attrVal  = parseInt(attrs[attrKey]) || 0;
 
     const attrLabel  = attrKey.charAt(0).toUpperCase() + attrKey.slice(1);
     const skillLabel = skillKey ? (skillKey.charAt(0).toUpperCase() + skillKey.slice(1).replace(/([A-Z])/g, " $1").trim()) : "";
+
+    // Build display string for the base pool breakdown
+    const skillParts = [];
+    if (skillKey) {
+      if (numVal > 0) skillParts.push(`${skillLabel} ${numVal}`);
+      if (isMd) skillParts.push("MD");
+      else if (isEd) skillParts.push("ED");
+      if (numVal === 0 && !isMd && !isEd) skillParts.push(`${skillLabel} 0`);
+    }
+    const poolDesc = `${attrLabel} ${attrVal}${skillParts.length ? ` + ${skillParts.join(" + ")}` : ""}`;
 
     // Roll dialog content — minimal, focused on what creatures need
     const content = `
@@ -385,7 +556,7 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
         <div class="reign-dialog-callout">
           <strong>${labelOverride || skillLabel}</strong>
           <div class="reign-text-muted reign-text-small">
-            Base pool: ${attrLabel} ${attrVal}${skillKey ? ` + ${skillLabel} ${isMd ? "MD" : isEd ? "ED" : numVal}` : ""}
+            Base pool: ${poolDesc}
           </div>
         </div>
         <div class="reign-grid-2col reign-gap-small">
@@ -699,7 +870,8 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
 
       const diceDisplay = results.map(r => `<span class="reign-die reign-die-plain">${r}</span>`).join(" ");
       const bodyVal     = actor.system.creatureAttributes?.body || "?";
-      const constVal    = parseInt(actor.system.creatureSkills?.constrict) || "?";
+      const constSkill  = normalizeCreatureSkill(actor.system.creatureSkills?.constrict);
+      const constVal    = constSkill.value || "?";
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
         content: `<div class="reign-chat-card">
@@ -913,23 +1085,31 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
     const COMBAT_SKILL_ORDER = ["fight","bite","claw","kick","ram","constrict","trample","grapple","dodge","parry","athletics","climb","swim","run","stealth"];
     const rawSkills = this.document.system.creatureSkills || {};
 
-    const buildSkillEntry = (key, val) => {
-      const isMd   = val === "MD";
-      const isEd   = val === "ED";
-      const numVal = typeof val === "number" ? val : 0;
+    const buildSkillEntry = (key, rawVal) => {
+      const sk    = normalizeCreatureSkill(rawVal);
+      const isMd  = sk.master;
+      const isEd  = sk.expert;
+      const numVal = sk.value;
       const attrKey = SENSE_SKILLS.has(key) ? "sense"
                     : COORD_SKILLS.has(key) ? "coordination" : "body";
       const attrVal = parseInt(attrs[attrKey]) || 0;
       // FIX UX-011: convert camelCase keys to spaced labels
       const label = key.replace(/([A-Z])/g, " $1").trim();
+
+      // Build display value: show dice count and/or ED/MD
+      let displayVal = String(numVal);
+      if (isMd) displayVal = numVal > 0 ? `${numVal}+MD` : "MD";
+      else if (isEd) displayVal = numVal > 0 ? `${numVal}+ED` : "ED";
+
       return {
         key, label: label.charAt(0).toUpperCase() + label.slice(1),
-        value: isMd ? "MD" : isEd ? "ED" : numVal,
+        value: displayVal,
+        numVal, isMd, isEd,
         badge: isMd ? "reign-badge-md" : isEd ? "reign-badge-ed" : "",
-        isMd, isEd,
         isSense: SENSE_SKILLS.has(key),
         attrKey, attrLabel: attrKey.charAt(0).toUpperCase() + attrKey.slice(1),
         attrVal,
+        totalPool: attrVal + numVal + ((isMd || isEd) ? 1 : 0),
         sortOrder: COMBAT_SKILL_ORDER.indexOf(key) >= 0
           ? COMBAT_SKILL_ORDER.indexOf(key) : 999
       };

@@ -19,6 +19,7 @@ import { ReignCompanymancer } from "./generators/companymancer.js";
 import { FactionDashboard } from "./apps/faction-dashboard.js";
 import { openHazardRoller, handlePoisonResist } from "./combat/hazards.js";
 import { reignDialog } from "./helpers/dialog-util.js";
+import { GMToolbar, fulfillRollRequest } from "./apps/gm-toolbar.js";
 
 import { migrateWorld } from "./system/migration.js";
 import * as models from "./system/models.js";
@@ -140,7 +141,8 @@ Hooks.once("init", async () => {
     "systems/reign/templates/actor/parts/tab-esoterica.hbs",
     "systems/reign/templates/actor/parts/tab-biography.hbs",
     "systems/reign/templates/actor/parts/tab-effects.hbs",
-    "systems/reign/templates/apps/companymancer.hbs"
+    "systems/reign/templates/apps/companymancer.hbs",
+    "systems/reign/templates/apps/gm-toolbar.hbs"
   ];
   await foundry.applications.handlebars.loadTemplates(templatePaths);
 
@@ -172,7 +174,8 @@ Hooks.once("init", async () => {
     assignShieldCoverage: CharacterRoller.assignShieldCoverage, // Package C: Shield assignment
     ReignCharactermancer,
     ReignCompanymancer,
-    openQuickDiceRoller                                      // F4: Quick Dice Roller
+    openQuickDiceRoller,                                     // F4: Quick Dice Roller
+    GMToolbar                                                // GM Toolbar class
   };
 });
 
@@ -191,6 +194,15 @@ Hooks.once("ready", async () => {
     }
     await game.settings.set("reign", "lastMigrationVersion", currentVersion);
   }
+});
+
+// GM Toolbar — Initialise the persistent HUD after the game is fully ready.
+// GM-only: the toolbar's init() method gates on game.user.isGM internally.
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const toolbar = new GMToolbar();
+  await toolbar.init();
+  game.reign.toolbar = toolbar;
 });
 
 /**
@@ -644,6 +656,15 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const width = parseInt(btn.dataset.width);
       
       await applyFirstAidToTarget(width);
+    });
+  });
+
+  // ROLL REQUEST: Fulfil button — executes the requested roll for the character
+  element.querySelectorAll(".fulfil-request-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg) return;
+      await fulfillRollRequest(msg);
     });
   });
 

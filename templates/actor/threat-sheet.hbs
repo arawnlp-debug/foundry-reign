@@ -76,9 +76,12 @@
       </div>
 
       {{!-- ── SKILLS (two columns: combat left, perception right) ── --}}
-      {{#if creatureSkillDisplay.length}}
       <div class="cs-section">
-        <div class="cs-section-header">Skills</div>
+        <div class="cs-section-header">
+          Skills
+          <button type="button" data-action="addCreatureSkill" class="cs-add-btn" title="Add skill"><i class="fas fa-plus"></i></button>
+        </div>
+        {{#if creatureSkillDisplay.length}}
         <div class="cs-skill-columns">
           <div class="cs-skill-col">
             <div class="cs-skill-col-label">Combat &amp; Action</div>
@@ -90,6 +93,10 @@
                         data-skill-key="{{sk.key}}" title="Roll {{sk.label}} ({{sk.attrLabel}} {{sk.attrVal}} + {{sk.value}})">
                   <i class="fas fa-dice-d10"></i>
                 </button>
+                <button type="button" class="cs-icon-btn" data-action="editCreatureSkill"
+                        data-skill-key="{{sk.key}}" title="Edit {{sk.label}}"><i class="fas fa-cog"></i></button>
+                <button type="button" class="cs-icon-btn cs-icon-btn-danger" data-action="removeCreatureSkill"
+                        data-skill-key="{{sk.key}}" title="Remove {{sk.label}}"><i class="fas fa-times"></i></button>
               </div>
             {{else}}
               <p class="cs-empty-note cs-empty-note-sm">—</p>
@@ -105,14 +112,20 @@
                         data-skill-key="{{sk.key}}" title="Roll {{sk.label}} ({{sk.attrLabel}} {{sk.attrVal}} + {{sk.value}})">
                   <i class="fas fa-dice-d10"></i>
                 </button>
+                <button type="button" class="cs-icon-btn" data-action="editCreatureSkill"
+                        data-skill-key="{{sk.key}}" title="Edit {{sk.label}}"><i class="fas fa-cog"></i></button>
+                <button type="button" class="cs-icon-btn cs-icon-btn-danger" data-action="removeCreatureSkill"
+                        data-skill-key="{{sk.key}}" title="Remove {{sk.label}}"><i class="fas fa-times"></i></button>
               </div>
             {{else}}
               <p class="cs-empty-note cs-empty-note-sm">—</p>
             {{/each}}
           </div>
         </div>
+        {{else}}
+        <p class="cs-empty-note">No skills defined. Click <strong>+</strong> to add.</p>
+        {{/if}}
       </div>
-      {{/if}}
 
       {{!-- ── ATTACKS ── --}}
       {{#if system.creatureAttacks.length}}
@@ -123,19 +136,56 @@
         </div>
         <div class="cs-attack-list">
           {{#each system.creatureAttacks as |atk|}}
-          <div class="cs-attack-row" data-attack-index="{{@index}}">
-            <div class="cs-attack-info">
-              <span class="cs-attack-name">{{atk.name}}</span>
-              {{#if atk.notes}}<span class="cs-attack-notes">{{atk.notes}}</span>{{/if}}
+          <div class="cs-attack-row-wrap" data-attack-index="{{@index}}">
+            <div class="cs-attack-row">
+              <div class="cs-attack-info">
+                <span class="cs-attack-name">{{atk.name}}</span>
+                {{#if atk.notes}}<span class="cs-attack-notes">{{atk.notes}}</span>{{/if}}
+              </div>
+              <span class="cs-attack-damage">{{atk.damage}}</span>
+              {{#if atk.isSlow}}<span class="cs-slow-badge" title="Slow {{atk.isSlow}}">Slow {{atk.isSlow}}</span>{{/if}}
+              <button type="button" class="cs-roll-btn cs-roll-btn-attack" data-action="rollCreatureAttack"
+                      data-attack-index="{{@index}}" title="Roll {{atk.name}} → {{atk.damage}}">
+                <i class="fas fa-fist-raised"></i> Roll
+              </button>
+              <button type="button" class="cs-icon-btn" data-action-local="toggleAttackEdit"
+                      data-attack-index="{{@index}}" title="Configure attack"><i class="fas fa-cog"></i></button>
+              <button type="button" class="cs-icon-btn cs-icon-btn-danger" data-action="removeCreatureAttack"
+                      data-attack-index="{{@index}}" title="Remove attack"><i class="fas fa-times"></i></button>
             </div>
-            <span class="cs-attack-damage">{{atk.damage}}</span>
-            {{#if atk.isSlow}}<span class="cs-slow-badge" title="Slow {{atk.isSlow}}">Slow {{atk.isSlow}}</span>{{/if}}
-            <button type="button" class="cs-roll-btn cs-roll-btn-attack" data-action="rollCreatureAttack"
-                    data-attack-index="{{@index}}" title="Roll {{atk.name}} → {{atk.damage}}">
-              <i class="fas fa-fist-raised"></i> Roll
-            </button>
-            <button type="button" class="cs-icon-btn cs-icon-btn-danger" data-action="removeCreatureAttack"
-                    data-attack-index="{{@index}}" title="Remove attack"><i class="fas fa-times"></i></button>
+
+            {{!-- Config row (hidden by default) --}}
+            <div class="cs-attack-config" data-attack-edit-index="{{@index}}" hidden>
+              <div class="cs-attack-config-row">
+                <label class="cs-config-label">Name</label>
+                <input type="text" name="system.creatureAttacks.{{@index}}.name"
+                       value="{{atk.name}}" placeholder="Attack name" class="cs-config-input"/>
+              </div>
+              <div class="cs-attack-config-row">
+                <label class="cs-config-label">Attr</label>
+                <select name="system.creatureAttacks.{{@index}}.attribute" class="cs-config-select">
+                  <option value="body" {{#if (eq atk.attribute "body")}}selected{{/if}}>Body</option>
+                  <option value="coordination" {{#if (eq atk.attribute "coordination")}}selected{{/if}}>Coordination</option>
+                  <option value="sense" {{#if (eq atk.attribute "sense")}}selected{{/if}}>Sense</option>
+                </select>
+                <label class="cs-config-label">Skill</label>
+                <input type="text" name="system.creatureAttacks.{{@index}}.skill"
+                       value="{{atk.skill}}" placeholder="e.g. bite, fight" class="cs-config-input"/>
+              </div>
+              <div class="cs-attack-config-row">
+                <label class="cs-config-label">Damage</label>
+                <input type="text" name="system.creatureAttacks.{{@index}}.damage"
+                       value="{{atk.damage}}" placeholder="e.g. Width+1 Killing" class="cs-config-input cs-config-input-wide"/>
+                <label class="cs-config-label">Slow</label>
+                <input type="number" name="system.creatureAttacks.{{@index}}.isSlow"
+                       value="{{atk.isSlow}}" min="0" max="10" class="cs-config-num"/>
+              </div>
+              <div class="cs-attack-config-row">
+                <label class="cs-config-label">Notes</label>
+                <input type="text" name="system.creatureAttacks.{{@index}}.notes"
+                       value="{{atk.notes}}" placeholder="Special qualities, conditions..." class="cs-config-input cs-config-input-wide"/>
+              </div>
+            </div>
           </div>
           {{/each}}
         </div>
