@@ -218,6 +218,12 @@ export class ReignThreatData extends foundry.abstract.TypeDataModel {
             description:   new StringField({ initial: "" }),
             parentCompany: new StringField({ initial: "" }),
 
+            // Creature-mode display fields
+            movement:      new StringField({ initial: "" }),
+            trainability:  new StringField({ initial: "" }),
+            tricks:        new NumberField({ initial: 0, min: 0, integer: true }),
+            specialRules:  new StringField({ initial: "" }),
+
             // G3.1: Creature Mode
             creatureMode: new BooleanField({ initial: false }),
             customLocations: new ArrayField(new SchemaField({

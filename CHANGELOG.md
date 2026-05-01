@@ -31,6 +31,21 @@ Each attack row now has a cog button that toggles an inline config panel (same p
 
 The Token Peek pool preview for creature-mode threats was reading `creatureSkills?.[skill]?.value`, but `creatureSkills` stores values directly as numbers/"ED"/"MD", not as `{value: N}` objects. The skill contribution was silently always 0. Fixed to read the value directly and correctly count ED/MD as +1 die.
 
+### BUG — ArrayField Form Submission Wipes Non-Form Fields
+**File:** `scripts/sheets/threat-sheet.js`
+
+Editing any form field on the creature sheet via `submitOnChange` would reset hit location Heights (rollHeights), Shock, and Killing damage to defaults, because the form data only included the named inputs (name, woundBoxes, ar) and Foundry replaced the entire `customLocations` array with partial objects. Same issue affected `creatureAttacks`. Fixed via `_mergeArrayFormData()` in `_prepareSubmitData`, which fills in missing sub-fields from the current document data before the update is applied.
+
+### BUG — Movement, Trainability, Tricks, Special Rules Not Persisting
+**Files:** `scripts/helpers/models.js`, `scripts/sheets/threat-sheet.js`
+
+The creature sheet had form inputs for `system.movement`, `system.trainability`, `system.tricks`, and `system.specialRules`, but these fields were never added to `ReignThreatData.defineSchema()`. Foundry's DataModel stripped them during validation, so values appeared to save but reverted on the next re-render or when any other field changed. Added all four fields to the schema.
+
+### FEATURE — Generic Area Damage Roller
+**Files:** `templates/dialogs/hazard-roller.hbs`, `scripts/combat/hazards.js`
+
+A new "Area" tab is added to the Hazard Roller for rolling generic Area Damage from any source — spells, creature abilities, traps, environmental effects, etc. The tab has three controls: source name (for the chat card), area dice count (1–30), and damage type (Shock/Killing). A live pool preview updates as inputs change. Clicking "Apply Area Damage to Targets" posts a chat card identifying the source and targets, then routes through `applyDamageToTarget` with the `areaDice` parameter, which handles both character and creature-mode targets. Armour does not apply (RAW Ch1 p.10).
+
 ---
 
 ## v2.8.0 — Quality of Life

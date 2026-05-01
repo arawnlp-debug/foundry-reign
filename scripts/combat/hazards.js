@@ -124,6 +124,28 @@ export async function openHazardRoller() {
         };
         modeSelect?.addEventListener("change", updatePoisonMode);
         updatePoisonMode();
+
+        // ── Area: live pool preview ──
+        const updateAreaPreview = () => {
+          const dice = parseInt(el.querySelector('[name="area-dice"]')?.value) || 1;
+          const type = el.querySelector('[name="area-type"]')?.value || "shock";
+          const typeLabel = type === "killing" ? "Killing" : "Shock";
+          const preview = el.querySelector(".area-pool-preview");
+          if (preview) preview.textContent = `${dice}d10 ${typeLabel}`;
+        };
+        el.querySelectorAll('[name="area-dice"], [name="area-type"]').forEach(inp => {
+          inp.addEventListener("input", updateAreaPreview);
+          inp.addEventListener("change", updateAreaPreview);
+        });
+        updateAreaPreview();
+
+        el.querySelector(".apply-area-btn")?.addEventListener("click", async (ev) => {
+          ev.preventDefault();
+          const dice = parseInt(el.querySelector('[name="area-dice"]')?.value) || 1;
+          const type = el.querySelector('[name="area-type"]')?.value || "shock";
+          const source = el.querySelector('[name="area-source"]')?.value || "Area Attack";
+          await applyAreaDamage(source, dice, type);
+        });
       }
     }
   );
@@ -195,6 +217,41 @@ async function applyFire(intensity, areaRating) {
   });
 
   await applyDamageToTarget(1, 1, dmgType, 0, false, areaRating);
+}
+
+
+// ==========================================
+// AREA DAMAGE (generic)
+// ==========================================
+
+/**
+ * Generic Area Damage roller for spells, creature abilities, traps, etc.
+ * RAW Ch1 p.10: Roll N dice, each die hits the location matching its face.
+ * If a location comes up twice, apply two points. Armour does not apply.
+ *
+ * Routes through applyDamageToTarget with areaDice parameter, which
+ * handles both character and creature-mode targets.
+ */
+async function applyAreaDamage(sourceName, areaDice, damageType) {
+  const targets = Array.from(game.user.targets);
+  if (targets.length === 0) return ui.notifications.warn("Target one or more tokens first.");
+
+  const isKilling = damageType === "killing";
+  const dmgType = isKilling ? "1 Killing" : "1 Shock";
+  const typeLabel = isKilling ? "Killing" : "Shock";
+  const safeName = foundry.utils.escapeHTML(sourceName || "Area Attack");
+
+  const targetNames = targets.map(t => foundry.utils.escapeHTML(t.name)).join(", ");
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ alias: safeName }),
+    content: `<div class="reign-chat-card reign-card-danger">
+      <h3><i class="fas fa-crosshairs"></i> ${safeName} — Area ${areaDice} ${typeLabel}</h3>
+      <p><strong>Targets:</strong> ${targetNames}</p>
+      <p class="reign-text-small reign-text-muted"><i class="fas fa-info-circle"></i> Area damage — armour does not apply (RAW Ch1).</p>
+    </div>`
+  });
+
+  await applyDamageToTarget(1, 1, dmgType, 0, false, areaDice);
 }
 
 

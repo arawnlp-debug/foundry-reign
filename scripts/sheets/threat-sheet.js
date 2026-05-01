@@ -160,9 +160,23 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
     });
   }
 
-  // FIX BUG-002: Parse rollHeights comma-string back to number array before Foundry validates it
+  // FIX: ArrayField form submissions lose fields that aren't named form inputs.
+  // When submitOnChange fires, form data contains only the named inputs for each
+  // array element (e.g. name, woundBoxes, ar for locations). Fields like rollHeights,
+  // shock, killing have no form inputs and would be replaced with schema defaults.
+  // Fix: merge form data on top of the current document data for each array element.
   _prepareSubmitData(event, form, formData) {
     const data = super._prepareSubmitData(event, form, formData);
+
+    // ── Merge customLocations: preserve rollHeights, shock, killing ──
+    this._mergeArrayFormData(data, "system.customLocations",
+      this.document.system.customLocations || []);
+
+    // ── Merge creatureAttacks: preserve fields not in config panel ──
+    this._mergeArrayFormData(data, "system.creatureAttacks",
+      this.document.system.creatureAttacks || []);
+
+    // ── Parse rollHeights comma-string to number array ──
     const locs = this.document.system.customLocations || [];
     locs.forEach((loc, i) => {
       const key = `system.customLocations.${i}.rollHeights`;
@@ -173,7 +187,36 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
           : raw.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 10);
       }
     });
+
     return data;
+  }
+
+  /**
+   * For an ArrayField at `prefix`, find all dotted keys in `data` that modify
+   * individual elements (e.g. prefix.0.name, prefix.1.ar) and fill in any
+   * missing sub-fields from `currentArray` so the update doesn't wipe them.
+   */
+  _mergeArrayFormData(data, prefix, currentArray) {
+    // Collect which array indices appear in the form data
+    const touchedIndices = new Set();
+    const indexPattern = new RegExp(`^${prefix.replace(/\./g, "\\.")}\\.(\\d+)\\.`);
+    for (const key of Object.keys(data)) {
+      const m = key.match(indexPattern);
+      if (m) touchedIndices.add(parseInt(m[1]));
+    }
+    if (touchedIndices.size === 0) return;
+
+    // For each touched index, ensure every field from the current doc data
+    // is present in the form data (form values win, doc values fill gaps)
+    for (const idx of touchedIndices) {
+      const current = currentArray[idx];
+      if (!current) continue;
+      const src = current.toObject ? current.toObject() : foundry.utils.deepClone(current);
+      for (const [field, val] of Object.entries(src)) {
+        const dotKey = `${prefix}.${idx}.${field}`;
+        if (!(dotKey in data)) data[dotKey] = val;
+      }
+    }
   }
 
   // =====================================================

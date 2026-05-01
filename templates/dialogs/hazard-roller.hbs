@@ -1,5 +1,5 @@
 {{!-- templates/dialogs/hazard-roller.hbs --}}
-{{!-- G1 + G2: Unified Hazard Roller — Falling, Fire, Poison --}}
+{{!-- G1 + G2 + G3: Unified Hazard Roller — Falling, Fire, Poison, Area --}}
 
 <div class="reign-dialog-form reign-hazard-roller">
 
@@ -13,6 +13,9 @@
     </button>
     <button type="button" class="hazard-tab-btn" data-tab="poison">
       <i class="fas fa-skull-crossbones"></i> Poison
+    </button>
+    <button type="button" class="hazard-tab-btn" data-tab="area">
+      <i class="fas fa-crosshairs"></i> Area
     </button>
   </div>
 
@@ -154,6 +157,42 @@
 
     <button type="button" class="reign-btn-execute apply-poison-btn">
       <i class="fas fa-skull-crossbones"></i> Roll Potency &amp; Apply to Targets
+    </button>
+  </div>
+
+  {{!-- ════════════════════════════════════════════ --}}
+  {{!-- AREA DAMAGE TAB --}}
+  {{!-- ════════════════════════════════════════════ --}}
+  <div class="hazard-tab-panel" data-tab="area">
+    <p class="reign-text-small reign-text-muted reign-mb-small">
+      RAW Ch1: Roll Area dice — each die hits the location matching its face. If a location comes up twice, apply two points. Armour does not protect against Area attacks.
+    </p>
+
+    <div class="form-group">
+      <label>Source Name</label>
+      <input type="text" name="area-source" value="Area Attack" placeholder="e.g. Boiling Oil, Eldritch Blast, Scalding Breath"/>
+    </div>
+
+    <div class="dialog-grid dialog-grid-2">
+      <div class="form-group">
+        <label>Area Dice</label>
+        <input type="number" name="area-dice" value="3" min="1" max="30"/>
+      </div>
+      <div class="form-group">
+        <label>Damage Type</label>
+        <select name="area-type">
+          <option value="shock">Shock</option>
+          <option value="killing">Killing</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="reign-dialog-pool-preview">
+      Pool: <span class="area-pool-preview">3d10 Shock</span>
+    </div>
+
+    <button type="button" class="reign-btn-execute apply-area-btn">
+      <i class="fas fa-crosshairs"></i> Apply Area Damage to Targets
     </button>
   </div>
 

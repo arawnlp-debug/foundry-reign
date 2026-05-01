@@ -316,13 +316,15 @@ The system ships with a **Bestiary — Creatures** compendium pack containing re
 
 ### The Hazard Roller
 
-A GM-only **Hazard Roller** is accessible from the Token Controls toolbar (skull-and-crossbones icon). It opens a tabbed dialog covering three hazard types:
+A GM-only **Hazard Roller** is accessible from the Token Controls toolbar (skull-and-crossbones icon). It opens a tabbed dialog covering four hazard types:
 
 **Falling** — set the fall height. The system calculates damage per RAW and applies it to targeted tokens.
 
 **Fire** — set the fire intensity. Damage is applied through the standard damage infrastructure.
 
 **Poison** — select a poison from the world item list. The system displays the poison's potency, major and minor effects, and delivery method. A "Resist" button prompts targeted tokens to roll the appropriate resistance check (typically Body + Vigor) against the poison's difficulty.
+
+**Area** — generic Area Damage roller for spells, creature abilities, traps, and other effects. Set the source name, dice count (1–30), and damage type (Shock/Killing). A live pool preview updates as inputs change. Routes through the standard damage infrastructure, handling both character and creature-mode targets. Armour does not apply (RAW Ch1 p.10).
 
 ### Poison Items
 
@@ -594,11 +596,39 @@ The `game.reign` global exposes core functions for macro use:
 
 ### v3.0.1 — Creature Sheet UX
 
-Creature skill management — skills can now be added, edited, and deleted directly from the creature sheet via dialogs and inline buttons. Attack editing — each attack row gains a cog-toggle config panel for editing name, attribute, skill, damage formula, slow rating, and notes inline. GM Toolbar bugfix — creature-mode Token Peek pool preview now correctly reads skill values (was silently ignoring all skill dice).
+Creature skill management — skills can now be added, edited, and deleted directly from the creature sheet via dialogs and inline buttons. Attack editing — each attack row gains a cog-toggle config panel for editing name, attribute, skill, damage formula, slow rating, and notes inline. Skills now support dice + ED/MD simultaneously (e.g. Fight 3 + ED). Fixed ArrayField form submission bug that caused hit location Heights, Shock, and Killing to reset when any field was edited. Added missing schema fields for Movement, Trainability, Tricks, and Special Rules so they persist correctly. GM Toolbar bugfix — creature-mode Token Peek pool preview now correctly reads skill values. Generic Area Damage roller added as a 4th tab in the Hazard Roller for spells, creature abilities, and other area effects.
 
 ### v3.0.0 — Creatures, Hazards & Poisons
 
 Creature Mode added to the threat sheet — a full bestiary system with custom hit locations, creature-specific attributes and skills (including ED/MD support), named attacks, and special mechanics (free Gobble Dice, charge accumulation, constriction, morale attacks, venom). Hazard Roller added as a GM-only toolbar button with tabbed dialogs for falling, fire, and poison hazards. Poisons added as a dedicated item type with potency, effects, difficulty, and delivery tracking. Weapons gain poison reference fields. Bestiary and Poisons compendium packs added.
+
+### v2.8.0 — Quality of Life
+
+Counterspell integration — a "Counter This Spell" gobble button on spell chat cards applying Gobble Dice against caster sets. Eerie detection prompt — a "Roll Sense + Eerie" button on successful spell cards opening a pre-configured detection roll dialog. One-Roll Table validation with structured error/warning cards posted to chat. Quick Dice Roller — standalone ORE roller button in the chat sidebar controls bar.
+
+### v2.6.0 — Presentation Pass
+
+Threat and company sheet consistency audit — all legacy CSS classes replaced with the shared utility system. Dark mode sweep — fourteen new semantic CSS variables with full light/dark mode values replacing ~35 hardcoded hex values. Charactermancer biography formatting rebuilt with "Gained:" summaries and a final character summary block. Redirect maneuver accessible from the Dodge roll dialog. Submission Hold called shot restricted to limb locations.
+
+### v2.5.0 — Combat Manoeuvre Automation
+
+Fifteen maneuvers fully automated across two tiers. Positional maneuvers (Pin, Restrain, Stand, Shove, Slam) apply status effects to targeted tokens via chat card buttons. Damage-modifying maneuvers (Strangle, Iron Kiss, Redirect, Submission Hold) track state across rounds via combatant flags. Tier 2 maneuvers gain a GM resolution button.
+
+### v2.4.0 — Active Effects Phase 2
+
+Sorcery group added to the Active Effect dictionary. New AE paths: `forceHitLocation`, `shiftHitLocationUp`, `appendManeuvers`, `minHeight`, `squishLimit`, `bonusTiming`, `ignoreMultiPenaltySkills`. Attunement-to-Perfect transition offers automatic AE creation.
+
+### v2.3.0 — Sorcery Elevation & School System
+
+The magic system fully rebuilt. Spells track Intensity, Slow, duration, and interaction flags. Esoterica tab redesigned with structured school and attunement panels. Magical schools defined in One-Roll Table JSON. Charactermancer school picker added.
+
+### v2.2.0 — Architecture & Chat Optimisation
+
+DRY extraction of hit location constants, scroll mixin, effect dictionary, and damage commit utility. Slimmed chat flag projection. Faction dashboard instance tracking improved.
+
+### v2.1.0 — Critical Bug Fixes
+
+Company conquest reward pre-damage snapshot fix. Shock recovery respects preCombatShock flag. Double-deletion in custom skills/moves resolved.
 
 ---
 
