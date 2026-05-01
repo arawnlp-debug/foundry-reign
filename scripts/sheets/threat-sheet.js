@@ -144,77 +144,185 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       btn.title = open ? "Configure attack" : "Close";
     });
 
-    // ── Heights input: parse comma string to number array on change/blur
+    // ── Location config: save field changes directly (no name attributes in form)
+    //    Uses {render: false} so the config panel stays open while editing.
     html.addEventListener("change", ev => {
-      const input = ev.target.closest(".cs-heights-input");
+      const input = ev.target.closest("[data-loc-field]");
       if (!input) return;
-      const idx = parseInt(input.dataset.heightsIndex);
-      if (isNaN(idx)) return;
+      const idx = parseInt(input.dataset.locIndex);
+      const field = input.dataset.locField;
+      if (isNaN(idx) || !field) return;
+
       const locs = foundry.utils.deepClone(this.document.system.customLocations || []);
       if (idx >= locs.length) return;
-      const raw = input.value;
-      locs[idx].rollHeights = raw === "redirect only" || raw.trim() === ""
-        ? []
-        : raw.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 10);
-      this.document.update({ "system.customLocations": locs });
+
+      let val = input.value;
+      if (input.type === "number") val = parseInt(val) || 0;
+      locs[idx][field] = val;
+      this.document.update({ "system.customLocations": locs }, { render: false });
+    });
+
+    // ── Attack config: save field changes directly (no name attributes in form)
+    //    Uses {render: false} so the config panel stays open while editing.
+    html.addEventListener("change", ev => {
+      const input = ev.target.closest("[data-atk-field]");
+      if (!input) return;
+      const idx = parseInt(input.dataset.atkIndex);
+      const field = input.dataset.atkField;
+      if (isNaN(idx) || !field) return;
+
+      const attacks = foundry.utils.deepClone(this.document.system.creatureAttacks || []);
+      if (idx >= attacks.length) return;
+
+      let val = input.value;
+      if (input.type === "number") val = parseInt(val) || 0;
+      attacks[idx][field] = val;
+      this.document.update({ "system.creatureAttacks": attacks }, { render: false });
+    });
+
+    // ── Height picker: toggle face buttons to assign/remove heights per location
+    //    Uses {render: false} so the sheet stays open — no re-render per click.
+    //    Button visuals are toggled manually for instant feedback.
+    html.addEventListener("click", ev => {
+      const btn = ev.target.closest("[data-action-local='toggleHeight']");
+      if (!btn) return;
+      const face = parseInt(btn.dataset.face);
+      const idx  = parseInt(btn.dataset.locIndex);
+      if (isNaN(face) || isNaN(idx)) return;
+
+      const locs = foundry.utils.deepClone(this.document.system.customLocations || []);
+      if (idx >= locs.length) return;
+
+      const heights = locs[idx].rollHeights || [];
+      const pos = heights.indexOf(face);
+      if (pos >= 0) {
+        heights.splice(pos, 1);
+        btn.classList.remove("cs-face-btn-active");
+        // Remove all location color classes
+        btn.className = btn.className.replace(/cs-face-loc-\S+/g, "").trim();
+      } else {
+        heights.push(face);
+        btn.classList.add("cs-face-btn-active");
+        // Find the location colour from a sibling that has it
+        const picker = btn.closest(".cs-height-picker");
+        const activeSibling = picker?.querySelector(".cs-face-btn-active[class*='cs-face-loc-']");
+        if (activeSibling) {
+          const colorMatch = activeSibling.className.match(/cs-face-loc-(\S+)/);
+          if (colorMatch) btn.classList.add(`cs-face-loc-${colorMatch[1]}`);
+        } else {
+          // Fallback: get colour from the location dot in the header
+          const locRow = html.querySelector(`[data-loc-index="${idx}"]`);
+          const dot = locRow?.querySelector(".cs-loc-dot[class*='cs-face-loc-']");
+          if (dot) {
+            const colorMatch = dot.className.match(/cs-face-loc-(\S+)/);
+            if (colorMatch) btn.classList.add(`cs-face-loc-${colorMatch[1]}`);
+          }
+        }
+      }
+      heights.sort((a, b) => a - b);
+      locs[idx].rollHeights = heights;
+
+      // Update the header height pips display too
+      const locRow = html.querySelector(`.cs-loc-row[data-loc-index="${idx}"]`);
+      const pipsContainer = locRow?.querySelector(".cs-loc-heights");
+      if (pipsContainer) {
+        const dot = locRow.querySelector(".cs-loc-dot[class*='cs-face-loc-']");
+        const colorMatch = dot?.className.match(/cs-face-loc-(\S+)/);
+        const color = colorMatch ? colorMatch[1] : "brass";
+        if (heights.length > 0) {
+          pipsContainer.innerHTML = heights.map(h =>
+            `<span class="cs-height-badge cs-face-loc-${color}">${h}</span>`
+          ).join("");
+        } else {
+          pipsContainer.innerHTML = `<span class="cs-loc-redir">↪ redirect</span>`;
+        }
+      }
+
+      // Save without re-rendering — panel stays open for more clicks
+      this.document.update({ "system.customLocations": locs }, { render: false });
     });
   }
 
   // FIX: ArrayField form submissions lose fields that aren't named form inputs.
-  // When submitOnChange fires, form data contains only the named inputs for each
-  // array element (e.g. name, woundBoxes, ar for locations). Fields like rollHeights,
-  // shock, killing have no form inputs and would be replaced with schema defaults.
-  // Fix: merge form data on top of the current document data for each array element.
+  // When submitOnChange fires, hidden config panel inputs still get collected by
+  // FormData. The expanded data only contains named fields (name, woundBoxes, ar)
+  // but NOT rollHeights, shock, killing — so the whole array gets replaced with
+  // partial objects, wiping those fields to schema defaults.
+  //
+  // Two-layer fix:
+  // 1. Hidden config panel inputs are disabled (see _onFirstRender) so they don't
+  //    appear in FormData at all when closed.
+  // 2. When ANY array element IS in the data (open config panel), merge missing
+  //    sub-fields from the current document to preserve non-form fields.
   _prepareSubmitData(event, form, formData) {
     const data = super._prepareSubmitData(event, form, formData);
 
     // ── Merge customLocations: preserve rollHeights, shock, killing ──
-    this._mergeArrayFormData(data, "system.customLocations",
+    this._mergeExpandedArrayData(data, ["system", "customLocations"],
       this.document.system.customLocations || []);
 
     // ── Merge creatureAttacks: preserve fields not in config panel ──
-    this._mergeArrayFormData(data, "system.creatureAttacks",
+    this._mergeExpandedArrayData(data, ["system", "creatureAttacks"],
       this.document.system.creatureAttacks || []);
 
-    // ── Parse rollHeights comma-string to number array ──
-    const locs = this.document.system.customLocations || [];
-    locs.forEach((loc, i) => {
-      const key = `system.customLocations.${i}.rollHeights`;
-      if (key in data) {
-        const raw = String(data[key]);
-        data[key] = raw === "redirect only" || raw.trim() === ""
-          ? []
-          : raw.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 10);
+    // ── Parse rollHeights: if any location data came through, convert
+    //    the comma-string (or array) back to a clean number array ──
+    const locsInData = data?.system?.customLocations;
+    if (locsInData) {
+      for (const [idx, loc] of Object.entries(locsInData)) {
+        if (loc && "rollHeights" in loc) {
+          const raw = loc.rollHeights;
+          if (typeof raw === "string") {
+            loc.rollHeights = (raw === "redirect only" || raw.trim() === "")
+              ? []
+              : raw.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 10);
+          }
+          // If it's already an array (from merge), leave it
+        }
       }
-    });
+    }
 
     return data;
   }
 
   /**
-   * For an ArrayField at `prefix`, find all dotted keys in `data` that modify
-   * individual elements (e.g. prefix.0.name, prefix.1.ar) and fill in any
-   * missing sub-fields from `currentArray` so the update doesn't wipe them.
+   * For an expanded ArrayField object at the given path, ensure that when ANY
+   * element is in the form data, ALL elements are present with full data.
+   * This prevents Foundry from replacing the full array with a partial set.
+   *
+   * Works on the expanded (nested) object that super._prepareSubmitData returns.
    */
-  _mergeArrayFormData(data, prefix, currentArray) {
-    // Collect which array indices appear in the form data
-    const touchedIndices = new Set();
-    const indexPattern = new RegExp(`^${prefix.replace(/\./g, "\\.")}\\.(\\d+)\\.`);
-    for (const key of Object.keys(data)) {
-      const m = key.match(indexPattern);
-      if (m) touchedIndices.add(parseInt(m[1]));
+  _mergeExpandedArrayData(data, pathParts, currentArray) {
+    // Navigate to the array-like object in the expanded data
+    let node = data;
+    for (const part of pathParts) {
+      if (!node || typeof node !== "object") return;
+      node = node[part];
     }
-    if (touchedIndices.size === 0) return;
+    if (!node || typeof node !== "object") return;
 
-    // For each touched index, ensure every field from the current doc data
-    // is present in the form data (form values win, doc values fill gaps)
-    for (const idx of touchedIndices) {
+    // Check if any numeric-keyed element is present
+    const hasAnyElement = Object.keys(node).some(k => !isNaN(parseInt(k)));
+    if (!hasAnyElement) return;
+
+    // Ensure ALL elements are present — if an element is missing entirely,
+    // add a full copy from the document. If partially present, fill gaps.
+    for (let idx = 0; idx < currentArray.length; idx++) {
       const current = currentArray[idx];
       if (!current) continue;
       const src = current.toObject ? current.toObject() : foundry.utils.deepClone(current);
-      for (const [field, val] of Object.entries(src)) {
-        const dotKey = `${prefix}.${idx}.${field}`;
-        if (!(dotKey in data)) data[dotKey] = val;
+
+      if (!(String(idx) in node)) {
+        // Element not in form data at all — add full copy from document
+        node[String(idx)] = src;
+      } else {
+        // Element partially in form data — fill in missing fields
+        const formElement = node[String(idx)];
+        for (const [field, val] of Object.entries(src)) {
+          if (!(field in formElement)) {
+            formElement[field] = val;
+          }
+        }
       }
     }
   }
@@ -463,8 +571,16 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
     event.preventDefault();
     const key = target.dataset.skillKey;
     if (!key) return;
-    // ObjectField keys are removed by setting them to -=null via Foundry's delete syntax
-    await this.document.update({ [`system.creatureSkills.-=${key}`]: null });
+    try {
+      // V14+ operator-based deletion (same pattern as character sheet)
+      const del = globalThis._del ?? foundry?.data?.operators?.ForcedDeletion?.create?.();
+      if (del) {
+        await this.document.update({ [`system.creatureSkills.${key}`]: del });
+      } else {
+        // Fallback for older cores / edge builds
+        await this.document.update({ [`system.creatureSkills.-=${key}`]: null });
+      }
+    } catch(err) { ui.notifications.error(`Action failed: ${err.message}`); console.error(err); }
   }
 
   async _onEditCreatureSkill(event, target) {
@@ -1094,12 +1210,21 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       }));
 
       const heights = (loc.rollHeights || []).slice().sort((a,b) => a-b);
+      const heightsSet = new Set(heights);
+
+      // Face picker: 10 buttons for the height config UI
+      const facePicker = Array.from({ length: 10 }, (_, i) => ({
+        face: i + 1,
+        active: heightsSet.has(i + 1)
+      }));
+
       return {
         ...loc, index: idx, color,
         heightPips: heights,
         heightLabel: heights.length > 0 ? heights.join(", ") : "redirect only",
         isRedirectOnly: heights.length === 0,
         boxes, statusLabel, statusClass,
+        facePicker,
         isDestroyed: killing >= max && max > 0
       };
     });

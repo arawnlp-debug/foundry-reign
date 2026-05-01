@@ -154,35 +154,35 @@
                       data-attack-index="{{@index}}" title="Remove attack"><i class="fas fa-times"></i></button>
             </div>
 
-            {{!-- Config row (hidden by default) --}}
+            {{!-- Config row (hidden — NO name attributes, changes handled via JS) --}}
             <div class="cs-attack-config" data-attack-edit-index="{{@index}}" hidden>
               <div class="cs-attack-config-row">
                 <label class="cs-config-label">Name</label>
-                <input type="text" name="system.creatureAttacks.{{@index}}.name"
+                <input type="text" data-atk-field="name" data-atk-index="{{@index}}"
                        value="{{atk.name}}" placeholder="Attack name" class="cs-config-input"/>
               </div>
               <div class="cs-attack-config-row">
                 <label class="cs-config-label">Attr</label>
-                <select name="system.creatureAttacks.{{@index}}.attribute" class="cs-config-select">
+                <select data-atk-field="attribute" data-atk-index="{{@index}}" class="cs-config-select">
                   <option value="body" {{#if (eq atk.attribute "body")}}selected{{/if}}>Body</option>
                   <option value="coordination" {{#if (eq atk.attribute "coordination")}}selected{{/if}}>Coordination</option>
                   <option value="sense" {{#if (eq atk.attribute "sense")}}selected{{/if}}>Sense</option>
                 </select>
                 <label class="cs-config-label">Skill</label>
-                <input type="text" name="system.creatureAttacks.{{@index}}.skill"
+                <input type="text" data-atk-field="skill" data-atk-index="{{@index}}"
                        value="{{atk.skill}}" placeholder="e.g. bite, fight" class="cs-config-input"/>
               </div>
               <div class="cs-attack-config-row">
                 <label class="cs-config-label">Damage</label>
-                <input type="text" name="system.creatureAttacks.{{@index}}.damage"
+                <input type="text" data-atk-field="damage" data-atk-index="{{@index}}"
                        value="{{atk.damage}}" placeholder="e.g. Width+1 Killing" class="cs-config-input cs-config-input-wide"/>
                 <label class="cs-config-label">Slow</label>
-                <input type="number" name="system.creatureAttacks.{{@index}}.isSlow"
+                <input type="number" data-atk-field="isSlow" data-atk-index="{{@index}}"
                        value="{{atk.isSlow}}" min="0" max="10" class="cs-config-num"/>
               </div>
               <div class="cs-attack-config-row">
                 <label class="cs-config-label">Notes</label>
-                <input type="text" name="system.creatureAttacks.{{@index}}.notes"
+                <input type="text" data-atk-field="notes" data-atk-index="{{@index}}"
                        value="{{atk.notes}}" placeholder="Special qualities, conditions..." class="cs-config-input cs-config-input-wide"/>
               </div>
             </div>
@@ -257,21 +257,29 @@
               {{/each}}
             </div>
 
-            {{!-- Config row (hidden) --}}
+            {{!-- Config row (hidden — NO name attributes, changes handled via JS) --}}
             <div class="cs-loc-config" data-edit-index="{{loc.index}}" hidden>
-              <label class="cs-config-label">Name</label>
-              <input type="text" name="system.customLocations.{{loc.index}}.name"
-                     value="{{loc.name}}" placeholder="Name" class="cs-config-input"/>
-              <label class="cs-config-label">Heights</label>
-              <input type="text" data-heights-index="{{loc.index}}"
-                     value="{{loc.heightLabel}}" placeholder="e.g. 7,8,9"
-                     class="cs-config-input cs-heights-input"/>
-              <label class="cs-config-label">Boxes</label>
-              <input type="number" name="system.customLocations.{{loc.index}}.woundBoxes"
-                     value="{{loc.woundBoxes}}" min="1" max="50" class="cs-config-num"/>
-              <label class="cs-config-label">AR</label>
-              <input type="number" name="system.customLocations.{{loc.index}}.ar"
-                     value="{{loc.ar}}" min="0" class="cs-config-num"/>
+              <div class="cs-config-row-inline">
+                <label class="cs-config-label">Name</label>
+                <input type="text" data-loc-field="name" data-loc-index="{{loc.index}}"
+                       value="{{loc.name}}" placeholder="Name" class="cs-config-input"/>
+                <label class="cs-config-label">Boxes</label>
+                <input type="number" data-loc-field="woundBoxes" data-loc-index="{{loc.index}}"
+                       value="{{loc.woundBoxes}}" min="1" max="50" class="cs-config-num"/>
+                <label class="cs-config-label">AR</label>
+                <input type="number" data-loc-field="ar" data-loc-index="{{loc.index}}"
+                       value="{{loc.ar}}" min="0" class="cs-config-num"/>
+              </div>
+              <div class="cs-config-row-inline">
+                <label class="cs-config-label">Heights</label>
+                <div class="cs-height-picker" data-loc-index="{{loc.index}}">
+                  {{#each loc.facePicker as |fp|}}
+                    <button type="button" class="cs-face-btn {{#if fp.active}}cs-face-btn-active cs-face-loc-{{loc.color}}{{/if}}"
+                            data-face="{{fp.face}}" data-loc-index="{{loc.index}}"
+                            data-action-local="toggleHeight" title="Face {{fp.face}}">{{fp.face}}</button>
+                  {{/each}}
+                </div>
+              </div>
             </div>
           </div>
           {{else}}

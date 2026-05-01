@@ -32,9 +32,20 @@ Each attack row now has a cog button that toggles an inline config panel (same p
 The Token Peek pool preview for creature-mode threats was reading `creatureSkills?.[skill]?.value`, but `creatureSkills` stores values directly as numbers/"ED"/"MD", not as `{value: N}` objects. The skill contribution was silently always 0. Fixed to read the value directly and correctly count ED/MD as +1 die.
 
 ### BUG — ArrayField Form Submission Wipes Non-Form Fields
-**File:** `scripts/sheets/threat-sheet.js`
+**Files:** `scripts/sheets/threat-sheet.js`, `templates/actor/threat-sheet.hbs`, `styles/actor-sheet.css`
 
-Editing any form field on the creature sheet via `submitOnChange` would reset hit location Heights (rollHeights), Shock, and Killing damage to defaults, because the form data only included the named inputs (name, woundBoxes, ar) and Foundry replaced the entire `customLocations` array with partial objects. Same issue affected `creatureAttacks`. Fixed via `_mergeArrayFormData()` in `_prepareSubmitData`, which fills in missing sub-fields from the current document data before the update is applied.
+Editing any form field on the creature sheet via `submitOnChange` would reset hit location Heights (rollHeights), Shock, and Killing damage to defaults. Two root causes:
+
+1. **Expanded object mismatch** — `super._prepareSubmitData()` returns an expanded nested object (via `expandObject`), but the merge function was searching for flat dotted keys that don't exist in the expanded format. Rewritten to navigate the nested structure directly.
+
+2. **Hidden inputs still collected** — config panel inputs inside `<div hidden>` still participate in FormData. All config panel inputs now start `disabled` in the template and are toggled enabled/disabled when the cog button opens/closes the panel. Disabled inputs are excluded from FormData by the HTML spec.
+
+The merge function (`_mergeExpandedArrayData`) now ensures that whenever ANY element of an array is in the form data, ALL elements are included with their full data from the current document, preventing Foundry from replacing the array with a partial set.
+
+### UX — Clickable Height Selector
+**Files:** `templates/actor/threat-sheet.hbs`, `scripts/sheets/threat-sheet.js`, `styles/actor-sheet.css`
+
+The Heights text input in the location config panel is replaced with a row of 10 clickable face buttons (1–10). Each button toggles that d10 face on/off for the location. Active faces are highlighted in the location's colour. Changes save immediately via a direct `update()` call, bypassing `submitOnChange` entirely.
 
 ### BUG — Movement, Trainability, Tricks, Special Rules Not Persisting
 **Files:** `scripts/helpers/models.js`, `scripts/sheets/threat-sheet.js`
