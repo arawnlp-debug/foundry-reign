@@ -69,7 +69,7 @@ The system handles all ORE mechanics automatically:
 
 ## Quick Dice Roller
 
-A standalone ORE dice roller is available directly from the chat sidebar — the d20 icon button in the chat controls bar, next to the roll mode and speaker selectors.
+A standalone ORE dice roller is available directly from the chat sidebar — the ORE icon button in the chat controls bar, next to the roll mode and speaker selectors.
 
 Click the button to open a dialog where you can set a roll label, pool size, difficulty, bonus and penalty dice, Expert Die face, and Master Die. A live pool preview updates as you adjust inputs. On confirm, the dice are rolled through the full ORE engine and posted as a standard chat card with sets, waste, and hit locations — identical to rolls made from a character sheet.
 
