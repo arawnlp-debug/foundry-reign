@@ -5,7 +5,7 @@
 
 .reign-chat-card {
   background: var(--reign-bg-parchment);
-  background-image: var(--reign-grain);
+  background-image: var(--reign-grain), var(--reign-texture-coarse);
   border: var(--reign-border-iron);
   border-radius: 4px;
   box-shadow: var(--reign-shadow-drop);
@@ -42,6 +42,24 @@
 /* -----------------------------------------
     TYPOGRAPHY & UTILITIES
 ----------------------------------------- */
+
+/* ── Base h3: ensures ALL chat card titles (HBS + JS-generated) match ── */
+.reign-chat-card h3 {
+    font-family: var(--reign-font-display);
+    font-size: var(--reign-text-lg);
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 var(--reign-space-sm) 0;
+    padding-bottom: var(--reign-space-sm);
+    border: none;
+    background-image: var(--reign-divider);
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 100% 6px;
+    color: var(--reign-text-dark);
+}
+
 .reign-text-danger { color: var(--reign-red) !important; }
 .reign-text-success { color: var(--reign-green) !important; }
 .reign-text-info { color: var(--reign-blue) !important; }
@@ -67,32 +85,34 @@
     padding: 6px; 
     font-weight: bold; 
     text-align: center; 
-    margin-bottom: 8px; 
-    border-radius: 4px; 
-    font-size: 0.9em; 
+    margin-bottom: var(--reign-space-sm); 
+    border-radius: var(--reign-radius-md); 
+    font-size: var(--reign-text-sm); 
 }
-.reign-banner small { font-weight: normal; font-size: 0.85em; }
+.reign-banner small { font-weight: normal; font-size: 0.9em; }
 .reign-banner-warning { background: var(--reign-bg-warn); color: var(--reign-burnt-orange); border: 1px solid var(--reign-color-warn-border); }
 .reign-banner-info { background: var(--reign-bg-teal); color: var(--reign-color-teal); border: 1px solid var(--reign-color-teal-border); }
-.reign-banner-fail { background: rgba(139,31,31,0.05); color: var(--reign-color-blood); font-size: 1.1em; padding: 10px; }
-.reign-banner-deflect { background: #e8f5e9; border: 2px solid #2e7d32; color: #1b5e20; padding: 8px; box-shadow: var(--reign-shadow-drop); margin-bottom: 10px; }
+.reign-banner-fail { background: var(--reign-bg-blood-muted); color: var(--reign-color-blood); font-size: var(--reign-text-base); padding: 10px; }
+.reign-banner-deflect { background: var(--reign-bg-deflect); border: 2px solid var(--reign-color-deflect); color: var(--reign-color-deflect-dark); padding: 8px; box-shadow: var(--reign-shadow-drop); margin-bottom: 10px; }
 
 /* Status Banners */
 .reign-status-banner {
-    padding: 8px;
+    padding: var(--reign-space-sm);
     text-align: center;
     font-weight: bold;
-    font-size: 1.1em;
-    margin-top: 8px;
-    border-radius: 4px;
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: var(--reign-text-base);
+    margin-top: var(--reign-space-sm);
+    border-radius: var(--reign-radius-md);
+    color: var(--reign-text-light);
+    box-shadow: var(--reign-shadow-drop);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
-.reign-status-banner.dead { background: var(--reign-dark-red); font-size: 1.2em; }
+.reign-status-banner.dead { background: var(--reign-dark-red); font-size: var(--reign-text-lg); }
 .reign-status-banner.unconscious { background: var(--reign-navy); }
-.reign-status-banner.dazed { background: var(--reign-burnt-orange); font-size: 0.95em; padding: 6px; }
-.reign-status-banner.maimed { background: var(--reign-red); font-size: 0.95em; padding: 6px; }
+.reign-status-banner.dazed { background: var(--reign-burnt-orange); }
+.reign-status-banner.maimed { background: var(--reign-red); }
 .reign-status-banner.gobbled { 
     background: var(--reign-bg-teal); 
     border: 2px solid var(--reign-color-teal-light); 
@@ -111,7 +131,7 @@
 .reign-card-magic { border-color: var(--reign-navy) !important; }
 .reign-card-critical { 
     border: 2px solid var(--reign-red) !important; 
-    background: rgba(139, 31, 31, 0.05); 
+    background: var(--reign-bg-blood-muted); 
 }
 .reign-header-fancy {
     font-family: var(--reign-font-display); 
@@ -121,7 +141,9 @@
 /* Callout Boxes */
 .reign-callout {
     background: var(--reign-bg-vellum);
-    padding: 5px;
+    padding: var(--reign-space-sm);
+    border-radius: var(--reign-radius-md);
+    font-size: var(--reign-text-sm);
 }
 .reign-callout-danger { border-left: 3px solid var(--reign-red); }
 .reign-callout-success { border-left: 3px solid var(--reign-green); }
@@ -132,31 +154,32 @@
 .reign-callout-critical { border-left: 3px solid var(--reign-critical); }
 
 /* Dark Mode Banners */
-.theme-dark .reign-chat-card .reign-banner-warning { background: var(--reign-bg-warn); border-color: var(--reign-color-warn-border); color: #ffcc80; }
-.theme-dark .reign-chat-card .reign-banner-info { background: var(--reign-bg-teal); border-color: var(--reign-color-teal-border); color: #b2dfdb; }
-.theme-dark .reign-chat-card .reign-banner-deflect { background: #1b5e20; border-color: #4caf50; color: #c8e6c9; }
+.theme-dark .reign-chat-card .reign-banner-warning { background: var(--reign-bg-warn); border-color: var(--reign-color-warn-border); color: var(--reign-orange); }
+.theme-dark .reign-chat-card .reign-banner-info { background: var(--reign-bg-teal); border-color: var(--reign-color-teal-border); color: var(--reign-color-teal-light); }
+.theme-dark .reign-chat-card .reign-banner-deflect { background: var(--reign-color-deflect-dark); border-color: var(--reign-color-deflect); color: var(--reign-bg-deflect); }
 .theme-dark .reign-callout-info { background: var(--reign-bg-info); }
 
 /* -----------------------------------------
     COLLAPSIBLE POOL BREAKDOWN
 ----------------------------------------- */
 .reign-pool-breakdown { 
-    margin-bottom: 12px; 
+    margin-bottom: var(--reign-space-md); 
     font-size: var(--reign-text-sm); 
     background: var(--reign-bg-vellum); 
-    padding: 5px 8px; 
-    border-radius: 3px; 
-    border: 1px solid var(--reign-border-light); 
+    padding: var(--reign-space-sm); 
+    border-radius: var(--reign-radius-md); 
+    border: var(--reign-border-light); 
 }
-.reign-pool-breakdown summary { cursor: pointer; color: var(--reign-text-muted); font-weight: bold; }
-.reign-pool-breakdown ul { margin: 5px 0 0 0; padding-left: 20px; color: var(--reign-text-dark); }
+.reign-pool-breakdown summary { cursor: pointer; color: var(--reign-text-muted); font-weight: bold; font-family: var(--reign-font-data); }
+.reign-pool-breakdown ul { margin: var(--reign-space-xs) 0 0 0; padding-left: 20px; color: var(--reign-text-dark); font-family: var(--reign-font-data); font-size: var(--reign-text-sm); }
+.reign-pool-breakdown ul li { margin-bottom: 2px; }
 
 /* -----------------------------------------
     GOBBLE DICE UI
 ----------------------------------------- */
 .reign-gobble-tracker { 
     margin-bottom: 12px; 
-    background: rgba(46, 125, 50, 0.1); 
+    background: var(--reign-bg-emerald-subtle); 
     border: 1px solid var(--reign-color-emerald); 
     padding: 8px; 
     text-align: center; 
@@ -166,7 +189,7 @@
 }
 .reign-gobble-tracker strong { display: block; margin-bottom: 6px; font-size: 1.1em; }
 .gobble-list { justify-content: center; gap: 5px; }
-.gobble-badge { background: var(--reign-color-emerald); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 1em; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.gobble-badge { background: var(--reign-color-emerald); color: var(--reign-text-light); padding: 4px 10px; border-radius: 12px; font-size: 1em; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
 /* -----------------------------------------
     SETS & DICE TRAYS
@@ -177,21 +200,23 @@
     background-repeat: no-repeat;
     background-position: bottom center;
     background-size: 100% 6px;
-    padding-bottom: 8px; 
-    margin-bottom: 8px; 
+    padding-bottom: var(--reign-space-sm); 
+    margin-bottom: var(--reign-space-sm); 
     color: var(--reign-text-muted); 
+    font-family: var(--reign-font-data);
     font-size: var(--reign-text-sm); 
     text-transform: uppercase; 
     letter-spacing: 1px;
+    font-weight: bold;
 }
 
 .ore-set { 
     background: var(--reign-bg-vellum); 
     border: 1px solid var(--reign-border-light); 
     border-left: 4px solid var(--reign-color-blood); 
-    border-radius: 4px; 
-    padding: 8px; 
-    margin-bottom: 8px; 
+    border-radius: var(--reign-radius-md); 
+    padding: var(--reign-space-sm); 
+    margin-bottom: var(--reign-space-sm); 
 }
 .set-text { font-size: 1.2em; color: var(--reign-color-blood); }
 .set-location { font-size: 0.9em; font-weight: bold; color: var(--reign-text-muted); }
@@ -218,7 +243,7 @@
 
 .reign-die.matched { 
     background: radial-gradient(circle at 30% 30%, var(--reign-color-blood), var(--reign-color-blood-dark)); 
-    color: #ffffff; 
+    color: var(--reign-text-light); 
     border: none; 
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 
     filter: drop-shadow(0px 3px 2px rgba(0,0,0,0.3)); 
@@ -228,13 +253,13 @@
     width: 24px;
     height: 24px;
     font-size: 0.9em;
-    background: radial-gradient(circle at 30% 30%, #d5cfc5, #a89e90); 
-    color: #888; 
+    background: radial-gradient(circle at 30% 30%, var(--reign-bg-vellum), var(--reign-bg-ash)); 
+    color: var(--reign-text-muted); 
     text-shadow: 0px 1px 0px rgba(255,255,255,0.3); 
     filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.1)); 
     opacity: 0.6; 
 }
-.theme-dark .reign-die.waste { background: radial-gradient(circle at 30% 30%, #3a3835, #2a2825); color: #777; text-shadow: none; opacity: 0.5; }
+.theme-dark .reign-die.waste { background: radial-gradient(circle at 30% 30%, var(--reign-bg-ash), var(--reign-bg-iron-light)); color: var(--reign-text-muted); text-shadow: none; opacity: 0.5; }
 .reign-die:hover { transform: scale(1.15) rotate(5deg); filter: drop-shadow(0px 4px 3px rgba(0,0,0,0.35)); transition: transform 0.15s ease, filter 0.15s ease; }
 .reign-die.matched:hover { filter: drop-shadow(0px 4px 4px rgba(139, 31, 31, 0.4)); }
 
@@ -260,44 +285,63 @@
     flex: 1; 
     cursor: pointer; 
     font-weight: bold; 
-    border-radius: 3px; 
-    transition: background 0.2s; 
+    font-family: var(--reign-font-flavor);
+    font-size: var(--reign-text-sm);
+    border-radius: var(--reign-radius-md); 
+    transition: background var(--reign-transition-fast), transform var(--reign-transition-fast), filter var(--reign-transition-fast); 
     padding: 4px; 
     line-height: normal; 
 }
 
+.reign-chat-card button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+}
+
+.reign-chat-card button:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+}
+
+.reign-chat-card button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+}
+
 /* Damage Button */
-.reign-btn-damage { background: rgba(229, 115, 115, 0.1); border: 1px solid #ef5350; color: var(--reign-color-blood); }
-.reign-btn-damage:hover { background: rgba(229, 115, 115, 0.3); }
+.reign-btn-damage { background: var(--reign-bg-blood-subtle); border: 1px solid var(--reign-color-danger-border); color: var(--reign-color-blood); }
+.reign-btn-damage:hover { background: var(--reign-bg-blood-subtle); }
 
 /* Gobble Button */
 .reign-btn-gobble { background: transparent; border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); margin-top: 6px; width: 100%; }
-.reign-btn-gobble:hover { background: rgba(46, 125, 50, 0.1); }
+.reign-btn-gobble:hover { background: var(--reign-bg-emerald-subtle); }
 
 /* Magic Button */
-.reign-btn-magic { background: rgba(66, 165, 245, 0.1); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
-.reign-btn-magic:hover { background: rgba(66, 165, 245, 0.3); }
+.reign-btn-magic { background: var(--reign-bg-blue-subtle); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
+.reign-btn-magic:hover { background: var(--reign-bg-blue-subtle); }
 .theme-dark .reign-btn-magic { color: var(--reign-blue); }
 
 /* Small Utility Buttons */
 .reign-btn-small { flex: 0 0 32px !important; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center;}
 
 /* Heal Button */
-.reign-btn-heal { background: rgba(46, 125, 50, 0.1); border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); }
-.reign-btn-heal:hover { background: rgba(46, 125, 50, 0.3); }
+.reign-btn-heal { background: var(--reign-bg-emerald-subtle); border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); }
+.reign-btn-heal:hover { background: var(--reign-bg-emerald-subtle); }
 .theme-dark .reign-btn-heal { color: var(--reign-color-emerald); }
 
 /* Ch7 Morale Attack Button */
-.reign-btn-morale { background: rgba(156, 39, 176, 0.1); border: 1px solid #9c27b0; color: #7b1fa2; flex: 0 0 auto !important; padding: 0 8px !important; font-size: 0.8em; font-weight: bold; }
-.reign-btn-morale:hover { background: rgba(156, 39, 176, 0.3); }
+.reign-btn-morale { background: var(--reign-bg-sorcery-subtle); border: 1px solid var(--reign-purple); color: var(--reign-purple); flex: 0 0 auto !important; padding: 0 8px !important; font-size: 0.8em; font-weight: bold; }
+.reign-btn-morale:hover { background: var(--reign-bg-sorcery-subtle); }
 .theme-dark .reign-btn-morale { color: var(--reign-purple); }
 /* C1: Manoeuvre status effect button — teal/teal-dark */
-.reign-btn-maneuver { background: rgba(0, 137, 123, 0.1); border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); }
-.reign-btn-maneuver:hover { background: rgba(0, 137, 123, 0.25); }
-.theme-dark .reign-btn-maneuver { background: rgba(0, 137, 123, 0.15); color: var(--reign-color-teal-border); border-color: var(--reign-color-teal-border); }
+.reign-btn-maneuver { background: var(--reign-bg-teal-subtle); border: 1px solid var(--reign-color-emerald); color: var(--reign-color-emerald); }
+.reign-btn-maneuver:hover { background: var(--reign-bg-teal-subtle); }
+.theme-dark .reign-btn-maneuver { background: var(--reign-bg-teal-subtle); color: var(--reign-color-teal-border); border-color: var(--reign-color-teal-border); }
 /* C2: Secondary hold button (Maintain / Execute / Wrench Free) — muted teal outline */
 .reign-btn-maneuver-secondary { background: transparent; border: 1px dashed var(--reign-color-emerald); color: var(--reign-color-emerald); opacity: 0.85; }
-.reign-btn-maneuver-secondary:hover { background: rgba(0, 137, 123, 0.15); opacity: 1; }
+.reign-btn-maneuver-secondary:hover { background: var(--reign-bg-teal-subtle); opacity: 1; }
 .theme-dark .reign-btn-maneuver-secondary { color: var(--reign-color-teal-border); border-color: var(--reign-color-teal-border); }
 
 /* -----------------------------------------
@@ -307,10 +351,10 @@
 .reign-phase-btn { flex: 1; border: 1px solid transparent; line-height: 24px; padding: 0; height: 28px; cursor: pointer; color: var(--reign-text-muted); transition: all 0.2s ease; background: transparent; }
 .reign-phase-btn:first-child { border-radius: 3px 0 0 3px; }
 .reign-phase-btn:last-child { border-radius: 0 3px 3px 0; }
-.reign-phase-btn.active-declare { background: var(--reign-green); color: white; border-color: #4caf50; box-shadow: 0 0 8px #4caf50; font-weight: bold; text-shadow: 1px 1px 2px black; }
-.reign-phase-btn.active-resolve { background: var(--reign-critical); color: white; border-color: #e53935; box-shadow: 0 0 8px #e53935; font-weight: bold; text-shadow: 1px 1px 2px black; }
+.reign-phase-btn.active-declare { background: var(--reign-green); color: var(--reign-text-light); border-color: var(--reign-green); box-shadow: 0 0 8px var(--reign-green); font-weight: bold; text-shadow: 1px 1px 2px black; }
+.reign-phase-btn.active-resolve { background: var(--reign-critical); color: var(--reign-text-light); border-color: var(--reign-critical); box-shadow: 0 0 8px var(--reign-critical); font-weight: bold; text-shadow: 1px 1px 2px black; }
 
-.reign-wound-banner { background: var(--reign-bg-danger); color: #b71c1c; border: 1px solid #d32f2f; text-align: center; padding: 6px; margin: 4px 8px 8px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: var(--reign-shadow-drop); }
+.reign-wound-banner { background: var(--reign-bg-danger); color: var(--reign-color-blood-dark); border: 1px solid var(--reign-color-danger); text-align: center; padding: 6px; margin: 4px 8px 8px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: var(--reign-shadow-drop); }
 .reign-wound-banner span { font-weight: normal; font-size: 0.95em; color: var(--reign-color-blood); }
 .theme-dark .reign-wound-banner { background: var(--reign-bg-danger); color: var(--reign-red); border-color: var(--reign-color-danger); }
 .theme-dark .reign-wound-banner span { color: var(--reign-text-light); }
@@ -323,8 +367,8 @@
 /* -----------------------------------------
     CHAT CARD: SETS & GOBBLE UI
 ----------------------------------------- */
-.reign-set-success { border-left: 5px solid var(--reign-green); background: rgba(45, 90, 39, 0.04); }
-.reign-set-fail { border-left: 5px solid var(--reign-red); background: rgba(139, 31, 31, 0.04); opacity: 0.85; }
+.reign-set-success { border-left: 5px solid var(--reign-green); background: var(--reign-bg-emerald-muted); }
+.reign-set-fail { border-left: 5px solid var(--reign-red); background: var(--reign-bg-blood-muted); opacity: 0.85; }
 
 .reign-gobble-gen { font-size: 0.9em; color: var(--reign-color-blue-dark); margin-top: 6px; text-align: center; padding: 6px; border-top: 1px dashed var(--reign-color-info-border); background: var(--reign-bg-info); border-radius: 3px; width: 100%; }
 .reign-gobble-gen-defense { font-size: 0.85em; font-style: italic; color: var(--reign-color-blue-dark); }
@@ -337,28 +381,28 @@
 .reign-action-buttons { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; width: 100%; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px; }
 
 /* Micro Action Buttons */
-.reign-btn-init { background: #fff8e1; border: 1px solid #f57f17; color: #f57f17; }
+.reign-btn-init { background: var(--reign-bg-amber); border: 1px solid var(--reign-color-amber); color: var(--reign-color-amber); }
 .reign-btn-init:hover { background: var(--reign-bg-warn); }
-.theme-dark .reign-btn-init { background: rgba(245, 127, 23, 0.1); color: #ffd54f; }
+.theme-dark .reign-btn-init { background: var(--reign-bg-amber-subtle); color: var(--reign-color-amber); }
 
 .reign-btn-company { background: var(--reign-bg-warn); border: 1px solid var(--reign-color-brass); color: var(--reign-burnt-orange); }
 .reign-btn-company:hover { background: var(--reign-bg-warn); }
-.theme-dark .reign-btn-company { background: rgba(255, 152, 0, 0.1); color: #ffb74d; }
+.theme-dark .reign-btn-company { background: var(--reign-bg-brass-subtle); color: var(--reign-orange); }
 
-.reign-btn-condition { background: rgba(156, 39, 176, 0.08); border: 1px solid var(--reign-purple); color: var(--reign-purple); }
-.reign-btn-condition:hover { background: rgba(156, 39, 176, 0.18); }
-.theme-dark .reign-btn-condition { background: rgba(123, 31, 162, 0.1); color: #ce93d8; }
+.reign-btn-condition { background: var(--reign-bg-sorcery-muted); border: 1px solid var(--reign-purple); color: var(--reign-purple); }
+.reign-btn-condition:hover { background: var(--reign-bg-sorcery-subtle); }
+.theme-dark .reign-btn-condition { background: var(--reign-bg-sorcery-subtle); color: var(--reign-purple); }
 
-.reign-btn-first-aid { background: var(--reign-bg-info); border: 1px solid #0277bd; color: #01579b; }
+.reign-btn-first-aid { background: var(--reign-bg-info); border: 1px solid var(--reign-blue); color: var(--reign-color-blue-dark); }
 .reign-btn-first-aid:hover { background: var(--reign-bg-info); }
-.theme-dark .reign-btn-first-aid { background: rgba(2, 119, 189, 0.1); color: #81d4fa; }
+.theme-dark .reign-btn-first-aid { background: var(--reign-bg-blue-subtle); color: var(--reign-blue); }
 
-.reign-btn-waste-dmg { background: var(--reign-bg-danger); border: 1px solid #ef5350; color: var(--reign-color-danger); }
+.reign-btn-waste-dmg { background: var(--reign-bg-danger); border: 1px solid var(--reign-color-danger-border); color: var(--reign-color-danger); }
 .reign-btn-waste-dmg:hover { background: var(--reign-bg-danger); }
-.theme-dark .reign-btn-waste-dmg { background: rgba(239, 83, 80, 0.1); color: #ef9a9a; }
+.theme-dark .reign-btn-waste-dmg { background: var(--reign-bg-blood-subtle); color: var(--reign-color-danger); }
 
 .reign-ed-result { margin-top: 10px; border-top: var(--reign-border-dashed); padding-top: 8px; font-size: 0.9em; color: var(--reign-text-dark); }
-.reign-ed-badge { background: var(--reign-green); color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold; margin-left: 5px; }
+.reign-ed-badge { background: var(--reign-green); color: var(--reign-text-light); padding: 2px 8px; border-radius: 3px; font-weight: bold; margin-left: 5px; }
 .reign-md-result { margin-top: 6px; font-size: 0.9em; color: var(--reign-green); }
 
 /* -----------------------------------------
@@ -469,8 +513,8 @@
 
 /* F1/F3: Spell action buttons row */
 .reign-spell-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.reign-btn-info { background: rgba(66, 165, 245, 0.1); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
-.reign-btn-info:hover { background: rgba(66, 165, 245, 0.25); }
+.reign-btn-info { background: var(--reign-bg-blue-subtle); border: 1px solid var(--reign-color-info-border); color: var(--reign-color-blue-dark); }
+.reign-btn-info:hover { background: var(--reign-bg-blue-subtle); }
 .theme-dark .reign-btn-info { color: var(--reign-color-blue-dark); border-color: var(--reign-color-info-border); }
 
 /* -----------------------------------------
@@ -519,7 +563,7 @@
     color: var(--reign-text-light);
 }
 .theme-dark .reign-quick-roller-btn:hover {
-    background: #a52a2a;
-    border-color: #a52a2a;
+    background: var(--reign-color-blood);
+    border-color: var(--reign-color-blood);
     box-shadow: 0 2px 6px rgba(200, 50, 50, 0.5);
 }

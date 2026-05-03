@@ -64,6 +64,7 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
                 fascinate: makeSkill(), graces: makeSkill(), lie: makeSkill(), plead: makeSkill()
             }),
             customSkills: new ObjectField({ initial: {} }),
+            customMoves: new ObjectField({ initial: {} }),
             esoterica: new SchemaField({
                 sorcery: new NumberField({ initial: 0, min: 0, integer: true }),
                 expert: new BooleanField({ initial: false }),

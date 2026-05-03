@@ -198,8 +198,8 @@
 
 .cp-btn-oneroll {
     background: var(--reign-color-emerald);
-    border: 1px solid #1b3818;
-    color: white;
+    border: 1px solid var(--reign-color-emerald);
+    color: var(--reign-text-light);
 }
 
 .cp-btn-oneroll:hover {
@@ -210,7 +210,7 @@
 .cp-btn-forge {
     background: var(--reign-color-blood);
     border: 1px solid var(--reign-color-blood-dark);
-    color: white;
+    color: var(--reign-text-light);
 }
 
 .cp-btn-forge:hover {
@@ -221,7 +221,7 @@
 .cp-btn-manual {
     background: var(--reign-bg-iron-light);
     border: 1px solid var(--reign-bg-iron);
-    color: white;
+    color: var(--reign-text-light);
 }
 
 .cp-btn-manual:hover {

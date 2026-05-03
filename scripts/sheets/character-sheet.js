@@ -969,7 +969,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
     const parryShields = equippedShields.filter(s => s.system.shieldSize !== "tower");
     if (parryShields.length > 0) shieldBonus = Math.max(...parryShields.map(s => s.system.parryBonus || 0));
 
-    context.preferredMoves = { body: bodyVal, coord: coordVal, parry: parryVal, dodge: dodgeVal, parryTotal: system.baseParryPool + shieldBonus, dodgeTotal: system.baseDodgePool, shieldBonus: shieldBonus };
+    context.preferredMoves = { body: bodyVal, coord: coordVal, parry: parryVal, dodge: dodgeVal, parryTotal: bodyVal + parryVal + shieldBonus, dodgeTotal: coordVal + dodgeVal, shieldBonus: shieldBonus };
 
     // PACKAGE C: Aim and Shield state for combat-moves template
     context.aimBonus = this.document.getFlag("reign", "aimBonus") || 0;

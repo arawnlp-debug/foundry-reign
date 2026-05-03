@@ -27,6 +27,24 @@ import * as models from "./system/models.js";
 const { DialogV2 } = foundry.applications.api;
 
 Hooks.once("init", async () => {
+
+  // ── Global UI Skin: mark <body> so CSS can target Foundry chrome ──
+  document.body.classList.add("system-reign");
+
+  // ── Colourblind Mode (Client Setting) ──
+  game.settings.register("reign", "colorblindMode", {
+    name: "Colourblind Mode",
+    hint: "Shifts the colour palette to an Okabe-Ito inspired high-contrast scheme that is distinguishable under protanopia, deuteranopia, and tritanopia.",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange: (enabled) => {
+      document.body.classList.toggle("colorblind-mode", enabled);
+    }
+  });
+  // Apply on load (deferred to 'ready' hook where client settings are guaranteed loaded)
+
   CONFIG.Combat.documentClass = ReignCombat;
   CONFIG.Combat.initiative = { formula: "0", decimals: 2 };
 
@@ -177,6 +195,13 @@ Hooks.once("init", async () => {
     openQuickDiceRoller,                                     // F4: Quick Dice Roller
     GMToolbar                                                // GM Toolbar class
   };
+});
+
+// ── Colourblind Mode: apply saved preference on load (all users) ──
+Hooks.once("ready", () => {
+  if (game.settings.get("reign", "colorblindMode")) {
+    document.body.classList.add("colorblind-mode");
+  }
 });
 
 Hooks.once("ready", async () => {

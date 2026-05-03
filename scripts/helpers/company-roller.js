@@ -195,11 +195,31 @@ export class CompanyRoller {
         // --- COMPOSE MAIN LABEL ---
         let actionLabel = rollData.presetLabel ? rollData.presetLabel : "Company Action";
 
+        // --- BUILD POOL BREAKDOWN ---
+        const qualityLabels = { "might": "Might", "treasure": "Treasure", "influence": "Influence", "territory": "Territory", "sovereignty": "Sovereignty" };
+        let poolBreakdown = [];
+        if (val1 > 0) {
+            let q1Label = qualityLabels[rollData.q1] || rollData.q1;
+            if (rollData.q1Limit !== null) q1Label += ` (capped at ${rollData.q1Limit})`;
+            poolBreakdown.push({ label: q1Label, value: `+${val1}`, isPenalty: false });
+        }
+        if (val2 > 0) {
+            let q2Label = qualityLabels[rollData.q2] || rollData.q2;
+            if (rollData.q2Limit !== null) q2Label += ` (capped at ${rollData.q2Limit})`;
+            poolBreakdown.push({ label: q2Label, value: `+${val2}`, isPenalty: false });
+        }
+        if (rollData.mod > 0) poolBreakdown.push({ label: "Modifier Dice", value: `+${rollData.mod}`, isPenalty: false });
+        if (rollData.mod < 0) poolBreakdown.push({ label: "Modifier Dice", value: `${rollData.mod}`, isPenalty: true });
+        if (pledges.bonus > 0) poolBreakdown.push({ label: "War Chest Bonus", value: `+${pledges.bonus}`, isPenalty: false });
+        if (pledges.ed > 0) poolBreakdown.push({ label: "Expert Die (War Chest)", value: `+1 (set to ${pledges.ed})`, isPenalty: false });
+        if (pledges.md > 0) poolBreakdown.push({ label: "Master Die (War Chest)", value: `+1`, isPenalty: false });
+
         // --- OUTPUT MAIN ORE CHAT CARD ---
         await postOREChat(actor, actionLabel, diceToRoll, results, pledges.ed, pledges.md, null, { 
             targetQuality: rollData.targetQuality, 
             wasCapped: wasCapped, 
-            difficulty: rollData.difficulty 
+            difficulty: rollData.difficulty,
+            poolBreakdown: poolBreakdown
         });
 
         // ==========================================

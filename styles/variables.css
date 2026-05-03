@@ -1,10 +1,17 @@
 /* ====================================================
    REIGN: REALITIES OF LORDS AND LEADERS 
    Variables & Theme Architecture
+   ────────────────────────────────────────────────────
+   SINGLE SOURCE OF TRUTH — All colour, spacing, and
+   typographic decisions live here. Component files
+   MUST NOT contain hardcoded hex or named colours.
 ==================================================== */
 
 :root {
-  /* The Palette: Blood, Iron, and Parchment (Light Mode Defaults) */
+
+  /* ─── The Palette: Blood, Iron, and Parchment ──────────────────────── */
+  /* Light Mode Defaults                                                  */
+
   --reign-bg-parchment: #f4f1ea;       /* Base sheet background */
   --reign-bg-vellum: #e8e0d0;          /* Secondary panels, zebra rows, callouts */
   --reign-bg-paper: #fdfdfc;           /* Inputs and text areas */
@@ -16,8 +23,27 @@
   --reign-color-blood-dark: #6a1616;   /* Hover states for blood */
   --reign-color-emerald: #2d5a27;      /* Success, Healing, Gobble Dice */
   --reign-color-brass: #d97706;        /* Sovereignty, Armor, Shields */
-  
-  /* Semantic Colors for V14 Chat/Dialogs */
+
+  /* ─── Extended Palette ─────────────────────────────────────────────── */
+  /* Sorcery: Charactermancer, esoteric UI, school icons                 */
+  --reign-color-sorcery: #512da8;
+  --reign-color-sorcery-dark: #311b92;
+  --reign-color-sorcery-light: #ede7f6;
+  /* Destroyed / Disabled: Greyed-out locations, dead states             */
+  --reign-color-destroyed: #555555;
+  --reign-color-destroyed-light: #999999;
+  /* Deflect: Shield deflection banners                                  */
+  --reign-color-deflect: #2e7d32;
+  --reign-color-deflect-dark: #1b5e20;
+  --reign-bg-deflect: #e8f5e9;
+  /* Spell intensity — fired/success green                               */
+  --reign-color-fired: #1e6b3a;
+  --reign-bg-fired: rgba(30,107,58,0.15);
+  /* Attunement header                                                   */
+  --reign-bg-attunement: #2a2a3a;
+  --reign-text-attunement: #cccccc;
+
+  /* ─── Semantic Colors for V14 Chat / Dialogs ───────────────────────── */
   --reign-red: #8b1f1f;
   --reign-green: #2d5a27;
   --reign-blue: #0277bd;
@@ -30,7 +56,8 @@
   --reign-navy: #1a237e;
   --reign-burnt-orange: #e65100;
 
-  /* Semantic UI Colours — Chat Cards & Banners */
+  /* ─── Semantic UI Colours — Chat Cards & Banners ───────────────────── */
+
   /* Teal: success confirmations, manoeuvre effects, healing */
   --reign-color-teal: #00695c;
   --reign-color-teal-light: #00897b;
@@ -53,17 +80,40 @@
   /* Arcane: extreme-intensity spells, esoteric power */
   --reign-color-arcane: #4a1a6e;
   --reign-color-arcane-light: #e2d4ff;
-  
+
+  /* ─── Subtle Backgrounds (Button Tints & Card Washes) ──────────────── */
+  /* These replace the ~80 raw rgba() values in component files.          */
+  /* Each has a -subtle (10% tint) and -muted (5% tint) variant.          */
+
+  --reign-bg-blood-subtle: rgba(229, 115, 115, 0.10);
+  --reign-bg-blood-muted: rgba(139, 31, 31, 0.05);
+  --reign-bg-blood-wash: rgba(139, 31, 31, 0.08);
+  --reign-bg-emerald-subtle: rgba(46, 125, 50, 0.10);
+  --reign-bg-emerald-muted: rgba(46, 125, 50, 0.04);
+  --reign-bg-brass-subtle: rgba(217, 119, 6, 0.10);
+  --reign-bg-brass-muted: rgba(217, 119, 6, 0.06);
+  --reign-bg-blue-subtle: rgba(66, 165, 245, 0.10);
+  --reign-bg-blue-muted: rgba(66, 165, 245, 0.04);
+  --reign-bg-sorcery-subtle: rgba(156, 39, 176, 0.10);
+  --reign-bg-sorcery-muted: rgba(156, 39, 176, 0.05);
+  --reign-bg-teal-subtle: rgba(0, 137, 123, 0.10);
+  --reign-bg-teal-muted: rgba(0, 137, 123, 0.04);
+  --reign-bg-amber-subtle: rgba(245, 127, 23, 0.10);
+
+  /* ─── Text ─────────────────────────────────────────────────────────── */
   --reign-text-dark: #111111;          /* Standard reading text */
   --reign-text-muted: #555555;         /* Helper text and hints */
   --reign-text-light: #ffffff;         /* Text on iron/blood backgrounds */
 
+  /* ─── Borders ──────────────────────────────────────────────────────── */
   --reign-border-iron: 2px solid var(--reign-bg-iron);
   --reign-border-brass: 1px solid var(--reign-color-brass);
   --reign-border-light: 1px solid #ccc;
   --reign-border-dashed: 1px dashed #aaa;
+  --reign-border-heavy: 2px solid #000;             /* Threat boxes, pool previews */
+  --reign-border-medium: 1px solid #999;             /* Health boxes, input outlines */
 
-  /* Typography Hierarchy */
+  /* ─── Typography Hierarchy ─────────────────────────────────────────── */
   --reign-font-display: 'Cinzel', 'Book Antiqua', Palatino, serif;
   --reign-font-flavor: "Book Antiqua", Palatino, serif;
   --reign-font-data: var(--font-primary), sans-serif;
@@ -78,30 +128,86 @@
   --reign-text-2xl: 1.8em;
   --reign-text-3xl: 2.5em;
 
-  /* Spacing Scale */
+  /* ─── Spacing Scale ────────────────────────────────────────────────── */
   --reign-space-xs: 4px;
   --reign-space-sm: 8px;
   --reign-space-md: 16px;
   --reign-space-lg: 24px;
   --reign-space-xl: 32px;
 
-  /* Shadows & Depth */
+  /* ─── Shadows & Depth ──────────────────────────────────────────────── */
   --reign-shadow-inset: inset 0 1px 3px rgba(0,0,0,0.1);
   --reign-shadow-drop: 0 2px 4px rgba(0,0,0,0.15);
+  --reign-shadow-elevated: 0 4px 12px rgba(0,0,0,0.20);
 
-  /* Motif: Diamond Divider (inline SVG) */
+  /* ─── Focus & Accessibility ────────────────────────────────────────── */
+  --reign-focus-ring: rgba(139, 31, 31, 0.5);        /* Blood-tinted focus outline */
+  --reign-focus-glow: 0 0 0 2px rgba(139, 31, 31, 0.35);
+  --reign-focus-ring-inner: rgba(139, 31, 31, 0.15); /* Subtle inner fill on focus */
+
+  /* ─── Custom Scrollbar ─────────────────────────────────────────────── */
+  --reign-scrollbar-track: transparent;
+  --reign-scrollbar-thumb: rgba(43, 43, 43, 0.25);   /* Iron at 25% */
+  --reign-scrollbar-hover: rgba(139, 31, 31, 0.4);   /* Blood on hover */
+  --reign-scrollbar-width: 6px;
+
+  /* ─── Transitions ──────────────────────────────────────────────────── */
+  --reign-transition-fast: 0.1s ease;
+  --reign-transition-base: 0.2s ease;
+  --reign-transition-slow: 0.3s ease;
+
+  /* ─── Border Radius ────────────────────────────────────────────────── */
+  --reign-radius-sm: 2px;
+  --reign-radius-md: 4px;
+  --reign-radius-lg: 8px;
+
+  /* ─── Motif: Diamond Divider (inline SVG — Light) ──────────────────── */
   --reign-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cline x1='0' y1='4' x2='90' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3Cpolygon points='100,0.5 106,4 100,7.5 94,4' fill='%238b1f1f' fill-opacity='0.3' stroke='%232b2b2b' stroke-opacity='0.25' stroke-width='0.5'/%3E%3Cline x1='110' y1='4' x2='200' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3C/svg%3E");
 
-  /* Texture: Parchment Grain (subtle warm noise) */
-  --reign-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  /* ─── Texture: Parchment (Multi-Layer) ───────────────────────────────── */
+  /* Layer 1: Fine grain — small-scale fractal noise for paper fibre       */
+  --reign-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.06'/%3E%3C/svg%3E");
+
+  /* Layer 2: Coarse fibre — larger-scale turbulence for visible texture   */
+  --reign-texture-coarse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.025' numOctaves='5' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='0.045'/%3E%3C/svg%3E");
+
+  /* Layer 3: Warm vignette — subtle edge darkening like aged paper        */
+  --reign-vignette: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 40%,
+    rgba(139, 120, 90, 0.06) 70%,
+    rgba(100, 80, 55, 0.12) 100%
+  );
+
+  /* Composed parchment surface: all layers stacked (bottom to top)        */
+  --reign-parchment-surface:
+    var(--reign-grain),
+    var(--reign-texture-coarse),
+    var(--reign-vignette);
+
+  /* Edge depth shadow for physical feel on sheet containers               */
+  --reign-shadow-parchment: inset 0 0 30px rgba(100, 80, 55, 0.08), inset 0 0 4px rgba(0, 0, 0, 0.04);
 }
 
-/* -----------------------------------------
-    DARK MODE COMPATIBILITY (Foundry VTT)
------------------------------------------ */
+
+/* ═════════════════════════════════════════════════════════════════════════
+   DARK MODE — Foundry VTT (.theme-dark)
+   ─────────────────────────────────────────────────────────────────────
+   Broadened scope: covers sheets, chat cards, dialogs, charactermancer,
+   companymancer, and the global UI skin via .system-reign.
+═════════════════════════════════════════════════════════════════════════ */
+
 .theme-dark .reign.sheet,
 .theme-dark .reign-chat-card,
-.theme-dark .reign-dialog-window .window-content {
+.theme-dark .reign-dialog-window .window-content,
+.theme-dark .charactermancer-wrapper,
+.theme-dark .cm-wrapper,
+.theme-dark .companymancer-wrapper,
+.theme-dark.system-reign #sidebar,
+.theme-dark.system-reign .window-header,
+.theme-dark.system-reign .window-content {
+
+  /* ─── Core Palette — Dark ────────────────────────────────────────── */
   --reign-bg-parchment: #1e1e1e;
   --reign-bg-vellum: #252525;
   --reign-bg-paper: #2a2a2a;
@@ -113,7 +219,22 @@
   --reign-color-blood-dark: #cc4444;
   --reign-color-emerald: #3a8a33;
   --reign-color-brass: #e68a00;
+
+  /* ─── Extended Palette — Dark ────────────────────────────────────── */
+  --reign-color-sorcery: #9575cd;
+  --reign-color-sorcery-dark: #7e57c2;
+  --reign-color-sorcery-light: #1a1028;
+  --reign-color-destroyed: #666666;
+  --reign-color-destroyed-light: #888888;
+  --reign-color-deflect: #4caf50;
+  --reign-color-deflect-dark: #388e3c;
+  --reign-bg-deflect: #1b3a1b;
+  --reign-color-fired: #66bb6a;
+  --reign-bg-fired: rgba(102,187,106,0.12);
+  --reign-bg-attunement: #1a1a28;
+  --reign-text-attunement: #bbbbbb;
   
+  /* ─── Semantic — Dark ────────────────────────────────────────────── */
   --reign-red: #ff5252;
   --reign-green: #4caf50;
   --reign-blue: #42a5f5;
@@ -125,7 +246,7 @@
   --reign-navy: #3949ab;
   --reign-burnt-orange: #f57c00;
 
-  /* Semantic UI Colours — Dark Mode */
+  /* Semantic UI Colours — Dark */
   --reign-color-teal: #009688;
   --reign-color-teal-light: #00bfa5;
   --reign-color-teal-border: #00897b;
@@ -142,16 +263,207 @@
   --reign-bg-amber: #2e2200;
   --reign-color-arcane: #9c6dbf;
   --reign-color-arcane-light: #d4b8f0;
-  
+
+  /* ─── Subtle Backgrounds — Dark ──────────────────────────────────── */
+  --reign-bg-blood-subtle: rgba(165, 50, 50, 0.15);
+  --reign-bg-blood-muted: rgba(165, 50, 50, 0.08);
+  --reign-bg-blood-wash: rgba(165, 50, 50, 0.10);
+  --reign-bg-emerald-subtle: rgba(58, 138, 51, 0.15);
+  --reign-bg-emerald-muted: rgba(58, 138, 51, 0.06);
+  --reign-bg-brass-subtle: rgba(230, 138, 0, 0.12);
+  --reign-bg-brass-muted: rgba(230, 138, 0, 0.06);
+  --reign-bg-blue-subtle: rgba(66, 165, 245, 0.12);
+  --reign-bg-blue-muted: rgba(66, 165, 245, 0.06);
+  --reign-bg-sorcery-subtle: rgba(149, 117, 205, 0.15);
+  --reign-bg-sorcery-muted: rgba(149, 117, 205, 0.08);
+  --reign-bg-teal-subtle: rgba(0, 150, 136, 0.12);
+  --reign-bg-teal-muted: rgba(0, 150, 136, 0.06);
+  --reign-bg-amber-subtle: rgba(245, 127, 23, 0.12);
+
+  /* ─── Text — Dark ────────────────────────────────────────────────── */
   --reign-text-dark: #e0e0e0;
   --reign-text-muted: #999999;
   --reign-text-light: #ffffff;
-  
+
+  /* ─── Borders — Dark ─────────────────────────────────────────────── */
   --reign-border-iron: 2px solid var(--reign-bg-iron);
   --reign-border-brass: 1px solid var(--reign-color-brass);
   --reign-border-light: 1px solid #444;
   --reign-border-dashed: 1px dashed #555;
-  
+  --reign-border-heavy: 2px solid #000;
+  --reign-border-medium: 1px solid #555;
+
+  /* ─── Shadows — Dark (deeper to compensate for dark backgrounds) ── */
   --reign-shadow-inset: inset 0 1px 3px rgba(0,0,0,0.4);
   --reign-shadow-drop: 0 2px 4px rgba(0,0,0,0.5);
+  --reign-shadow-elevated: 0 4px 12px rgba(0,0,0,0.6);
+
+  /* ─── Focus — Dark ───────────────────────────────────────────────── */
+  --reign-focus-ring: rgba(165, 50, 50, 0.6);
+  --reign-focus-glow: 0 0 0 2px rgba(165, 50, 50, 0.4);
+  --reign-focus-ring-inner: rgba(165, 50, 50, 0.1);
+
+  /* ─── Scrollbar — Dark ───────────────────────────────────────────── */
+  --reign-scrollbar-track: transparent;
+  --reign-scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --reign-scrollbar-hover: rgba(165, 50, 50, 0.4);
+
+  /* ─── Motif: Diamond Divider — Dark ──────────────────────────────── */
+  /* Lighter strokes, slightly brighter blood diamond for visibility    */
+  --reign-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cline x1='0' y1='4' x2='90' y2='4' stroke='%23888888' stroke-opacity='0.3' stroke-width='1'/%3E%3Cpolygon points='100,0.5 106,4 100,7.5 94,4' fill='%23a53232' fill-opacity='0.45' stroke='%23888888' stroke-opacity='0.2' stroke-width='0.5'/%3E%3Cline x1='110' y1='4' x2='200' y2='4' stroke='%23888888' stroke-opacity='0.3' stroke-width='1'/%3E%3C/svg%3E");
+
+  /* ─── Texture: Grain — Dark ──────────────────────────────────────── */
+  /* Fully desaturated, lower opacity for dark surfaces                */
+  --reign-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E");
+
+  /* Coarse texture — cooler, desaturated for dark leather/stone feel  */
+  --reign-texture-coarse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.025' numOctaves='5' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='0.035'/%3E%3C/svg%3E");
+
+  /* Vignette — deeper edge darkening for dramatic dark mode           */
+  --reign-vignette: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 35%,
+    rgba(0, 0, 0, 0.08) 65%,
+    rgba(0, 0, 0, 0.18) 100%
+  );
+
+  --reign-parchment-surface:
+    var(--reign-grain),
+    var(--reign-texture-coarse),
+    var(--reign-vignette);
+
+  --reign-shadow-parchment: inset 0 0 30px rgba(0, 0, 0, 0.15), inset 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   COLOURBLIND MODE — Okabe-Ito Inspired Palette
+   ─────────────────────────────────────────────────────────────────────
+   Toggled via client setting `reign.colorblindMode` which applies
+   .colorblind-mode to document.body. Remaps the three semantic hues
+   (Blood, Emerald, Brass) plus Sorcery to a high-contrast palette
+   that is distinguishable under protanopia, deuteranopia, and
+   tritanopia. All downstream variables (subtle bgs, focus rings)
+   cascade automatically.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* ── Colourblind: Light Mode ─────────────────────────────────────────── */
+.colorblind-mode .reign.sheet,
+.colorblind-mode .reign-chat-card,
+.colorblind-mode .reign-dialog-window .window-content,
+.colorblind-mode .charactermancer-wrapper,
+.colorblind-mode .cm-wrapper,
+.colorblind-mode .companymancer-wrapper,
+.colorblind-mode.system-reign #sidebar,
+.colorblind-mode.system-reign .window-header,
+.colorblind-mode.system-reign .window-content {
+
+  /* Blood → Vermillion (Okabe-Ito) */
+  --reign-color-blood: #D55E00;
+  --reign-color-blood-dark: #A34700;
+  --reign-red: #D55E00;
+  --reign-critical: #CC3311;
+  --reign-dark-red: #6B2F00;
+
+  /* Emerald → Bluish Green (Okabe-Ito) */
+  --reign-color-emerald: #009E73;
+  --reign-green: #009E73;
+  --reign-color-teal: #009E73;
+  --reign-color-teal-light: #00C08B;
+  --reign-color-deflect: #009E73;
+  --reign-color-deflect-dark: #007A59;
+  --reign-color-fired: #007A59;
+
+  /* Brass → Orange/Yellow (Okabe-Ito) */
+  --reign-color-brass: #E69F00;
+  --reign-orange: #E69F00;
+  --reign-burnt-orange: #CC8800;
+  --reign-color-amber: #E69F00;
+  --reign-color-warn-border: #E69F00;
+
+  /* Sorcery → Sky Blue (Okabe-Ito) */
+  --reign-color-sorcery: #56B4E9;
+  --reign-color-sorcery-dark: #3A98CC;
+  --reign-color-arcane: #56B4E9;
+  --reign-purple: #56B4E9;
+  --reign-navy: #0072B2;
+
+  /* Info → Reddish Purple (Okabe-Ito) for contrast against blue-green */
+  --reign-blue: #CC79A7;
+  --reign-color-blue-dark: #AA5585;
+  --reign-color-info-border: #CC79A7;
+
+  /* Subtle backgrounds cascade from the remapped primaries */
+  --reign-bg-blood-subtle: rgba(213, 94, 0, 0.10);
+  --reign-bg-blood-muted: rgba(213, 94, 0, 0.05);
+  --reign-bg-blood-wash: rgba(213, 94, 0, 0.08);
+  --reign-bg-emerald-subtle: rgba(0, 158, 115, 0.10);
+  --reign-bg-emerald-muted: rgba(0, 158, 115, 0.04);
+  --reign-bg-brass-subtle: rgba(230, 159, 0, 0.10);
+  --reign-bg-brass-muted: rgba(230, 159, 0, 0.06);
+  --reign-bg-sorcery-subtle: rgba(86, 180, 233, 0.10);
+  --reign-bg-sorcery-muted: rgba(86, 180, 233, 0.05);
+  --reign-bg-blue-subtle: rgba(204, 121, 167, 0.10);
+  --reign-bg-teal-subtle: rgba(0, 158, 115, 0.10);
+
+  /* Focus ring uses vermillion instead of blood-red */
+  --reign-focus-ring: rgba(213, 94, 0, 0.5);
+  --reign-focus-glow: 0 0 0 2px rgba(213, 94, 0, 0.35);
+
+  /* Scrollbar hover uses vermillion */
+  --reign-scrollbar-hover: rgba(213, 94, 0, 0.4);
+
+  /* Divider uses vermillion diamond, neutral strokes */
+  --reign-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cline x1='0' y1='4' x2='90' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3Cpolygon points='100,0.5 106,4 100,7.5 94,4' fill='%23D55E00' fill-opacity='0.3' stroke='%232b2b2b' stroke-opacity='0.25' stroke-width='0.5'/%3E%3Cline x1='110' y1='4' x2='200' y2='4' stroke='%232b2b2b' stroke-opacity='0.35' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* ── Colourblind: Dark Mode (both classes active) ────────────────────── */
+.colorblind-mode.theme-dark .reign.sheet,
+.colorblind-mode.theme-dark .reign-chat-card,
+.colorblind-mode.theme-dark .reign-dialog-window .window-content,
+.colorblind-mode.theme-dark .charactermancer-wrapper,
+.colorblind-mode.theme-dark .cm-wrapper,
+.colorblind-mode.theme-dark .companymancer-wrapper,
+.colorblind-mode.theme-dark.system-reign #sidebar,
+.colorblind-mode.theme-dark.system-reign .window-header,
+.colorblind-mode.theme-dark.system-reign .window-content {
+
+  /* Vermillion — slightly brighter for dark backgrounds */
+  --reign-color-blood: #E87530;
+  --reign-color-blood-dark: #FF8C42;
+  --reign-red: #FF8C42;
+  --reign-critical: #FF6633;
+
+  /* Bluish Green — slightly brighter */
+  --reign-color-emerald: #2BBFA0;
+  --reign-green: #2BBFA0;
+  --reign-color-teal: #2BBFA0;
+
+  /* Orange/Yellow — slightly brighter */
+  --reign-color-brass: #FFB833;
+  --reign-orange: #FFB833;
+
+  /* Sky Blue — holds well in dark mode */
+  --reign-color-sorcery: #7CC8F0;
+  --reign-purple: #7CC8F0;
+  --reign-color-arcane: #7CC8F0;
+
+  /* Reddish Purple */
+  --reign-blue: #E09CC0;
+  --reign-color-blue-dark: #CC79A7;
+
+  /* Subtle bgs with dark-adjusted opacities */
+  --reign-bg-blood-subtle: rgba(232, 117, 48, 0.15);
+  --reign-bg-blood-muted: rgba(232, 117, 48, 0.08);
+  --reign-bg-emerald-subtle: rgba(43, 191, 160, 0.15);
+  --reign-bg-emerald-muted: rgba(43, 191, 160, 0.06);
+  --reign-bg-brass-subtle: rgba(255, 184, 51, 0.12);
+  --reign-bg-sorcery-subtle: rgba(124, 200, 240, 0.12);
+
+  --reign-focus-ring: rgba(232, 117, 48, 0.6);
+  --reign-focus-glow: 0 0 0 2px rgba(232, 117, 48, 0.4);
+  --reign-scrollbar-hover: rgba(232, 117, 48, 0.4);
+
+  /* Divider — dark mode colourblind */
+  --reign-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='8' viewBox='0 0 200 8'%3E%3Cline x1='0' y1='4' x2='90' y2='4' stroke='%23888888' stroke-opacity='0.3' stroke-width='1'/%3E%3Cpolygon points='100,0.5 106,4 100,7.5 94,4' fill='%23E87530' fill-opacity='0.45' stroke='%23888888' stroke-opacity='0.2' stroke-width='0.5'/%3E%3Cline x1='110' y1='4' x2='200' y2='4' stroke='%23888888' stroke-opacity='0.3' stroke-width='1'/%3E%3C/svg%3E");
 }

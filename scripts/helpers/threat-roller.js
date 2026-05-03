@@ -126,7 +126,13 @@ export class ThreatRoller {
             }
         };
         
-        await postOREChat(actor, game.i18n.localize("REIGN.RollThreatAction") || "Threat Action", diceToRoll, results, 0, 0, pseudoWeapon, { isMinion: true, wasCapped, isAttack: true });
+        // Build pool breakdown for chat card
+        let poolBreakdown = [];
+        poolBreakdown.push({ label: "Group Size", value: `+${groupSize}`, isPenalty: false });
+        if (rollData.bonus > 0) poolBreakdown.push({ label: "Ganging Up / Bonus", value: `+${rollData.bonus}`, isPenalty: false });
+        if (rollData.penalty > 0) poolBreakdown.push({ label: "Penalties", value: `-${rollData.penalty}`, isPenalty: true });
+
+        await postOREChat(actor, game.i18n.localize("REIGN.RollThreatAction") || "Threat Action", diceToRoll, results, 0, 0, pseudoWeapon, { isMinion: true, wasCapped, isAttack: true, poolBreakdown: poolBreakdown });
         
     } catch (err) {
         console.error("Reign Threat Roller | CRITICAL EXCEPTION:", err);
@@ -170,7 +176,8 @@ export class ThreatRoller {
 
         let actionLabel = (game.i18n.localize("REIGN.RollMorale") || "Morale Check") + outcomeText;
 
-        await postOREChat(actor, actionLabel, diceToRoll, results, 0, 0, null, { isMinion: true, wasCapped });
+        let poolBreakdown = [{ label: "Morale", value: `+${moraleVal}`, isPenalty: false }];
+        await postOREChat(actor, actionLabel, diceToRoll, results, 0, 0, null, { isMinion: true, wasCapped, poolBreakdown: poolBreakdown });
 
         if (routed) {
             await actor.toggleStatusEffect("dead", { active: true });

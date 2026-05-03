@@ -8,7 +8,8 @@
 ----------------------------------------- */
 .reign.sheet.actor, .reign.sheet.item {
   background: var(--reign-bg-parchment);
-  background-image: var(--reign-grain);
+  background-image: var(--reign-parchment-surface);
+  box-shadow: var(--reign-shadow-parchment);
   color: var(--reign-text-dark);
   font-family: var(--reign-font-flavor);
 }
@@ -254,4 +255,598 @@
     border-radius: 4px !important;
     box-sizing: border-box !important;
     object-fit: contain !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PHASE 3: FOUNDRY GLOBAL SKINNING
+   ─────────────────────────────────────────────────────────────────────
+   Scoped to .system-reign (added to <body> during init hook).
+   Skins the Foundry chrome to match the "Blood, Iron, and Parchment"
+   visual identity so sheets don't feel like islands.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Sidebar ────────────────────────────────────────────────────────── */
+.system-reign #sidebar {
+  background: var(--reign-bg-parchment);
+  background-image: var(--reign-grain), var(--reign-texture-coarse);
+  border-left: var(--reign-border-iron);
+}
+
+.system-reign #sidebar .sidebar-tab {
+  background: transparent;
+  color: var(--reign-text-dark);
+  font-family: var(--reign-font-flavor);
+}
+
+.system-reign #sidebar #sidebar-tabs > .item {
+  font-family: var(--reign-font-display);
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  transition: color var(--reign-transition-base), border-color var(--reign-transition-base);
+}
+
+.system-reign #sidebar #sidebar-tabs > .item.active {
+  border-bottom-color: var(--reign-color-blood);
+  text-shadow: none;
+}
+
+.system-reign #sidebar .directory-header {
+  border-bottom: var(--reign-border-iron);
+}
+
+.system-reign #sidebar .directory-list .directory-item {
+  border-bottom: 1px solid var(--reign-bg-vellum);
+}
+
+.system-reign #sidebar h3 {
+  font-family: var(--reign-font-display);
+}
+
+/* ─── Window Headers ─────────────────────────────────────────────────── */
+.system-reign .window-app .window-header,
+.system-reign .app-v2 .window-header {
+  background: var(--reign-bg-iron);
+  color: var(--reign-text-light);
+  font-family: var(--reign-font-display);
+  border-bottom: 2px solid var(--reign-color-blood);
+}
+
+.system-reign .window-app .window-header .window-title,
+.system-reign .app-v2 .window-header .window-title {
+  color: var(--reign-text-light);
+  font-family: var(--reign-font-display);
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: var(--reign-text-sm);
+}
+
+.system-reign .window-app .window-header .header-button,
+.system-reign .app-v2 .window-header .header-button {
+  color: rgba(255,255,255,0.6);
+  transition: color var(--reign-transition-fast);
+}
+
+.system-reign .window-app .window-header .header-button:hover,
+.system-reign .app-v2 .window-header .header-button:hover {
+  color: var(--reign-text-light);
+}
+
+/* ─── Window Content ─────────────────────────────────────────────────── */
+.system-reign .window-app .window-content,
+.system-reign .app-v2 .window-content {
+  background: var(--reign-bg-parchment);
+  background-image: var(--reign-parchment-surface);
+}
+
+/* ─── Dialog Footer Buttons ──────────────────────────────────────────── */
+.system-reign .dialog .dialog-buttons button,
+.system-reign .app-v2 footer.window-footer button {
+  background: var(--reign-bg-iron);
+  color: var(--reign-text-light);
+  border: 1px solid var(--reign-bg-iron-light);
+  font-family: var(--reign-font-flavor);
+  font-weight: bold;
+  border-radius: var(--reign-radius-md);
+  transition: background var(--reign-transition-fast), transform var(--reign-transition-fast);
+}
+
+.system-reign .dialog .dialog-buttons button:hover,
+.system-reign .app-v2 footer.window-footer button:hover {
+  background: var(--reign-color-blood);
+  border-color: var(--reign-color-blood-dark);
+  transform: translateY(-1px);
+}
+
+/* ─── Chat Messages ──────────────────────────────────────────────────── */
+.system-reign #chat-log .message {
+  border-bottom: 1px solid var(--reign-bg-vellum);
+}
+
+.system-reign #chat-log .message .message-sender {
+  font-family: var(--reign-font-display);
+  font-weight: bold;
+}
+
+/* ─── Combat Tracker ─────────────────────────────────────────────────── */
+.system-reign #combat-tracker .combatant {
+  border-bottom: 1px solid var(--reign-bg-vellum);
+  transition: background var(--reign-transition-fast);
+}
+
+.system-reign #combat-tracker .combatant:hover {
+  background: var(--reign-bg-vellum);
+}
+
+.system-reign #combat-tracker .combatant.active {
+  border-left: 3px solid var(--reign-color-blood);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBARS
+   Thin, themed scrollbars that disappear into the design.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* Webkit (Chrome, Edge, Electron/Foundry) */
+.system-reign ::-webkit-scrollbar {
+  width: var(--reign-scrollbar-width);
+  height: var(--reign-scrollbar-width);
+}
+
+.system-reign ::-webkit-scrollbar-track {
+  background: var(--reign-scrollbar-track);
+}
+
+.system-reign ::-webkit-scrollbar-thumb {
+  background: var(--reign-scrollbar-thumb);
+  border-radius: 3px;
+  transition: background var(--reign-transition-base);
+}
+
+.system-reign ::-webkit-scrollbar-thumb:hover {
+  background: var(--reign-scrollbar-hover);
+}
+
+/* Firefox */
+.system-reign * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--reign-scrollbar-thumb) var(--reign-scrollbar-track);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   FOCUS STATES & KEYBOARD ACCESSIBILITY
+   Themed focus rings replace browser-default blue outlines.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* Global focus-visible ring for all interactive elements within Reign */
+.system-reign input:focus-visible,
+.system-reign select:focus-visible,
+.system-reign textarea:focus-visible,
+.system-reign button:focus-visible,
+.system-reign [role="button"]:focus-visible,
+.system-reign a:focus-visible,
+.system-reign .item:focus-visible {
+  outline: none;
+  box-shadow: var(--reign-focus-glow);
+}
+
+/* Subtle inner highlight for inputs */
+.reign input:focus-visible,
+.reign select:focus-visible,
+.reign textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--reign-focus-glow), var(--reign-shadow-inset);
+  border-color: var(--reign-color-blood);
+}
+
+/* Tab navigation items */
+.reign .sheet-tabs .item:focus-visible {
+  box-shadow: var(--reign-focus-glow);
+  border-radius: var(--reign-radius-sm);
+}
+
+/* Skill rows — focus-within for keyboard navigation */
+.reign .skill-row:focus-within {
+  background: var(--reign-bg-blood-muted);
+  box-shadow: inset 3px 0 0 var(--reign-color-blood);
+}
+
+/* Prevent double focus rings in inner elements */
+.reign .skill-row:focus-within input:focus-visible {
+  box-shadow: none;
+}
+
+/* Overscroll containment for all scrollable areas */
+.reign .sheet-body,
+.reign-spell-scroll,
+.reign .tab {
+  overscroll-behavior: contain;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THE .reign-btn SYSTEM
+   ─────────────────────────────────────────────────────────────────────
+   Unified button base with tactile micro-interactions (translateY,
+   brightness filter, shadow drop). All buttons MUST extend from this
+   base. Modifiers control colour; the base controls feel.
+═════════════════════════════════════════════════════════════════════════ */
+
+.reign-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-family: var(--reign-font-flavor);
+  font-weight: bold;
+  font-size: var(--reign-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  border-radius: var(--reign-radius-md);
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform var(--reign-transition-fast),
+    filter var(--reign-transition-fast),
+    box-shadow 0.15s ease,
+    background var(--reign-transition-fast),
+    border-color var(--reign-transition-fast);
+  box-shadow: var(--reign-shadow-drop);
+}
+
+.reign-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: var(--reign-shadow-elevated);
+}
+
+.reign-btn:active {
+  transform: translateY(0px);
+  filter: brightness(0.95);
+  box-shadow: none;
+}
+
+.reign-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--reign-focus-glow), var(--reign-shadow-drop);
+}
+
+.reign-btn:disabled,
+.reign-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+
+/* ── Colour Modifiers ────────────────────────────────────────────────── */
+
+/* Iron (default dark button) */
+.reign-btn--iron {
+  background: var(--reign-bg-iron);
+  color: var(--reign-text-light);
+  border-color: var(--reign-bg-iron-light);
+}
+
+.reign-btn--iron:hover {
+  background: var(--reign-bg-iron-light);
+}
+
+/* Blood (primary CTA, danger, attack) */
+.reign-btn--blood {
+  background: var(--reign-color-blood);
+  color: var(--reign-text-light);
+  border-color: var(--reign-color-blood-dark);
+}
+
+.reign-btn--blood:hover {
+  background: var(--reign-color-blood-dark);
+}
+
+/* Emerald (success, healing, gobble) */
+.reign-btn--emerald {
+  background: var(--reign-color-emerald);
+  color: var(--reign-text-light);
+  border-color: var(--reign-color-emerald);
+}
+
+.reign-btn--emerald:hover {
+  filter: brightness(1.2);
+}
+
+/* Brass (sovereignty, armor, shields) */
+.reign-btn--brass {
+  background: var(--reign-color-brass);
+  color: var(--reign-text-light);
+  border-color: var(--reign-color-brass);
+}
+
+.reign-btn--brass:hover {
+  filter: brightness(1.15);
+}
+
+/* Arcane (sorcery, esoterica) */
+.reign-btn--arcane {
+  background: var(--reign-color-sorcery);
+  color: var(--reign-text-light);
+  border-color: var(--reign-color-sorcery-dark);
+}
+
+.reign-btn--arcane:hover {
+  background: var(--reign-color-sorcery-dark);
+}
+
+/* Ghost (transparent outline — secondary actions) */
+.reign-btn--ghost {
+  background: transparent;
+  color: var(--reign-text-dark);
+  border-color: var(--reign-bg-ash);
+  box-shadow: none;
+}
+
+.reign-btn--ghost:hover {
+  background: var(--reign-bg-vellum);
+  box-shadow: var(--reign-shadow-drop);
+}
+
+/* Tinted variants (subtle coloured backgrounds for chat/card buttons) */
+.reign-btn--blood-tint {
+  background: var(--reign-bg-blood-subtle);
+  color: var(--reign-color-blood);
+  border-color: var(--reign-color-blood);
+  box-shadow: none;
+}
+
+.reign-btn--blood-tint:hover {
+  background: var(--reign-bg-blood-wash);
+}
+
+.reign-btn--emerald-tint {
+  background: var(--reign-bg-emerald-subtle);
+  color: var(--reign-color-emerald);
+  border-color: var(--reign-color-emerald);
+  box-shadow: none;
+}
+
+.reign-btn--emerald-tint:hover {
+  background: var(--reign-bg-emerald-muted);
+}
+
+.reign-btn--brass-tint {
+  background: var(--reign-bg-brass-subtle);
+  color: var(--reign-color-brass);
+  border-color: var(--reign-color-brass);
+  box-shadow: none;
+}
+
+.reign-btn--brass-tint:hover {
+  background: var(--reign-bg-brass-muted);
+}
+
+.reign-btn--blue-tint {
+  background: var(--reign-bg-blue-subtle);
+  color: var(--reign-color-blue-dark);
+  border-color: var(--reign-color-info-border);
+  box-shadow: none;
+}
+
+.reign-btn--blue-tint:hover {
+  background: var(--reign-bg-blue-muted);
+}
+
+.reign-btn--sorcery-tint {
+  background: var(--reign-bg-sorcery-subtle);
+  color: var(--reign-purple);
+  border-color: var(--reign-purple);
+  box-shadow: none;
+}
+
+.reign-btn--sorcery-tint:hover {
+  background: var(--reign-bg-sorcery-muted);
+}
+
+.reign-btn--teal-tint {
+  background: var(--reign-bg-teal-subtle);
+  color: var(--reign-color-emerald);
+  border-color: var(--reign-color-emerald);
+  box-shadow: none;
+}
+
+.reign-btn--teal-tint:hover {
+  background: var(--reign-bg-teal-muted);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   EMPTY STATES
+   Elegant dashed-border placeholder for empty lists/panels.
+═════════════════════════════════════════════════════════════════════════ */
+
+.reign-empty-state {
+  text-align: center;
+  padding: var(--reign-space-lg);
+  border: 2px dashed var(--reign-bg-ash);
+  border-radius: var(--reign-radius-md);
+  color: var(--reign-text-muted);
+  font-style: italic;
+  font-family: var(--reign-font-flavor);
+  font-size: var(--reign-text-sm);
+  opacity: 0.7;
+  transition: opacity var(--reign-transition-base), border-color var(--reign-transition-base);
+}
+
+.reign-empty-state:hover {
+  opacity: 1;
+  border-color: var(--reign-color-blood);
+}
+
+.reign-empty-state i {
+  display: block;
+  font-size: var(--reign-text-2xl);
+  margin-bottom: var(--reign-space-sm);
+  color: var(--reign-bg-ash);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PHASE 6: INPUT & FORM POLISH
+   ─────────────────────────────────────────────────────────────────────
+   Unified input styling: consistent heights, smooth transitions,
+   themed spin-button removal, and select arrow styling.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Global Input Reset ─────────────────────────────────────────────── */
+/* Remove number input spin buttons across all Reign sheets               */
+.reign input[type="number"]::-webkit-inner-spin-button,
+.reign input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.reign input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Consistent transition on ALL inputs within Reign sheets */
+.reign input,
+.reign select,
+.reign textarea {
+  transition:
+    border-color var(--reign-transition-base),
+    background var(--reign-transition-base),
+    box-shadow var(--reign-transition-base);
+}
+
+/* ─── Select Dropdown Polish ─────────────────────────────────────────── */
+.reign select {
+  background: var(--reign-bg-paper);
+  border: var(--reign-border-light);
+  border-radius: var(--reign-radius-md);
+  color: var(--reign-text-dark);
+  font-family: var(--reign-font-flavor);
+  padding: 3px 6px;
+  cursor: pointer;
+}
+
+.reign select:hover {
+  border-color: var(--reign-bg-ash);
+}
+
+/* ─── Checkbox Polish ────────────────────────────────────────────────── */
+.reign input[type="checkbox"] {
+  accent-color: var(--reign-color-blood);
+  cursor: pointer;
+}
+
+/* ─── Range Slider Polish ────────────────────────────────────────────── */
+.reign input[type="range"] {
+  accent-color: var(--reign-color-blood);
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PHASE 7: MICRO-DETAIL & POLISH
+   ─────────────────────────────────────────────────────────────────────
+   Tab fade-in, item row refinements, consistent zebra striping,
+   and overscroll containment.
+═════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tab Content Fade-In ────────────────────────────────────────────── */
+/* Replaces hard display:none/block toggle with a smooth entrance        */
+@keyframes reign-tab-fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reign .sheet-body .tab.active {
+  animation: reign-tab-fadein 0.2s ease-out;
+}
+
+/* ─── Item Row Polish ────────────────────────────────────────────────── */
+/* Subtle left-border accent on hover for interactive lists               */
+.reign .item-row {
+  transition: background var(--reign-transition-fast), border-left-color var(--reign-transition-fast);
+  border-left: 3px solid transparent;
+}
+
+.reign .item-row:hover {
+  border-left-color: var(--reign-color-blood);
+}
+
+/* Action icons: fade in on hover */
+.reign .item-row .item-controls {
+  opacity: 0.4;
+  transition: opacity var(--reign-transition-fast);
+}
+
+.reign .item-row:hover .item-controls {
+  opacity: 1;
+}
+
+/* ─── Skill Row Polish ───────────────────────────────────────────────── */
+.reign .skill-row {
+  border-left: 3px solid transparent;
+  transition: background var(--reign-transition-fast), border-left-color var(--reign-transition-fast);
+}
+
+.reign .skill-row:hover {
+  border-left-color: var(--reign-color-blood);
+}
+
+/* ─── Rollable Cursor & Hover ────────────────────────────────────────── */
+/* Any element with data-action that triggers a roll should feel clicky   */
+.reign [data-action*="roll"],
+.reign [data-action*="Roll"],
+.reign .rollable {
+  cursor: pointer;
+  transition: text-shadow var(--reign-transition-fast), color var(--reign-transition-fast);
+}
+
+.reign [data-action*="roll"]:hover,
+.reign [data-action*="Roll"]:hover,
+.reign .rollable:hover {
+  text-shadow: 0 0 6px var(--reign-bg-blood-subtle);
+  color: var(--reign-color-blood);
+}
+
+/* ─── Section Dividers ───────────────────────────────────────────────── */
+/* Consistent diamond divider between sections */
+.reign-divider {
+  background-image: var(--reign-divider);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 200px 8px;
+  height: 8px;
+  margin: var(--reign-space-md) 0;
+}
+
+/* ─── Selection Highlight ────────────────────────────────────────────── */
+/* Text selection uses the system palette, not default browser blue       */
+.system-reign ::selection {
+  background: rgba(139, 31, 31, 0.25);
+  color: var(--reign-text-dark);
+}
+
+.system-reign ::-moz-selection {
+  background: rgba(139, 31, 31, 0.25);
+  color: var(--reign-text-dark);
+}
+
+/* ─── Smooth Window Resize ───────────────────────────────────────────── */
+.reign.sheet {
+  transition: width 0.15s ease, height 0.15s ease;
+}
+
+/* ─── Tooltip Consistency ────────────────────────────────────────────── */
+.system-reign [data-tooltip] {
+  position: relative;
 }

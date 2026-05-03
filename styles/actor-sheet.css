@@ -343,7 +343,7 @@
 
 .reign .health-hint {
     font-size: 0.8em;
-    color: #ccc;
+    color: var(--reign-text-attunement);
     font-weight: normal;
     font-style: italic;
 }
@@ -355,7 +355,7 @@
 }
 
 .reign .shield-badge {
-    background: rgba(217, 119, 6, 0.15);
+    background: var(--reign-bg-brass-subtle);
     border: var(--reign-border-brass);
     color: var(--reign-color-brass);
     padding: 2px 10px;
@@ -366,9 +366,9 @@
 }
 
 .reign .recovery-btn {
-    background: #444;
+    background: var(--reign-bg-ash);
     color: var(--reign-text-light) !important;
-    border: 1px solid #666;
+    border: 1px solid var(--reign-color-destroyed);
     padding: 2px 10px;
     cursor: pointer;
     font-family: var(--reign-font-flavor);
@@ -384,7 +384,7 @@
 
 .reign .recovery-btn:hover {
     background: var(--reign-color-emerald);
-    border-color: #000;
+    border-color: var(--reign-bg-iron);
 }
 
 .reign .reign-health-row {
@@ -440,7 +440,7 @@
 .reign .health-box {
     width: 22px;
     height: 22px;
-    border: 1px solid #999;
+    border: var(--reign-border-medium);
     background: var(--reign-bg-vellum);
     display: flex;
     justify-content: center;
@@ -488,9 +488,9 @@
 }
 
 /* Health Container Dark Mode Overrides */
-.theme-dark .reign-health-container .health-box { background: #333; border-color: #555; }
+.theme-dark .reign-health-container .health-box { background: var(--reign-bg-ash); border-color: var(--reign-color-destroyed); }
 .theme-dark .reign-health-container .health-box[data-state="shock"] { background: var(--reign-bg-warn); color: var(--reign-text-dark); }
-.theme-dark .reign-health-container .health-box[data-state="killing"] { background: var(--reign-color-blood); color: #fff; }
+.theme-dark .reign-health-container .health-box[data-state="killing"] { background: var(--reign-color-blood); color: var(--reign-text-light); }
 
 /* -----------------------------------------
     MOVE LIST & DYNAMICS
@@ -870,21 +870,21 @@
 .reign-threat-header-input { width: 100%; font-size: 1.8em; font-weight: bold; color: var(--reign-color-blood); border: none; border-bottom: 2px solid var(--reign-bg-iron); background: transparent; font-family: var(--reign-font-flavor); transition: background 0.2s; }
 .reign-threat-header-input:hover, .reign-threat-header-input:focus { background: rgba(0,0,0,0.03); }
 .reign-threat-type-label { font-size: 0.9em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: var(--reign-text-muted); margin-top: 4px; }
-.reign-threat-number-input { width: 80px; height: 60px; font-size: 2.5em; text-align: center; font-weight: bold; border: 2px solid #000; background: var(--reign-bg-paper); font-family: var(--reign-font-data); border-radius: 4px; box-shadow: var(--reign-shadow-inset); color: var(--reign-color-blood); }
+.reign-threat-number-input { width: 80px; height: 60px; font-size: 2.5em; text-align: center; font-weight: bold; border: var(--reign-border-heavy); background: var(--reign-bg-paper); font-family: var(--reign-font-data); border-radius: 4px; box-shadow: var(--reign-shadow-inset); color: var(--reign-color-blood); }
 .reign-threat-select { width: 100%; text-align: center; font-size: 1.1em; padding: 5px; border: var(--reign-border-light); background: var(--reign-bg-paper); color: var(--reign-text-dark); border-radius: 3px; }
 .reign-threat-weapon { width: 100%; text-align: center; border: var(--reign-border-light); background: var(--reign-bg-paper); color: var(--reign-text-dark); font-family: var(--reign-font-flavor); font-size: 1.1em; padding: 8px; border-radius: 3px; box-shadow: var(--reign-shadow-inset); }
 
-.threat-profile-img { width: 80px; height: 80px; flex: 0 0 80px; border: 2px solid #000; object-fit: cover; }
+.threat-profile-img { width: 80px; height: 80px; flex: 0 0 80px; border: var(--reign-border-heavy); object-fit: cover; }
 .threat-stat-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
 .threat-main-border { border: 2px solid var(--reign-bg-iron); border-radius: 4px; overflow: hidden; }
 
-.threat-header-black { background: var(--reign-bg-iron); color: #fff; padding: 6px; }
+.threat-header-black { background: var(--reign-bg-iron); color: var(--reign-text-light); padding: 6px; }
 .threat-header-black h2 { margin: 0; color: var(--reign-text-light); font-size: 1.2em; text-transform: uppercase; font-weight: bold; border: none; }
 
-.threat-header-red { background: var(--reign-color-blood); color: #fff; padding: 4px; }
+.threat-header-red { background: var(--reign-color-blood); color: var(--reign-text-light); padding: 4px; }
 .threat-header-red h2 { margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase; border: none; color: var(--reign-text-light); }
 
-.threat-header-teal { background: var(--reign-color-teal); color: #fff; padding: 4px; }
+.threat-header-teal { background: var(--reign-color-teal); color: var(--reign-text-light); padding: 4px; }
 .threat-header-teal h2 { margin: 0; font-size: 1.1em; font-weight: bold; text-transform: uppercase; border: none; color: var(--reign-text-light); cursor: pointer; }
 
 .threat-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -900,8 +900,8 @@
 .threat-description-area { border: none; padding: 15px; width: 100%; box-sizing: border-box; min-height: 120px; font-family: inherit; font-size: 1em; resize: vertical; background: transparent; color: var(--reign-text-dark); }
 
 /* Threat Sheet Dark Mode Overrides */
-.theme-dark .threat-max-input { background: #333; border-color: #555; color: #999; }
-.theme-dark .threat-header-black { background: #222; border-bottom: 1px solid #444; }
+.theme-dark .threat-max-input { background: var(--reign-bg-ash); border-color: var(--reign-color-destroyed); color: var(--reign-text-muted); }
+.theme-dark .threat-header-black { background: var(--reign-bg-iron-light); border-bottom: var(--reign-border-light); }
 
 /* -----------------------------------------
     ESOTERICA TAB & MAGIC
@@ -920,13 +920,13 @@
 .reign .quick-attr-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-bottom: 1px solid rgba(0,0,0,0.08); font-size: 0.9em; text-transform: uppercase; font-weight: bold; transition: background 0.15s; }
 .reign .quick-attr-row:last-child { border-bottom: none; }
 .reign .quick-attr-row strong { color: var(--reign-color-blood); font-size: 1.15em; font-family: var(--reign-font-data); }
-.reign .quick-attr-row.reign-school-stat-active { background: rgba(139,0,0,0.08); border-left: 3px solid var(--reign-color-blood); padding-left: 5px; }
+.reign .quick-attr-row.reign-school-stat-active { background: var(--reign-bg-blood-wash); border-left: 3px solid var(--reign-color-blood); padding-left: 5px; }
 .reign-school-stat-pip { color: var(--reign-color-blood); font-size: 0.7em; margin-left: 4px; }
 
 /* ── SCHOOL PANEL ─────────────────────────────────────────── */
 .reign-school-panel { border: var(--reign-border-iron); border-radius: 4px; overflow: hidden; box-shadow: var(--reign-shadow-drop); }
-.reign-school-header { display: flex; align-items: center; background: var(--reign-color-blood); color: white; padding: 6px 10px; }
-.reign-school-header h2 { color: white; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; }
+.reign-school-header { display: flex; align-items: center; background: var(--reign-color-blood); color: var(--reign-text-light); padding: 6px 10px; }
+.reign-school-header h2 { color: var(--reign-text-light); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; }
 .reign-school-body { padding: 8px; background: var(--reign-bg-paper); display: flex; flex-direction: column; gap: 6px; }
 .reign-school-field { display: flex; flex-direction: column; gap: 2px; }
 .reign-school-field label { font-size: 0.72em; text-transform: uppercase; color: var(--reign-text-muted); font-weight: bold; letter-spacing: 0.04em; }
@@ -934,8 +934,8 @@
 
 /* ── ATTUNEMENT STATUS PANEL ──────────────────────────────── */
 .reign-attunement-panel { border: var(--reign-border-iron); border-radius: 4px; overflow: hidden; box-shadow: var(--reign-shadow-drop); flex: 1; display: flex; flex-direction: column; }
-.reign-attunement-status-header { display: flex; align-items: center; background: #2a2a3a; color: #ccc; padding: 6px 10px; }
-.reign-attunement-status-header h2 { color: #ccc; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; }
+.reign-attunement-status-header { display: flex; align-items: center; background: var(--reign-bg-attunement); color: var(--reign-text-attunement); padding: 6px 10px; }
+.reign-attunement-status-header h2 { color: var(--reign-text-attunement); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; }
 .reign-attunement-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px; background: var(--reign-bg-paper); }
 .reign-attune-option { display: flex; align-items: center; gap: 0; cursor: pointer; }
 .reign-attune-option input[type="radio"] { display: none; }
@@ -963,19 +963,19 @@
     font-size: 0.75em; font-weight: bold; font-family: var(--reign-font-data);
     cursor: default; flex-shrink: 0;
 }
-.intensity-low     { background: var(--reign-bg-parchment); color: var(--reign-text-muted); border: 1px solid #bbb; }
+.intensity-low     { background: var(--reign-bg-parchment); color: var(--reign-text-muted); border: var(--reign-border-medium); }
 .intensity-mid     { background: var(--reign-color-amber); color: var(--reign-text-light); }
-.intensity-high    { background: var(--reign-color-blood); color: white; }
+.intensity-high    { background: var(--reign-color-blood); color: var(--reign-text-light); }
 .intensity-extreme { background: var(--reign-color-arcane); color: var(--reign-color-arcane-light); }
 
 /* ── SPELL STATUS ICONS ───────────────────────────────────── */
 .reign-spell-lock        { color: var(--reign-color-brass); font-size: 0.8em; flex-shrink: 0; }
 .reign-spell-attune-icon { color: var(--reign-blue); font-size: 0.8em; flex-shrink: 0; }
-.reign-spell-slow-badge  { display: inline-flex; align-items: center; gap: 2px; font-size: 0.7em; color: var(--reign-text-muted); background: var(--reign-bg-parchment); border: 1px solid #ccc; border-radius: 3px; padding: 1px 4px; }
+.reign-spell-slow-badge  { display: inline-flex; align-items: center; gap: 2px; font-size: 0.7em; color: var(--reign-text-muted); background: var(--reign-bg-parchment); border: var(--reign-border-light); border-radius: 3px; padding: 1px 4px; }
 
 /* ── SPELL GROUPS ─────────────────────────────────────────── */
 .reign-spell-group { margin-bottom: 8px; }
-.reign-spell-group-header { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: linear-gradient(to right, rgba(139,0,0,0.12), transparent); border-left: 3px solid var(--reign-color-blood); border-bottom: 1px solid var(--reign-border-iron); cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--reign-text-dark); user-select: none; text-decoration: none; }
+.reign-spell-group-header { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: linear-gradient(to right, var(--reign-bg-blood-wash), transparent); border-left: 3px solid var(--reign-color-blood); border-bottom: 1px solid var(--reign-border-iron); cursor: pointer; font-weight: bold; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--reign-text-dark); user-select: none; text-decoration: none; }
 .reign-spell-group-name { flex: 1; }
 .reign-spell-group-count { font-size: 0.8em; color: var(--reign-text-muted); background: var(--reign-bg-parchment); border-radius: 10px; padding: 1px 7px; }
 .reign-spell-group-chevron { font-size: 0.8em; color: var(--reign-color-blood); transition: transform 0.2s; }
@@ -994,16 +994,16 @@
 .reign-flag-label input { cursor: pointer; }
 
 /* ── SPELL CHAT CARD BLOCK ────────────────────────────────── */
-.reign-spell-result { margin-top: 10px; border: 1px solid rgba(139,0,0,0.3); border-radius: 4px; overflow: hidden; }
+.reign-spell-result { margin-top: 10px; border: 1px solid var(--reign-color-blood); border-radius: 4px; overflow: hidden; }
 .reign-spell-intensity-check { padding: 7px 12px; font-size: 0.9em; font-weight: bold; }
-.reign-spell-intensity-check.fired    { background: rgba(30,107,58,0.15); color: #1e6b3a; border-left: 3px solid #1e6b3a; }
-.reign-spell-intensity-check.fizzled  { background: rgba(139,0,0,0.10); color: var(--reign-color-blood); border-left: 3px solid var(--reign-color-blood); }
+.reign-spell-intensity-check.fired    { background: var(--reign-bg-fired); color: var(--reign-color-fired); border-left: 3px solid var(--reign-color-fired); }
+.reign-spell-intensity-check.fizzled  { background: var(--reign-bg-blood-subtle); color: var(--reign-color-blood); border-left: 3px solid var(--reign-color-blood); }
 .reign-spell-meta { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; background: var(--reign-bg-parchment); border-top: var(--reign-border-dashed); }
-.reign-spell-meta-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78em; background: var(--reign-bg-paper); border: 1px solid #ccc; border-radius: 12px; padding: 2px 8px; color: var(--reign-text-dark); }
+.reign-spell-meta-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78em; background: var(--reign-bg-paper); border: var(--reign-border-light); border-radius: 12px; padding: 2px 8px; color: var(--reign-text-dark); }
 .reign-spell-meta-tag.detection { border-color: var(--reign-blue); color: var(--reign-color-blue-dark); }
 .reign-spell-meta-tag.slow      { border-color: var(--reign-color-brass); color: var(--reign-color-brass); }
-.reign-spell-meta-tag.flag      { border-color: #888; color: var(--reign-text-muted); }
-.reign-spell-meta-tag.attune-spell { border-color: #5a9fcc; background: rgba(90,159,204,0.1); }
+.reign-spell-meta-tag.flag      { border-color: var(--reign-color-destroyed); color: var(--reign-text-muted); }
+.reign-spell-meta-tag.attune-spell { border-color: var(--reign-blue); background: var(--reign-bg-blue-subtle); }
 
 /* ── WEAPON QUALITY: LOCKED STATE ─────────────────────────── */
 .reign-quality-locked { opacity: 0.45; cursor: not-allowed; }
@@ -1036,19 +1036,19 @@
 .reign-control-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); border-radius: 3px; color: var(--reign-text-light) !important; cursor: pointer; padding: 2px 8px; font-size: 0.9em; font-weight: bold; height: 26px; transition: background 0.2s; }
 .reign-control-btn:hover { background: rgba(255,255,255,0.3); }
 .reign-toggle-link { color: var(--reign-text-light); cursor: pointer; transition: color 0.2s; }
-.reign-toggle-link:hover { color: #ccc; }
+.reign-toggle-link:hover { color: var(--reign-text-muted); }
 
 /* -----------------------------------------
     SHIELD UI
 ----------------------------------------- */
 .shield-toggle { color: rgba(0, 0, 0, 0.15); cursor: pointer; transition: all 0.2s ease; font-size: 1.1em; }
-.shield-toggle:hover { color: rgba(217, 119, 6, 0.5); transform: scale(1.2); }
-.shield-toggle.active { color: var(--reign-color-brass); text-shadow: 0 0 8px rgba(217, 119, 6, 0.4); transform: scale(1.2); }
+.shield-toggle:hover { color: var(--reign-color-brass); transform: scale(1.2); }
+.shield-toggle.active { color: var(--reign-color-brass); text-shadow: 0 0 8px var(--reign-bg-brass-subtle); transform: scale(1.2); }
 
 /* Shield Dark Mode Overrides */
 .theme-dark .shield-toggle { color: rgba(255, 255, 255, 0.15); }
 
-.reign-shield-status { background: rgba(217, 119, 6, 0.1); border: var(--reign-border-brass); color: var(--reign-color-brass); padding: 2px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+.reign-shield-status { background: var(--reign-bg-brass-subtle); border: var(--reign-border-brass); color: var(--reign-color-brass); padding: 2px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
 
 .reign-tower-toggle { cursor: pointer; color: var(--reign-text-muted); font-size: 0.85em; display: flex; align-items: center; justify-content: center; gap: 5px; transition: color 0.2s; }
 .reign-tower-toggle.active { color: var(--reign-color-emerald); font-weight: bold; }
@@ -1076,7 +1076,7 @@
 .reign-health-data-list .reign-health-row.status-healthy { border-left: 3px solid var(--reign-bg-iron); }
 .reign-health-data-list .reign-health-row.status-shock   { border-left: 3px solid var(--reign-color-brass); }
 .reign-health-data-list .reign-health-row.status-killing { border-left: 3px solid var(--reign-color-blood); }
-.reign-health-data-list .reign-health-row.status-destroyed { border-left: 3px solid #555; }
+.reign-health-data-list .reign-health-row.status-destroyed { border-left: 3px solid var(--reign-color-destroyed); }
 
 .reign-silhouette-container { background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center; }
 .damage-silhouette { width: 100%; max-height: 320px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
@@ -1087,7 +1087,7 @@
 .damage-silhouette .hit-zone.status-healthy path { stroke: var(--reign-bg-iron); }
 .damage-silhouette .hit-zone.status-shock path { stroke: var(--reign-color-brass); }
 .damage-silhouette .hit-zone.status-killing path { stroke: var(--reign-color-blood-dark); }
-.damage-silhouette .hit-zone.status-destroyed path { stroke: #555555; }
+.damage-silhouette .hit-zone.status-destroyed path { stroke: var(--reign-color-destroyed); }
 
 /* Legacy polygon support (fallback) */
 .damage-silhouette .hit-zone polygon { stroke: var(--reign-bg-iron); stroke-width: 3; stroke-linejoin: round; transition: stroke 0.2s ease, filter 0.2s ease; cursor: pointer; }
@@ -1095,7 +1095,7 @@
 .damage-silhouette .hit-zone.status-healthy polygon { stroke: var(--reign-bg-iron); }
 .damage-silhouette .hit-zone.status-shock polygon { stroke: var(--reign-color-brass); }
 .damage-silhouette .hit-zone.status-killing polygon { stroke: var(--reign-color-blood-dark); }
-.damage-silhouette .hit-zone.status-destroyed polygon { stroke: #555555; }
+.damage-silhouette .hit-zone.status-destroyed polygon { stroke: var(--reign-color-destroyed); }
 
 .silhouette-instructions { font-size: 0.75em; color: var(--reign-text-muted); text-align: center; margin-top: 10px; font-family: var(--reign-font-data); text-transform: uppercase; }
 
@@ -1230,7 +1230,7 @@
 .fd-filter-input:focus {
     outline: none;
     border-color: var(--reign-color-brass);
-    box-shadow: 0 0 0 2px rgba(217,119,6,0.15);
+    box-shadow: 0 0 0 2px var(--reign-bg-brass-subtle);
 }
 .fd-filter-input::placeholder { color: var(--reign-text-muted); opacity: 0.7; }
 
@@ -1301,8 +1301,8 @@
 .fd-th-label { font-size: 0.85em; }
 
 .fd-th-sov {
-    background: rgba(217,119,6,0.12);
-    border-left: 1px solid rgba(217,119,6,0.25);
+    background: var(--reign-bg-brass-subtle);
+    border-left: 1px solid var(--reign-color-brass);
 }
 .fd-th-size { width: 48px; }
 .fd-th-actions { width: auto; min-width: 100px; }
@@ -1341,8 +1341,8 @@
 .fd-td { padding: 8px 6px; vertical-align: middle; }
 .fd-td-name { padding: 8px 10px; text-align: left; vertical-align: middle; }
 .fd-td-sov {
-    background: rgba(217,119,6,0.04);
-    border-left: 1px solid rgba(217,119,6,0.12);
+    background: var(--reign-bg-brass-muted);
+    border-left: 1px solid var(--reign-bg-brass-subtle);
 }
 .fd-td-size { width: 48px; }
 .fd-td-action { width: auto; padding: 8px 6px; }
@@ -1634,7 +1634,7 @@
     gap: var(--reign-space-md);
     padding: var(--reign-space-sm) var(--reign-space-md) var(--reign-space-sm) 40px;
     border-top: 1px dashed var(--reign-text-muted);
-    border-top-color: rgba(85,85,85,0.3);
+    border-top-color: var(--reign-color-destroyed);
 }
 
 .fd-drawer-section { flex: 1; min-width: 0; }
@@ -1832,11 +1832,11 @@
 /* Chronicle entry type colors */
 .fd-chron-advance  { border-left-color: var(--reign-text-muted); }
 .fd-chron-event    { border-left-color: var(--reign-color-brass); }
-.fd-chron-damage   { border-left-color: var(--reign-color-blood); background: rgba(139,31,31,0.03); }
-.fd-chron-conquest  { border-left-color: var(--reign-color-emerald); background: rgba(45,90,39,0.03); }
-.fd-chron-alliance  { border-left-color: var(--reign-blue); background: rgba(2,119,189,0.03); }
-.fd-chron-diplomacy { border-left-color: var(--reign-purple); background: rgba(171,71,188,0.03); }
-.fd-chron-loss      { border-left-color: var(--reign-burnt-orange); background: rgba(230,81,0,0.03); }
+.fd-chron-damage   { border-left-color: var(--reign-color-blood); background: var(--reign-bg-blood-muted); }
+.fd-chron-conquest  { border-left-color: var(--reign-color-emerald); background: var(--reign-bg-emerald-muted); }
+.fd-chron-alliance  { border-left-color: var(--reign-blue); background: var(--reign-bg-blue-muted); }
+.fd-chron-diplomacy { border-left-color: var(--reign-purple); background: var(--reign-bg-sorcery-muted); }
+.fd-chron-loss      { border-left-color: var(--reign-burnt-orange); background: var(--reign-bg-blood-muted); }
 
 /* ─── Opposed Prompt (Chat Card) ──────────────────────────────────────── */
 .fd-opposed-prompt { border-left-width: 4px; }
@@ -1909,18 +1909,18 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Faction Dashboard
 ═══════════════════════════════════════════════════════════════════════════ */
-.theme-dark .fd-th-sov { background: rgba(217,119,6,0.08); }
-.theme-dark .fd-td-sov { background: rgba(217,119,6,0.03); }
+.theme-dark .fd-th-sov { background: var(--reign-bg-brass-muted); }
+.theme-dark .fd-td-sov { background: var(--reign-bg-brass-muted); }
 .theme-dark .fd-tr:nth-child(even):not(.fd-drawer-row) { background: rgba(255,255,255,0.015); }
 .theme-dark .fd-drawer-content { border-top-color: rgba(255,255,255,0.1); }
-.theme-dark .fd-drawer-item-problem { background: rgba(165,50,50,0.1); }
+.theme-dark .fd-drawer-item-problem { background: var(--reign-bg-blood-subtle); }
 
 /* Chronicle dark mode */
-.theme-dark .fd-chron-damage   { background: rgba(165,50,50,0.08); }
-.theme-dark .fd-chron-conquest  { background: rgba(58,138,51,0.08); }
-.theme-dark .fd-chron-alliance  { background: rgba(66,165,245,0.08); }
-.theme-dark .fd-chron-diplomacy { background: rgba(206,147,216,0.08); }
-.theme-dark .fd-chron-loss      { background: rgba(245,124,0,0.08); }
+.theme-dark .fd-chron-damage   { background: var(--reign-bg-blood-muted); }
+.theme-dark .fd-chron-conquest  { background: var(--reign-bg-emerald-muted); }
+.theme-dark .fd-chron-alliance  { background: var(--reign-bg-blue-muted); }
+.theme-dark .fd-chron-diplomacy { background: var(--reign-bg-sorcery-muted); }
+.theme-dark .fd-chron-loss      { background: var(--reign-bg-blood-muted); }
 
 
 /* -----------------------------------------
@@ -1999,7 +1999,7 @@
 .cs-attr-input {
   width: 38px; text-align: center;
   font-family: var(--reign-font-display); font-size: 22px; font-weight: bold;
-  color: #fff; background: transparent; border: none;
+  color: var(--reign-text-light); background: transparent; border: none;
   border-bottom: 1px solid rgba(255,255,255,0.18); padding: 0;
   transition: border-color 0.15s;
 }
@@ -2080,7 +2080,7 @@
   border-color: var(--reign-bg-iron); color: var(--reign-text-light);
   background: var(--reign-bg-iron); font-weight: 700;
 }
-.cs-roll-btn-attack:hover { background: #333; border-color: #333; color: #fff; }
+.cs-roll-btn-attack:hover { background: var(--reign-bg-ash); border-color: var(--reign-bg-ash); color: var(--reign-text-light); }
 
 /* ── Attacks ── */
 .cs-attack-list { display: flex; flex-direction: column; }
@@ -2115,7 +2115,7 @@
 .cs-attack-config {
   display: flex; flex-direction: column; gap: 5px;
   padding: 6px 10px 8px 10px;
-  border-top: 1px dashed #ddd; background: var(--reign-bg-vellum);
+  border-top: var(--reign-border-dashed); background: var(--reign-bg-vellum);
 }
 .cs-attack-config-row {
   display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
@@ -2151,24 +2151,24 @@
 .cs-face-pip:hover { transform: scale(1.2); z-index: 1; }
 .cs-face-empty { background: var(--reign-bg-iron-light); color: rgba(255,255,255,0.2); }
 /* Per-location pip colours */
-.cs-face-loc-blood   { background: var(--cs-blood);   color: #fff; }
-.cs-face-loc-brass   { background: var(--cs-brass);   color: #fff; }
-.cs-face-loc-emerald { background: var(--cs-emerald); color: #fff; }
-.cs-face-loc-blue    { background: var(--cs-blue);    color: #fff; }
-.cs-face-loc-purple  { background: var(--cs-purple);  color: #fff; }
-.cs-face-loc-teal    { background: var(--cs-teal);    color: #fff; }
-.cs-face-loc-ash     { background: var(--cs-ash);     color: #fff; }
-.cs-face-loc-amber   { background: var(--cs-amber);   color: #fff; }
+.cs-face-loc-blood   { background: var(--cs-blood);   color: var(--reign-text-light); }
+.cs-face-loc-brass   { background: var(--cs-brass);   color: var(--reign-text-light); }
+.cs-face-loc-emerald { background: var(--cs-emerald); color: var(--reign-text-light); }
+.cs-face-loc-blue    { background: var(--cs-blue);    color: var(--reign-text-light); }
+.cs-face-loc-purple  { background: var(--cs-purple);  color: var(--reign-text-light); }
+.cs-face-loc-teal    { background: var(--cs-teal);    color: var(--reign-text-light); }
+.cs-face-loc-ash     { background: var(--cs-ash);     color: var(--reign-text-light); }
+.cs-face-loc-amber   { background: var(--cs-amber);   color: var(--reign-text-light); }
 
 /* ── Location list ── */
 .cs-loc-list { display: flex; flex-direction: column; }
 .cs-loc-row { border-bottom: var(--reign-border-light); transition: background 0.1s; }
 .cs-loc-row:last-child { border-bottom: none; }
-.cs-loc-row.status-shock   { background: #fffdf0; }
-.cs-loc-row.status-killing { background: #fff7f7; }
+.cs-loc-row.status-shock   { background: var(--reign-bg-warn); }
+.cs-loc-row.status-killing { background: var(--reign-bg-danger); }
 .cs-loc-row.status-destroyed { opacity: 0.55; }
-.theme-dark .cs-loc-row.status-shock   { background: #201900; }
-.theme-dark .cs-loc-row.status-killing { background: #200808; }
+.theme-dark .cs-loc-row.status-shock   { background: var(--reign-bg-warn); }
+.theme-dark .cs-loc-row.status-killing { background: var(--reign-bg-danger); }
 
 /* Location header row */
 .cs-loc-header {
@@ -2213,10 +2213,10 @@
 }
 .cs-status-status-healthy   { color: var(--reign-text-muted); }
 .cs-status-status-shock     { background: var(--reign-bg-warn); color: var(--reign-burnt-orange); }
-.cs-status-status-killing   { background: #ffecec; color: var(--reign-color-blood); }
-.cs-status-status-destroyed { background: var(--reign-bg-iron); color: #fff; }
-.theme-dark .cs-status-status-shock    { background: #2c1f00; }
-.theme-dark .cs-status-status-killing  { background: #2a0a0a; color: #ef9a9a; }
+.cs-status-status-killing   { background: var(--reign-bg-danger); color: var(--reign-color-blood); }
+.cs-status-status-destroyed { background: var(--reign-bg-iron); color: var(--reign-text-light); }
+.theme-dark .cs-status-status-shock    { background: var(--reign-bg-warn); }
+.theme-dark .cs-status-status-killing  { background: var(--reign-bg-danger); color: var(--reign-color-danger); }
 
 /* Icon buttons */
 .cs-icon-btn {
@@ -2235,7 +2235,7 @@
 }
 .cs-wound-box {
   width: 18px; height: 18px;
-  border: 1px solid #bbb; border-radius: 2px;
+  border: var(--reign-border-medium); border-radius: 2px;
   background: var(--reign-bg-vellum);
   cursor: pointer; user-select: none;
   transition: background 0.08s, transform 0.08s, border-color 0.08s;
@@ -2251,22 +2251,22 @@
   width: 100%; height: 100%;
 }
 .cs-wound-box[data-state="killing"] {
-  background: var(--cs-blood); border-color: #560a0a;
+  background: var(--cs-blood); border-color: var(--reign-color-blood-dark);
 }
 .cs-wound-box[data-state="killing"]::after {
   content: "✕"; display: flex; align-items: center; justify-content: center;
   font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.85);
   width: 100%; height: 100%;
 }
-.theme-dark .cs-wound-box                       { background: #2a2a2a; border-color: #4a4a4a; }
-.theme-dark .cs-wound-box[data-state="shock"]   { background: #2c1f00; border-color: #7a5200; }
-.theme-dark .cs-wound-box[data-state="killing"] { background: #5a0a0a; border-color: #3a0505; }
+.theme-dark .cs-wound-box                       { background: var(--reign-bg-paper); border-color: var(--reign-bg-ash); }
+.theme-dark .cs-wound-box[data-state="shock"]   { background: var(--reign-bg-warn); border-color: var(--reign-color-brass); }
+.theme-dark .cs-wound-box[data-state="killing"] { background: var(--reign-color-blood-dark); border-color: var(--reign-color-blood-dark); }
 
 /* ── Location config row ── */
 .cs-loc-config {
   display: flex; flex-direction: column; gap: 5px;
   padding: 5px 8px 7px 20px;
-  border-top: 1px dashed #ddd; background: var(--reign-bg-vellum);
+  border-top: var(--reign-border-dashed); background: var(--reign-bg-vellum);
 }
 .cs-config-row-inline {
   display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
@@ -2296,7 +2296,7 @@
 }
 .cs-face-btn {
   width: 24px; height: 24px;
-  border: 1px solid #ccc; border-radius: 3px;
+  border: var(--reign-border-medium); border-radius: 3px;
   background: var(--reign-bg-paper);
   font-family: var(--reign-font-data); font-size: 11px; font-weight: 700;
   color: var(--reign-text-muted);
@@ -2306,11 +2306,11 @@
 }
 .cs-face-btn:hover { transform: scale(1.12); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 .cs-face-btn-active {
-  color: #fff; border-color: rgba(0,0,0,0.2);
+  color: var(--reign-text-light); border-color: rgba(0,0,0,0.2);
   font-weight: 800;
 }
-.theme-dark .cs-face-btn { background: #2a2a2a; border-color: #4a4a4a; color: #888; }
-.theme-dark .cs-face-btn-active { color: #fff; }
+.theme-dark .cs-face-btn { background: var(--reign-bg-paper); border-color: var(--reign-bg-ash); color: var(--reign-text-muted); }
+.theme-dark .cs-face-btn-active { color: var(--reign-text-light); }
 
 /* ── Special rules textarea ── */
 .cs-special-textarea {
@@ -2345,9 +2345,9 @@
   border: 1px solid; transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
 }
 .cs-ability-btn {
-  background: var(--reign-bg-iron); border-color: var(--reign-bg-iron); color: #fff;
+  background: var(--reign-bg-iron); border-color: var(--reign-bg-iron); color: var(--reign-text-light);
 }
-.cs-ability-btn:hover { background: #2a2a2a; border-color: #2a2a2a; }
+.cs-ability-btn:hover { background: var(--reign-bg-iron); border-color: var(--reign-bg-iron); }
 .cs-ability-btn-used {
   background: var(--reign-bg-vellum); border-color: #ccc;
   color: var(--reign-text-muted); cursor: not-allowed;

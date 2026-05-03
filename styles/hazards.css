@@ -84,8 +84,8 @@
 
 /* ── Poison Effects in Chat ──────────────────────── */
 .reign-poison-effects {
-    background: rgba(139,0,0,0.06);
-    border: 1px solid rgba(139,0,0,0.2);
+    background: var(--reign-bg-blood-muted);
+    border: 1px solid var(--reign-bg-blood-subtle);
     border-radius: 4px;
     padding: 8px 12px;
     margin: 8px 0;
