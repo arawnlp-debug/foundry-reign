@@ -1,43 +1,12 @@
 // scripts/combat/defense.js
-import { parseORE, calculateInitiative, computeLocationDamage, getHitLocationLabel } from "../helpers/ore-engine.js";
+import { parseORE, calculateInitiative, computeLocationDamage, getHitLocationLabel, parseDamageFormula } from "../helpers/ore-engine.js";
 import { generateOREChatHTML } from "../helpers/chat.js";
 import { reignDialog } from "../helpers/dialog-util.js";
 import { syncCharacterStatusEffects } from "./damage.js";
 import { HIT_LOCATIONS } from "../helpers/config.js";
 
-/**
- * PACKAGE B HELPER: Evaluates a damage formula string with a given Width value.
- * Handles patterns like "Width Shock", "Width+1 Killing", "1 Killing, Width Shock".
- * @returns {{ shock: number, killing: number }}
- */
-function evaluateWeaponDamage(dmgString, width) {
-    const safeDmg = String(dmgString || "Width Shock").toLowerCase();
-    let shock = 0;
-    let killing = 0;
-
-    const shockMatch = safeDmg.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*shock/);
-    const killMatch = safeDmg.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*killing/);
-
-    if (shockMatch) {
-        let expr = shockMatch[1].replace(/width/gi, String(width));
-        try { shock = new Roll(expr.replace(/\s/g, "")).evaluateSync().total; }
-        catch { shock = parseInt(expr) || 0; }
-    }
-    if (killMatch) {
-        let expr = killMatch[1].replace(/width/gi, String(width));
-        try { killing = new Roll(expr.replace(/\s/g, "")).evaluateSync().total; }
-        catch { killing = parseInt(expr) || 0; }
-    }
-
-    // Fallback: if no typed match, treat entire string as Shock
-    if (!shockMatch && !killMatch) {
-        let expr = safeDmg.replace(/width/gi, String(width)).replace(/\s/g, "");
-        try { shock = new Roll(expr).evaluateSync().total; }
-        catch { shock = parseInt(expr) || 0; }
-    }
-
-    return { shock, killing };
-}
+// NOTE: Damage formula parsing is now centralized in parseDamageFormula() (ore-engine.js).
+// evaluateWeaponDamage has been removed. All call sites use parseDamageFormula instead.
 
 /**
  * PACKAGE B HELPER: Checks whether a character has adequate equipment to parry
@@ -326,7 +295,7 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
                 const dmgStr = attackFlags.itemData?.system?.damage
                             || attackFlags.itemData?.system?.damageFormula
                             || "Width Shock";
-                const { shock, killing } = evaluateWeaponDamage(dmgStr, attackWidth);
+                const { shock, killing } = parseDamageFormula(dmgStr, attackWidth);
 
                 if (shock > 0 || killing > 0) {
                     const localHealth = foundry.utils.deepClone(defenderActor.system.health);

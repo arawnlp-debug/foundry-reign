@@ -120,7 +120,8 @@ export class ReignCombat extends Combat {
       }
 
       // Dodge Cover: Clear dive-for-cover protection from previous round.
-      if (actor.getFlag("reign", "dodgeCover")) {
+      const hadDodgeCover = !!actor.getFlag("reign", "dodgeCover");
+      if (hadDodgeCover) {
         actorUpdates["flags.reign.-=dodgeCover"] = null;
       }
 
@@ -140,8 +141,10 @@ export class ReignCombat extends Combat {
         await actor.update(actorUpdates);
       }
 
-      // Prone from dive-for-cover: toggle separately as it uses a status effect API call.
-      if (actor.getFlag("reign", "dodgeCover") === null && actor.statuses.has("prone")) {
+      // Prone from dive-for-cover: clear the prone status that was applied when
+      // the character dived behind cover last round. Uses the pre-deletion snapshot
+      // (hadDodgeCover) since getFlag returns undefined after flag deletion.
+      if (hadDodgeCover && actor.statuses.has("prone")) {
         await actor.toggleStatusEffect("prone", { active: false });
       }
     }));

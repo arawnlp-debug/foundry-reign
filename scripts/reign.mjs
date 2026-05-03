@@ -1120,17 +1120,16 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
               }
           } else {
               // ISSUE-029 FIX: Display initiative as "W×H" rather than the raw decimal
-              // (e.g. "3×7" instead of "37.07") so players can read it at a glance.
+              // (e.g. "2×10" instead of "210.90") so players can read it at a glance.
+              // Encoding: Width*100 + Height + fractional_offset (≤0.99)
               if (Number.isNumeric(c.initiative)) {
                   const initNum = c.initiative;
-                  // Strip the defence/minion fractional offsets to extract Width and Height.
-                  // Formula: Width = Math.floor(initNum / 10), Height = Math.round((initNum % 10) * 100) % 100
-                  // Stored as: Width*10 + Height + fractional_offset (≤0.99)
-                  const rawBase = Math.floor(initNum); // e.g. 37 from 37.07
-                  const w = Math.floor(rawBase / 10);
-                  const h = rawBase % 10;
-                  const isDefence = (initNum - rawBase) >= 0.9;
-                  const isMinion  = (initNum - rawBase) < 0 || (initNum < rawBase);
+                  const rawBase = Math.floor(initNum); // e.g. 210 from 210.90
+                  const w = Math.floor(rawBase / 100);
+                  const h = rawBase % 100;
+                  const frac = initNum - rawBase;
+                  const isDefence = frac >= 0.9 && frac < 1.0;
+                  const isMinion  = initNum < rawBase;
                   const icon = isDefence ? "🛡" : "⚔";
                   if (!initDiv.querySelector(".reign-init-label")) {
                       const span = document.createElement("span");

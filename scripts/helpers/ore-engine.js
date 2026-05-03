@@ -117,7 +117,9 @@ export function getHitLocationLabel(key) {
 
 /**
  * Calculates ORE Initiative based on Set Width, Height, and Modifiers.
- * RAW: Width x 10 + Height. Defenses get +0.9. Weapons get range modifier. Minions get -0.5.
+ * Encoding: Width*100 + Height. This gives Height a full two-digit field,
+ * avoiding the collision where 2×10 (was 30) looked identical to 3×0.
+ * Defenses get +0.90. Weapons get range modifier (≤0.89). Minions get -0.50.
  */
 export function calculateInitiative(parsedSets, isDefense = false, isAttack = false, isMinion = false, weaponRange = "0") {
   if (!parsedSets || parsedSets.length === 0) return 0;
@@ -128,7 +130,7 @@ export function calculateInitiative(parsedSets, isDefense = false, isAttack = fa
     return max;
   });
 
-  let initValue = (fastestSet.width * 10) + fastestSet.height;
+  let initValue = (fastestSet.width * 100) + fastestSet.height;
 
   if (isDefense) {
       initValue += 0.90;
@@ -224,4 +226,93 @@ export function getCreatureHitLocation(height, heightLocationMap) {
   const h = parseInt(height);
   if (!heightLocationMap || isNaN(h)) return [];
   return heightLocationMap[h] || [];
+}
+
+
+// ==========================================
+// UNIFIED DAMAGE FORMULA PARSER
+// ==========================================
+
+/**
+ * Evaluates a sub-expression string, substituting "width" with the given value.
+ * Handles plain numbers, "width", and arithmetic like "width+1", "width-2".
+ * @param {string} exprStr - The expression fragment (e.g. "width+1", "3").
+ * @param {number} widthValue - The Width of the set.
+ * @returns {number} The evaluated result.
+ */
+function _evalFormulaExpr(exprStr, widthValue) {
+  let expr = String(exprStr ?? "0").toLowerCase().replace(/width/gi, String(widthValue)).replace(/\s/g, "");
+  try {
+    return new Roll(expr).evaluateSync().total;
+  } catch (e) {
+    return parseInt(expr) || 0;
+  }
+}
+
+/**
+ * Parses a damage/healing formula string and evaluates it with a given Width value.
+ * This is the single canonical parser for all damage formulas in the system.
+ *
+ * Handles patterns like:
+ *   "Width Shock"                → { shock: Width, killing: 0, healing: 0 }
+ *   "Width+1 Killing"           → { shock: 0, killing: Width+1, healing: 0 }
+ *   "1 Killing, Width Shock"    → { shock: Width, killing: 1, healing: 0 }
+ *   "Width Healing"             → { shock: 0, killing: 0, healing: Width }
+ *   "3"                         → { shock: 3, killing: 0, healing: 0 } (fallback: untyped = Shock)
+ *
+ * @param {string} formulaStr - The damage formula string.
+ * @param {number} width - The Width of the attacking/healing set.
+ * @returns {{ shock: number, killing: number, healing: number }}
+ */
+export function parseDamageFormula(formulaStr, width) {
+  const safe = String(formulaStr || "Width Shock").toLowerCase();
+
+  const shockMatch = safe.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*shock/);
+  const killMatch  = safe.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*killing/);
+  const healMatch  = safe.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*healing/);
+
+  let shock = 0, killing = 0, healing = 0;
+
+  if (shockMatch) shock   = _evalFormulaExpr(shockMatch[1], width);
+  if (killMatch)  killing = _evalFormulaExpr(killMatch[1], width);
+  if (healMatch)  healing = _evalFormulaExpr(healMatch[1], width);
+
+  // Fallback: if no typed keyword matched, treat entire string as Shock
+  if (!shockMatch && !killMatch && !healMatch) {
+    shock = _evalFormulaExpr(safe.replace(/healing/gi, ""), width);
+  }
+
+  return { shock, killing, healing };
+}
+
+
+// ==========================================
+// HIT REDIRECT VALIDATION HELPER
+// ==========================================
+
+/** Canonical set of valid character hit location keys. */
+const VALID_HIT_LOCATIONS = new Set(["head", "torso", "armR", "armL", "legR", "legL"]);
+
+/**
+ * Resolves a hit-redirect for a given location key. If the actor has an Active Effect
+ * redirect configured for that location, returns the validated target key.
+ * Warns and falls back to the original key if the redirect target is invalid.
+ *
+ * @param {Actor} actor - The target actor.
+ * @param {string} locKey - The original hit location key.
+ * @returns {{ locKey: string, wasRedirected: boolean }}
+ */
+export function resolveHitRedirect(actor, locKey) {
+  const redirectTarget = actor?.system?.modifiers?.hitRedirects?.[locKey];
+  if (!redirectTarget || redirectTarget.trim() === "") return { locKey, wasRedirected: false };
+
+  const target = redirectTarget.trim();
+  if (!VALID_HIT_LOCATIONS.has(target)) {
+    const actorName = actor?.name || "Unknown";
+    console.warn(`Reign | Invalid hit redirect on ${actorName}: "${locKey}" → "${target}" is not a valid location key. Keeping original location.`);
+    ui.notifications.warn(`${actorName} has an invalid hit redirect ("${target}"). Damage applied to original location.`);
+    return { locKey, wasRedirected: false };
+  }
+
+  return { locKey: target, wasRedirected: true };
 }

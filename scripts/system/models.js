@@ -45,6 +45,7 @@ export class ReignCharacterData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         return {
             creationMode: new BooleanField({ initial: false }),
+            isGMC: new BooleanField({ initial: false }),
             biography: new SchemaField({
                 mission: new StringField({ initial: "" }), duty: new StringField({ initial: "" }), craving: new StringField({ initial: "" }),
                 problems: new StringField({ initial: "" }), advantages: new StringField({ initial: "" }), history: new StringField({ initial: "" }),

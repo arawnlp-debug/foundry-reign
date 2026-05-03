@@ -52,6 +52,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       toggleEffect: this.prototype._onToggleEffect,
       advancedEditEffect: this.prototype._onAdvancedEditEffect,
       editImage: this.prototype._onEditImage,
+      toggleGMC: this.prototype._onToggleGMC,
       toggleSpellGroup: this.prototype._onToggleSpellGroup
     }
   };
@@ -74,6 +75,16 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       } catch(err) { 
           ui.notifications.error(`Action failed: ${err.message}`); 
           console.error(err); 
+      }
+  }
+
+  async _onToggleGMC(event, target) {
+      event.preventDefault();
+      try {
+          await this.document.update({ "system.isGMC": !this.document.system.isGMC });
+      } catch(err) {
+          ui.notifications.error(`Action failed: ${err.message}`);
+          console.error(err);
       }
   }
 
@@ -106,11 +117,13 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
           if (!restType) return;
           const system = this.document.system;
 
-          // RAW: Daily Vigor recovery — roll Body + Vigor.
-          // On a successful set the character chooses ONE of two options:
-          //   A) Remove Shock equal to the set's Width (distributed across any locations), OR
-          //   B) Convert exactly 1 Killing damage to Shock on any one location.
-          // Only the best set is used. (Rules — Daily recovery.)
+          // RAW p.111: Daily Vigor self-recovery — roll Body + Vigor.
+          // "If it succeeds, you may remove a number of Shock points equal to
+          //  the Width of the roll."
+          // Only the best set is used. Shock removal only — no Killing conversion.
+          // NOTE: Killing→Shock conversion is a separate mechanic requiring a healer
+          // (RAW p.111: "a healer can attempt a roll... one point of Killing damage
+          //  is turned into Shock"). That is handled via the First Aid workflow.
           if (restType === "vigor") {
               const body = parseInt(system.attributes.body?.value) || 0;
               const vigor = parseInt(system.skills.vigor?.value) || 0;
@@ -131,57 +144,10 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
               const bestSet = parsed.sets[0];
               const width = bestSet.width;
 
-              // Build lists for the OR choice dialog
-              const hasKilling = HIT_LOCATIONS.some(loc => (system.health[loc].killing || 0) > 0);
-              const killingOptions = HIT_LOCATIONS
-                  .filter(loc => (system.health[loc].killing || 0) > 0)
-                  .map(loc => `<option value="${loc}">${loc === "armR" ? "Right Arm" : loc === "armL" ? "Left Arm" : loc === "legR" ? "Right Leg" : loc === "legL" ? "Left Leg" : loc.charAt(0).toUpperCase() + loc.slice(1)} (Kill: ${system.health[loc].killing})</option>`)
-                  .join("");
-
-              const choiceContent = `
-                <form class="reign-dialog-form">
-                  <p class="reign-dialog-callout">Roll succeeded! Best set: <strong>${bestSet.text}</strong>. Choose one recovery option:</p>
-                  <div class="form-group">
-                    <label><input type="radio" name="vigorMode" value="shock" checked> Remove <strong>${width} Shock</strong> (distributed across locations)</label>
-                  </div>
-                  <div class="form-group">
-                    <label>
-                      <input type="radio" name="vigorMode" value="killing" ${!hasKilling ? "disabled" : ""}> 
-                      Convert <strong>1 Killing → Shock</strong> on one location ${!hasKilling ? "(no Killing damage present)" : ""}
-                    </label>
-                    ${hasKilling ? `<select name="killingLoc" style="margin-top:4px;width:100%">${killingOptions}</select>` : ""}
-                  </div>
-                </form>
-              `;
-
-              const modeChoice = await reignDialog("Vigorous Recovery — Choose Option", choiceContent, (e, b, d) => {
-                  const f = d.element.querySelector("form");
-                  return {
-                      mode: f.querySelector('[name="vigorMode"]:checked')?.value || "shock",
-                      killingLoc: f.querySelector('[name="killingLoc"]')?.value || null
-                  };
-              }, { defaultLabel: "Apply" });
-
-              if (!modeChoice) return;
-
-              // Option B: Convert 1 Killing → Shock
-              if (modeChoice.mode === "killing") {
-                  const loc = modeChoice.killingLoc;
-                  if (!loc || !(system.health[loc].killing > 0)) return ui.notifications.warn("No Killing damage at that location.");
-                  const effectiveMax = this.document.system.effectiveMax?.[loc] || 5;
-                  const newKilling = system.health[loc].killing - 1;
-                  const newShock = Math.min(system.health[loc].shock + 1, effectiveMax);
-                  await this.document.update({ [`system.health.${loc}.killing`]: newKilling, [`system.health.${loc}.shock`]: newShock });
-                  await syncCharacterStatusEffects(this.document);
-                  const locLabel = loc === "armR" ? "Right Arm" : loc === "armL" ? "Left Arm" : loc === "legR" ? "Right Leg" : loc === "legL" ? "Left Leg" : loc.charAt(0).toUpperCase() + loc.slice(1);
-                  await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.document}), content: `<div class="reign-chat-card"><h3 class="reign-msg-success">Vigorous Recovery</h3><p>Rolled ${pool}d10 (Body+Vigor). Set: ${bestSet.text}.<br>Converted <strong>1 Killing → Shock</strong> on <strong>${locLabel}</strong>.</p></div>` });
-                  return;
-              }
-
-              // Option A: Remove Shock (distributed)
+              // Distribute Shock removal across locations
               const distContent = `
                 <form class="reign-dialog-form">
-                  <p class="reign-dialog-callout">Width: <strong>${width}</strong>. Remove up to ${width} Shock across any locations.</p>
+                  <p class="reign-dialog-callout">Roll succeeded! Best set: <strong>${bestSet.text}</strong>.<br>Remove up to <strong>${width} Shock</strong> across any locations.</p>
                   <div class="form-group"><label>Head (Shock: ${system.health.head.shock}):</label><input type="number" name="head" value="0" min="0" max="${Math.min(width, system.health.head.shock)}"></div>
                   <div class="form-group"><label>Torso (Shock: ${system.health.torso.shock}):</label><input type="number" name="torso" value="0" min="0" max="${Math.min(width, system.health.torso.shock)}"></div>
                   <div class="form-group"><label>R. Arm (Shock: ${system.health.armR.shock}):</label><input type="number" name="armR" value="0" min="0" max="${Math.min(width, system.health.armR.shock)}"></div>
@@ -191,7 +157,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
                 </form>
               `;
 
-              const dist = await reignDialog("Distribute Shock Removal", distContent, (e,b,d) => {
+              const dist = await reignDialog("Vigorous Recovery — Distribute Shock Removal", distContent, (e,b,d) => {
                       const f = d.element.querySelector("form");
                       return { head: parseInt(f.head.value)||0, torso: parseInt(f.torso.value)||0, armR: parseInt(f.armR.value)||0, armL: parseInt(f.armL.value)||0, legR: parseInt(f.legR.value)||0, legL: parseInt(f.legL.value)||0 };
                   }, { defaultLabel: "Apply Healing" }
@@ -782,9 +748,16 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       }
   }
 
+  _onRender(context, options) {
+    super._onRender(context, options);
+    this.element.classList.toggle("reign-gmc", !!context.isGMC);
+  }
+
   _onFirstRender(context, options) {
     super._onFirstRender(context, options);
     const html = this.element;
+    // Apply GMC border class on first render
+    html.classList.toggle("reign-gmc", !!context.isGMC);
 
     html.addEventListener('contextmenu', (ev) => {
         if (ev.target.closest('.hit-zone') || ev.target.closest('.health-box')) ev.preventDefault();
@@ -867,6 +840,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
     const effArmor = system.effectiveArmor;
 
     context.creationMode = system.creationMode || false;
+    context.isGMC = system.isGMC || false;
     context.progressionMode = this.document.getFlag("reign", "progressionMode") || false;
     this._activeTab = this._activeTab || "stats";
     context.tabs = { stats: this._activeTab === "stats" ? "active" : "", combat: this._activeTab === "combat" ? "active" : "", esoterica: this._activeTab === "esoterica" ? "active" : "", biography: this._activeTab === "biography" ? "active" : "", effects: this._activeTab === "effects" ? "active" : "" };

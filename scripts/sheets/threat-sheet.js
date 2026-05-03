@@ -146,6 +146,7 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
 
     // ── Location config: save field changes directly (no name attributes in form)
     //    Uses {render: false} so the config panel stays open while editing.
+    //    DOM is patched manually so the header (name, AR, wound track) stays in sync.
     html.addEventListener("change", ev => {
       const input = ev.target.closest("[data-loc-field]");
       if (!input) return;
@@ -160,6 +161,45 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       if (input.type === "number") val = parseInt(val) || 0;
       locs[idx][field] = val;
       this.document.update({ "system.customLocations": locs }, { render: false });
+
+      // ── Patch the visible header so changes show immediately ──
+      const locRow = html.querySelector(`.cs-loc-row[data-loc-index="${idx}"]`);
+      if (!locRow) return;
+
+      if (field === "name") {
+        const nameEl = locRow.querySelector(".cs-loc-name");
+        if (nameEl) nameEl.textContent = val;
+
+      } else if (field === "ar") {
+        const header = locRow.querySelector(".cs-loc-header");
+        let arTag = locRow.querySelector(".cs-ar-tag");
+        if (val > 0) {
+          if (arTag) { arTag.textContent = `AR${val}`; }
+          else {
+            arTag = document.createElement("span");
+            arTag.className = "cs-ar-tag";
+            arTag.textContent = `AR${val}`;
+            // Insert before .cs-loc-right
+            const right = header?.querySelector(".cs-loc-right");
+            right ? header.insertBefore(arTag, right) : header?.appendChild(arTag);
+          }
+        } else {
+          arTag?.remove();
+        }
+
+      } else if (field === "woundBoxes") {
+        const track = locRow.querySelector(".cs-wound-track");
+        if (track) {
+          const loc  = locs[idx];
+          const killing = loc.killing || 0;
+          const shock   = loc.shock   || 0;
+          const max     = val; // already parseInt'd above
+          track.innerHTML = Array.from({ length: max }, (_, i) => {
+            const state = i < killing ? "killing" : (i < killing + shock ? "shock" : "");
+            return `<div class="cs-wound-box" data-state="${state}" data-loc-index="${idx}" data-box-index="${i}" title="L: Shock  R: Killing  Shift: Remove"></div>`;
+          }).join("");
+        }
+      }
     });
 
     // ── Attack config: save field changes directly (no name attributes in form)

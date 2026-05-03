@@ -1,6 +1,6 @@
 // scripts/combat/damage.js
 const { DialogV2 } = foundry.applications.api;
-import { computeLocationDamage, getHitLocation, getHitLocationLabel, parseORE, calculateInitiative, checkThreatElimination, calculateMoraleAttackRemoval, getCreatureHitLocation } from "../helpers/ore-engine.js";
+import { computeLocationDamage, getHitLocation, getHitLocationLabel, parseORE, calculateInitiative, checkThreatElimination, calculateMoraleAttackRemoval, getCreatureHitLocation, parseDamageFormula, resolveHitRedirect } from "../helpers/ore-engine.js";
 import { generateOREChatHTML } from "../helpers/chat.js";
 import { reignDialog, reignAlert, reignClose } from "../helpers/dialog-util.js";
 import { HIT_LOCATIONS } from "../helpers/config.js";
@@ -31,18 +31,8 @@ async function commitHealth(actor, localHealth) {
   return changed;
 }
 
-/**
- * Safely evaluates a math string formula, substituting "width" where necessary.
- */
-function evaluateMathString(exprStr, widthValue) {
-  let expr = String(exprStr ?? "0").toLowerCase().replace(/width/gi, widthValue).replace(/\s/g, "");
-  try {
-      let r = new Roll(expr);
-      return r.evaluateSync().total;
-  } catch (e) { 
-      return parseInt(expr) || 0; 
-  }
-}
+// NOTE: Damage formula parsing is now centralized in parseDamageFormula() (ore-engine.js).
+// evaluateMathString has been removed. All call sites use parseDamageFormula instead.
 
 
 // ==========================================
@@ -267,19 +257,9 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
       combatMods = attacker?.system?.modifiers?.combat || {};
   }
 
-  const safeDmgStr = String(dmgString || "Width Shock").toLowerCase();
-  let baseShock = 0;
-  let baseKilling = 0;
-
-  const shockMatch = safeDmgStr.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*shock/);
-  const killMatch = safeDmgStr.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*killing/);
-
-  if (!shockMatch && !killMatch) {
-    baseShock = evaluateMathString(safeDmgStr, width);
-  }
-
-  if (shockMatch) baseShock = evaluateMathString(shockMatch[1], width);
-  if (killMatch) baseKilling = evaluateMathString(killMatch[1], width);
+  const parsed = parseDamageFormula(dmgString, width);
+  let baseShock = parsed.shock;
+  let baseKilling = parsed.killing;
 
   // Apply Active Effect Bonus Damage
   baseShock += (combatMods.bonusDamageShock || 0);
@@ -469,11 +449,11 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
       for (let [locKey, hits] of Object.entries(locCounts)) {
         if (locKey === "unknown") continue;
 
-        // ACTIVE EFFECT: Hit Redirection (e.g. Missing Limb)
-        let redirectTarget = targetActor.system.modifiers?.hitRedirects?.[locKey];
-        if (redirectTarget && redirectTarget.trim() !== "") {
-            ui.notifications.info(`${safeTargetName}'s ${getHitLocationLabel(locKey)} is missing/redirected! Damage routed to ${redirectTarget.trim()}.`);
-            locKey = redirectTarget.trim();
+        // ACTIVE EFFECT: Hit Redirection (e.g. Missing Limb) — validated via resolveHitRedirect
+        const redirect1 = resolveHitRedirect(targetActor, locKey);
+        if (redirect1.wasRedirected) {
+            ui.notifications.info(`${safeTargetName}'s ${getHitLocationLabel(locKey)} is missing/redirected! Damage routed to ${redirect1.locKey}.`);
+            locKey = redirect1.locKey;
         }
 
         // ITEM 8: Cover blocks area hits to protected locations
@@ -518,11 +498,11 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
     } else {
       // STANDARD SINGLE TARGET WEAPONS
       
-      // ACTIVE EFFECT: Hit Redirection (e.g. Missing Limb)
-      let redirectTarget = targetActor.system.modifiers?.hitRedirects?.[mainLocKey];
-      if (redirectTarget && redirectTarget.trim() !== "") {
-          ui.notifications.info(`${safeTargetName}'s ${getHitLocationLabel(mainLocKey)} is missing/redirected! Damage routed to ${redirectTarget.trim()}.`);
-          mainLocKey = redirectTarget.trim();
+      // ACTIVE EFFECT: Hit Redirection (e.g. Missing Limb) — validated via resolveHitRedirect
+      const redirect2 = resolveHitRedirect(targetActor, mainLocKey);
+      if (redirect2.wasRedirected) {
+          ui.notifications.info(`${safeTargetName}'s ${getHitLocationLabel(mainLocKey)} is missing/redirected! Damage routed to ${redirect2.locKey}.`);
+          mainLocKey = redirect2.locKey;
       }
 
       // ITEM 8: Cover blocks the hit entirely — the location is hidden behind an obstacle
@@ -657,11 +637,8 @@ export async function applyScatteredDamageToTarget(facesArrayStr, damageType, ap
     for (let face of faces) {
       let locKey = getHitLocation(face);
       
-      // ACTIVE EFFECT: Hit Redirection
-      let redirectTarget = targetActor.system.modifiers?.hitRedirects?.[locKey];
-      if (redirectTarget && redirectTarget.trim() !== "") {
-          locKey = redirectTarget.trim();
-      }
+      // ACTIVE EFFECT: Hit Redirection — validated via resolveHitRedirect
+      ({ locKey } = resolveHitRedirect(targetActor, locKey));
 
       if (locKey !== "unknown") locCounts[locKey] = (locCounts[locKey] || 0) + 1;
     }
@@ -818,15 +795,8 @@ export async function applyHealingToTarget(width, height, healString) {
   const targets = Array.from(game.user.targets);
   if (targets.length === 0) return ui.notifications.warn("Please target a token first!");
 
-  const safeHealStr = String(healString || "Width Healing").toLowerCase();
-  let baseHeal = 0;
-  
-  const healMatch = safeHealStr.match(/((?:width|\d)(?:\s*[\+\-]\s*\d+)?)\s*healing/);
-  if (healMatch) {
-      baseHeal = evaluateMathString(healMatch[1], width);
-  } else {
-      baseHeal = evaluateMathString(safeHealStr.replace(/healing/gi, ""), width);
-  }
+  const healParsed = parseDamageFormula(healString || "Width Healing", width);
+  const baseHeal = healParsed.healing || healParsed.shock; // Fallback: untyped formula treated as healing
 
   if (baseHeal <= 0) return ui.notifications.info("No healing points generated by this formula.");
 
@@ -837,11 +807,8 @@ export async function applyHealingToTarget(width, height, healString) {
     let mainLocKey = getHitLocation(height);
     if (mainLocKey === "unknown") continue;
 
-    // ACTIVE EFFECT: Hit Redirection
-    let redirectTarget = targetActor.system.modifiers?.hitRedirects?.[mainLocKey];
-    if (redirectTarget && redirectTarget.trim() !== "") {
-        mainLocKey = redirectTarget.trim();
-    }
+    // ACTIVE EFFECT: Hit Redirection — validated via resolveHitRedirect
+    mainLocKey = resolveHitRedirect(targetActor, mainLocKey).locKey;
 
     let localHealth = foundry.utils.deepClone(targetActor.system.health);
     let loc = localHealth[mainLocKey];
@@ -1000,11 +967,8 @@ export async function applyFirstAidToTarget(width) {
     const targetActor = target.actor;
     if (!targetActor || targetActor.type !== "character") continue;
 
-    // ACTIVE EFFECT: Hit Redirection
-    let redirectTarget = targetActor.system.modifiers?.hitRedirects?.[locKey];
-    if (redirectTarget && redirectTarget.trim() !== "") {
-        locKey = redirectTarget.trim();
-    }
+    // ACTIVE EFFECT: Hit Redirection — validated via resolveHitRedirect
+    locKey = resolveHitRedirect(targetActor, locKey).locKey;
 
     let localHealth = foundry.utils.deepClone(targetActor.system.health);
     let loc = localHealth[locKey];
@@ -1130,8 +1094,16 @@ export async function performPostCombatRecovery(actor) {
 /**
  * Checks a character's current health values and applies or removes condition ActiveEffects.
  */
+// Re-entrancy guard: prevents duplicate status AE creation when rapid
+// sequential damage calls (e.g. multi-location area attacks) trigger
+// overlapping sync operations on the same actor.
+const _statusSyncInFlight = new Set();
+
 export async function syncCharacterStatusEffects(actor) {
   if (actor.type !== "character") return;
+  if (_statusSyncInFlight.has(actor.id)) return;
+  _statusSyncInFlight.add(actor.id);
+  try {
   const health = actor.system.health;
 
   const em = actor.system.effectiveMax;
@@ -1169,6 +1141,9 @@ export async function syncCharacterStatusEffects(actor) {
 
   if (toDelete.length > 0) await actor.deleteEmbeddedDocuments("ActiveEffect", toDelete);
   if (toCreate.length > 0) await actor.createEmbeddedDocuments("ActiveEffect", toCreate);
+  } finally {
+    _statusSyncInFlight.delete(actor.id);
+  }
 }
 
 /**

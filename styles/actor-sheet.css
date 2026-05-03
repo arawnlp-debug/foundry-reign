@@ -43,6 +43,52 @@
   transform: scale(1.02);
 }
 
+/* ── GMC Portrait Wrap & Toggle ── */
+.reign .portrait-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 90px;
+}
+
+.reign .portrait-wrap--gmc .profile-img {
+  border-color: var(--reign-red);
+}
+
+.reign .gmc-toggle {
+  width: 100%;
+  font-size: 10px;
+  font-family: var(--reign-font-ui, inherit);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 4px;
+  border: 1px solid var(--reign-border-color, #555);
+  background: var(--reign-bg-iron, #2a2a2a);
+  color: var(--reign-text-muted, #aaa);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+
+.reign .gmc-toggle--active {
+  border-color: var(--reign-red);
+  background: color-mix(in srgb, var(--reign-red) 20%, transparent);
+  color: var(--reign-red);
+}
+
+.reign .gmc-toggle:hover {
+  filter: brightness(1.2);
+}
+
+/* ── GMC Sheet Border ── */
+.reign.sheet.actor.reign-gmc {
+  outline: 2px solid var(--reign-red);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
 .reign .header-fields {
   flex: 1;
   display: flex;

@@ -99,25 +99,35 @@ function _getTokenPoolHint() {
 
 const HEALTH_LOCS = ["head", "torso", "armR", "armL", "legR", "legL"];
 
-/** Build vitals data for PCs + threats on the active scene.
- *  PCs always shown. Threats shown only when they have a token on canvas.
+/** Build vitals data for PCs + GMCs + threats on the active scene.
+ *  PCs (isGMC=false) always shown. GMCs only shown when on canvas and not hidden.
+ *  Threats shown only when they have a token on canvas and are not hidden.
  *  Sorted by combat turn order during encounters, alphabetically otherwise. */
 function _getPartyVitals() {
   const combat = game.combat?.started ? game.combat : null;
   const sceneTokens = canvas?.tokens?.placeables || [];
 
-  // ── Gather PCs ──
-  let pcs = game.actors.filter(a => a.type === "character" && (
-    a.hasPlayerOwner || game.users.some(u => u.character?.id === a.id)
-  ));
-  if (pcs.length === 0) pcs = game.actors.filter(a => a.type === "character");
+  // ── Gather PCs (non-GMC characters) — always shown ──
+  const allChars = game.actors.filter(a => a.type === "character");
+  const pcs = allChars.filter(a => !a.system.isGMC);
 
-  // ── Gather threats with tokens on canvas ──
+  // ── Gather GMCs — only if they have a visible (non-hidden) token on canvas ──
+  const visibleCharTokenActorIds = new Set();
+  for (const token of sceneTokens) {
+    const actor = token.actor;
+    if (!actor || actor.type !== "character") continue;
+    if (token.document.hidden) continue;
+    visibleCharTokenActorIds.add(actor.id);
+  }
+  const gmcs = allChars.filter(a => a.system.isGMC && visibleCharTokenActorIds.has(a.id));
+
+  // ── Gather threats — only if visible (non-hidden) token on canvas ──
   const threatActorIds = new Set();
   const threats = [];
   for (const token of sceneTokens) {
     const actor = token.actor;
     if (!actor || actor.type !== "threat") continue;
+    if (token.document.hidden) continue;
     if (threatActorIds.has(actor.id)) continue; // Dedupe linked tokens
     threatActorIds.add(actor.id);
     threats.push(actor);
@@ -127,7 +137,11 @@ function _getPartyVitals() {
   const entries = [];
 
   for (const actor of pcs) {
-    entries.push(_buildCharacterVital(actor, combat));
+    entries.push(_buildCharacterVital(actor, combat, false));
+  }
+
+  for (const actor of gmcs) {
+    entries.push(_buildCharacterVital(actor, combat, true));
   }
 
   for (const actor of threats) {
@@ -148,9 +162,11 @@ function _getPartyVitals() {
       return a.name.localeCompare(b.name);
     });
   } else {
-    // Out of combat: PCs alphabetical, then threats alphabetical
+    // Out of combat: PCs first, then GMCs, then threats — each group alphabetical
     entries.sort((a, b) => {
-      if (a.isPC !== b.isPC) return a.isPC ? -1 : 1;
+      const rankA = a.isPC ? 0 : a.isGMC ? 1 : 2;
+      const rankB = b.isPC ? 0 : b.isGMC ? 1 : 2;
+      if (rankA !== rankB) return rankA - rankB;
       return a.name.localeCompare(b.name);
     });
   }
@@ -159,7 +175,7 @@ function _getPartyVitals() {
 }
 
 /** Build a vitals entry for a character actor. */
-function _buildCharacterVital(actor, combat) {
+function _buildCharacterVital(actor, combat, isGMC = false) {
   const health = actor.system.health || {};
   const effMax  = actor.system.effectiveMax || {};
 
@@ -191,7 +207,7 @@ function _buildCharacterVital(actor, combat) {
     worstState, conditions,
     hasConditions: conditions.length > 0,
     declared, inCombat: declared !== null,
-    isPC: true, isThreat: false
+    isPC: !isGMC, isGMC, isThreat: false
   };
 }
 

@@ -1,6 +1,14 @@
 <header class="sheet-header">
   <div class="header-top">
-    <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img"/>
+    <div class="portrait-wrap {{#if system.isGMC}}portrait-wrap--gmc{{/if}}">
+      <img src="{{actor.img}}" data-action="editImage" title="{{actor.name}}" class="profile-img"/>
+      <button type="button" data-action="toggleGMC"
+              class="gmc-toggle {{#if system.isGMC}}gmc-toggle--active{{/if}}"
+              title="{{#if system.isGMC}}GMC — click to mark as PC{{else}}PC — click to mark as GMC{{/if}}">
+        <i class="fas {{#if system.isGMC}}fa-user-secret{{else}}fa-user{{/if}}"></i>
+        {{#if system.isGMC}}GMC{{else}}PC{{/if}}
+      </button>
+    </div>
     <div class="header-fields">
       <div class="title-row">
         <input name="name" type="text" value="{{actor.name}}" placeholder="CHARACTER NAME"/>
