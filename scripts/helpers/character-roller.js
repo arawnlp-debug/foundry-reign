@@ -92,7 +92,7 @@ export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShot
 }
 
 export class CharacterRoller {
-  static async rollCharacter(actor, dataset) {
+  static async rollCharacter(actor, dataset, options = {}) {
     try {
         if (DEBUG_ROLLS) console.log("Reign Roller | Execution Started.", dataset);
 
@@ -710,12 +710,20 @@ export class CharacterRoller {
                   if (input !== mdInput) input.addEventListener("input", updatePool);
                   input.addEventListener("change", updatePool);
               });
-     
+
+              // ITEM-8a: If the declaration dialog passed a preMultiActions hint, pre-set
+              // the Multi-Actions counter so the player doesn't have to enter it manually.
+              // This is a default only — the player can still adjust it before rolling.
+              if (dataset.preMultiActions && multiInput && !ignoreMultiPenalty) {
+                  const pre = parseInt(dataset.preMultiActions);
+                  if (pre > 1) multiInput.value = pre;
+              }
+
               enforceExclusivity();
 
               // BATCH C ITEM-11: Pre-fill dialog fields from a stored lastRollContext.
               // Called by the ↺ re-roll handler and the Pin escape button.
-              const prefill = dataset?.prefillContext;
+              const prefill = options?.prefillContext;
               if (prefill) {
                   const setField = (name, value) => {
                       if (value === undefined || value === null) return;

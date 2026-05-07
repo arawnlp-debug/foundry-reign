@@ -12,6 +12,7 @@ Built for Foundry V14. Automates the OneRoll Engine (ORE) in full — from perso
 - [Quick Dice Roller](#quick-dice-roller)
 - [Characters](#characters)
 - [Combat](#combat)
+- [Declaration System](#declaration-system)
 - [Sorcery](#sorcery)
 - [Creatures & Bestiary](#creatures--bestiary)
 - [Hazards](#hazards)
@@ -29,17 +30,17 @@ Built for Foundry V14. Automates the OneRoll Engine (ORE) in full — from perso
 ## Installation
 
 **From Foundry's system browser:**
-1. Open Foundry VTT → Game Systems → Install System
+1. Open Foundry VTT → Game Settings → Manage Systems → Install System
 2. Search for **Reign**
 
 **By manifest URL:**
-1. Open Foundry VTT → Game Systems → Install System
+1. Open Foundry VTT → Game Settings → Manage Systems → Install System
 2. Paste into the manifest field:
    ```
    https://raw.githubusercontent.com/arawnlpdebug/foundryreign/main/system.json
    ```
 
-**Compatibility:** Foundry V14 · System version 3.0.0
+**Compatibility:** Foundry V14 · System version 3.2.0
 
 ---
 
@@ -69,7 +70,7 @@ The system handles all ORE mechanics automatically:
 
 ## Quick Dice Roller
 
-A standalone ORE dice roller is available directly from the chat sidebar — the d20 icon button in the chat controls bar, next to the roll mode and speaker selectors.
+A standalone ORE dice roller is available directly from the chat sidebar — the ORE icon button in the chat controls bar, next to the roll mode and speaker selectors.
 
 Click the button to open a dialog where you can set a roll label, pool size, difficulty, bonus and penalty dice, Expert Die face, and Master Die. A live pool preview updates as you adjust inputs. On confirm, the dice are rolled through the full ORE engine and posted as a standard chat card with sets, waste, and hit locations — identical to rolls made from a character sheet.
 
@@ -103,9 +104,9 @@ Six attributes — Body, Coordination, Sense, Knowledge, Command, Charm — each
 
 The combat tab has three sections that update in real time during an encounter.
 
-**Health** — a six-location silhouette (Head, Torso, Left Arm, Right Arm, Left Leg, Right Leg). Each location tracks Shock and Killing independently. Locations fill visually as damage accrues. When a limb fills entirely with Killing damage, any further damage to that limb overflows into the torso — this is a standard rule applying to all attacks. The torso filling with Killing damage means death, as does the head filling with Killing damage. The head filling with Shock damage renders the character unconscious; the torso filling with Shock damage inflicts a –1d penalty to all actions. Armor Rating applies per location.
+**Health** — a six-location silhouette (Head, Torso, Left Arm, Right Arm, Left Leg, Right Leg). Each location tracks Shock and Killing independently. Locations fill visually as damage accrues. When a limb fills entirely with Killing damage, any further damage to that limb overflows into the torso. The torso or head filling with Killing damage means death. The head filling with Shock damage renders the character unconscious; the torso filling with Shock damage inflicts a –1d penalty to all actions. Armor Rating applies per location.
 
-**Inventory** — equipped weapons, armor, and shields in a compact list. Weapons show damage formula, pool, range, and qualities. Equip and unequip with one click. Slow weapons show their cooldown status in the current combat round.
+**Inventory** — equipped weapons, armor, and shields in a compact list. Weapons show damage formula, pool, range, and qualities. Equip and unequip with one click. Slow weapons show their cooldown status in the current combat round, and the owning player is automatically notified via a private whisper at the start of the round when the weapon is ready to fire again.
 
 **Combat Moves** — all declared actions for the round, including the **Aim** maneuver (which accumulates a bonus Width that carries into the next attack roll) and **Shield Coverage** (assigning which locations the shield protects this round).
 
@@ -127,11 +128,11 @@ Click a weapon name on the combat tab to open the attack roll dialog. The pool i
 
 **Armor Piercing** — weapons with AP reduce the target's AR before damage is applied.
 
-**Slow weapons** — a Slow N weapon sets a per-character cooldown flag. The roller blocks another attack with that weapon until the cooldown clears (next available round shown in the combat inventory).
+**Slow weapons** — a Slow N weapon sets a per-character cooldown flag. The roller blocks another attack with that weapon until the cooldown clears (next available round shown in the combat inventory). At the start of the round when the weapon becomes ready, the owning player receives a private whisper notification so they don't miss their window.
 
 **Area weapons** — area N weapons produce N extra damage rolls against secondary targets. Apply each separately.
 
-**Massive weapons** — certain two-handed weapons (large clubs, battleaxes, polearms, greatswords) can be made massive. A massive weapon adds +1 Killing damage on every hit. Wielding one requires Body 4 or higher.
+**Massive weapons** — certain two-handed weapons can be made massive. A massive weapon adds +1 Killing damage on every hit. Wielding one requires Body 4 or higher.
 
 ### Defense
 
@@ -171,9 +172,7 @@ Unworthy opponents — mobs, rabble, minions — don't have hit locations or wou
 
 Threat is a static rating from 1 to 4 measuring how dangerous the fighters are — it is not the mob itself. The mob is the group of fighters tracked by the magnitude pool.
 
-**When a fighter is eliminated**, two things happen simultaneously: one die is immediately removed from any set the mob has in the current round's roll (spoiling or narrowing their attack), and the mob's pool shrinks by one die for every subsequent round. A mob that started with eight fighters rolling 8d will roll 7d next round after losing one.
-
-The mob's own waste dice don't trigger special effects.
+**When a fighter is eliminated**, two things happen simultaneously: one die is immediately removed from any set the mob has in the current round's roll (spoiling or narrowing their attack), and the mob's pool shrinks by one die for every subsequent round.
 
 A mob is defeated when its magnitude reaches zero through eliminations, or when a morale check produces no sets and the group routs.
 
@@ -184,7 +183,83 @@ The threat sheet tracks four values:
 - **Morale** — a secondary pool used for routing checks; if the roll produces no sets, the horde routs and is removed from play
 - **Damage Formula** — the standard Shock/Killing formula the mob deals (e.g. "Width Shock")
 
-Clicking **Roll Attack** on the threat sheet rolls the group's magnitude pool and produces a standard chat card. Damage is applied to targeted tokens as normal physical Shock or Killing. Clicking **Roll Morale** checks whether the horde holds — no sets means the horde flees and both magnitude and morale are zeroed automatically.
+Clicking **Roll Attack** on the threat sheet rolls the group's magnitude pool and produces a standard chat card. Damage is applied to targeted tokens as normal. Clicking **Roll Morale** checks whether the horde holds — no sets means the horde flees and both magnitude and morale are zeroed automatically.
+
+---
+
+## Declaration System
+
+Every combat round in Reign opens with a **declaration phase**: all combatants state their intended action before anyone rolls. Characters with lower Sense declare first; those with higher Sense — who have seen what others are doing — declare last and can react accordingly.
+
+The system tracks declarations in the combat tracker. Two modes are available, configurable per world in **World Settings → Declaration Mode**.
+
+### Simple Mode (Default)
+
+Each combatant row in the tracker shows a circle icon. When a player has decided their action, they click the circle to confirm. The icon turns to a checkmark. Rolling during declaration phase automatically marks the character as declared.
+
+Simple mode is the default and mirrors table play with minimal overhead. It is appropriate for groups who don't need digital declaration records.
+
+### Advanced Mode
+
+Advanced mode replaces the bare toggle with a structured **Declare** button. Clicking it opens a declaration dialog that captures the intended action before rolling.
+
+#### The Declaration Dialog
+
+The dialog has two fields that are always present:
+
+- **Declaration** — a free-text description of what the character is doing ("Attack Bufo with my sword, dodge if I can"). This text is public and visible to all players in the combat tracker once confirmed.
+- **Action Type** — a dropdown that determines what sub-fields appear below.
+
+**Action Types:**
+
+| Type | Who Can Use It | What It Does |
+|---|---|---|
+| No Roll / Narrative | All | Confirms declaration with no roll — movement, waiting, item use, conversation |
+| Attack | Characters, Creatures | Opens the weapon or creature attack selector, then launches the roll dialog |
+| Defense | Characters, Creatures | Opens Dodge or Parry subtype selector, then launches the roll dialog |
+| Skill Roll | Characters, Creatures | Selects stat and skill, then launches the roll dialog |
+| Multi-action | Characters only | Adds 2–4 action slots; see below |
+| Ready Slow Weapon | Characters only | Marks that this round is spent readying a slow weapon — no roll |
+| Complete Slow Spell | Characters only | Appears only when a slow spell is ready; launches the casting roll |
+
+#### Confirm (No Roll) vs Confirm + Roll
+
+The dialog has two confirmation buttons:
+
+- **Confirm (No Roll)** — marks the character as declared without opening the roll dialog. Use this for narrative actions, waiting, or when you want to declare now and roll separately.
+- **Confirm + Roll** — marks the character as declared and immediately opens the roll dialog pre-configured for the chosen action.
+
+For creatures and mob threats, "Confirm + Roll" routes to the appropriate creature pool dialog or the mob attack dialog rather than the character roll dialog.
+
+#### Multi-action
+
+When **Multi-action** is selected, between 2 and 4 action slots appear. Each slot has its own action type selector (Attack, Defense, or Skill Roll) and the appropriate sub-selectors.
+
+A live **pool penalty preview** updates as slots are added: each additional action costs −1d from the pool.
+
+On **Confirm + Roll**, a second step appears — the **pool selector**. This dialog shows each declared slot alongside its computed base pool (e.g. "Attack with Sword — Body 4 + Fight 3 = 7d"). The player chooses which single pool to roll. The roll dialog then opens with **Multi-Actions** pre-set to the correct count — the player doesn't need to enter it manually.
+
+After rolling, each set on the chat card shows an **Assign** dropdown populated with the declared action labels. The player selects which action each set resolves and clicks Assign. Assigned sets display a read-only label so all players can see what the rolls are being used for. Only the rolling player or the GM can make assignments.
+
+#### What Gets Stored
+
+When a declaration is confirmed, three flags are written to the combatant:
+
+- `declarationText` — the free-text description (displayed in the tracker)
+- `declarationAction` — the structured action record (type, slots, and computed penalty)
+- `declared` — set to true
+
+All three flags are automatically cleared at the start of each new round.
+
+#### Declaration Phase Sort Order
+
+During the declaration phase, the combat tracker and GM Toolbar sort combatants in the RAW commitment order:
+
+1. **Sense ascending** — lowest Sense declares first (least aware, most committed)
+2. **GMC before PC** — when Sense is tied, non-player-owned combatants declare first
+3. **Sight ascending** — final tiebreaker within the same type
+
+Characters who have already declared move to the bottom of each group.
 
 ---
 
@@ -206,9 +281,7 @@ Below the Sorcery panel, the School panel records:
 - **School Name** — e.g. "The Runewrights"
 - **Domain** — what the magic acts upon
 - **Method** — how spells are cast (dancing, writing, chanting, touch, etc.)
-- **Associated Attribute** — the Stat (or occasionally Skill) that pairs with Sorcery for this school, as defined by the school's rules. All canonical schools in Heluso & Milonda use a Stat, but custom schools may use a Skill instead.
-
-Selecting an associated attribute from the dropdown immediately updates the casting attributes highlight.
+- **Associated Attribute** — the Stat (or occasionally Skill) that pairs with Sorcery for this school
 
 ### Attunement
 
@@ -218,57 +291,33 @@ The Attunement panel tracks the four states of attunement as radio buttons with 
 |---|---|---|
 | Not Attuned | Grey | Must cast a temporary attunement spell before domain spells |
 | Temporary | Amber | Attunement spell has been cast; grants access to one higher-intensity spell in the domain |
-| Partial | Red | Permanently attuned but with unpleasant side effects (sandy texture, fragile bones, etc.) |
+| Partial | Red | Permanently attuned but with unpleasant side effects |
 | Perfect | Green | Perfectly attuned; full domain access and attunement benefits |
 
-When a character reaches Perfect Attunement, the system offers to create a labelled Active Effect for tracking mechanical attunement benefits (immunities, resistances, etc.).
-
-A notes textarea below the badges holds narrative descriptions of attunement effects and side effects, pre-seeded during character creation with the school's attunement description.
+When a character reaches Perfect Attunement, the system offers to create a labelled Active Effect for tracking mechanical attunement benefits.
 
 ### The Spell List
 
-Spells are listed grouped by school name. Each school group is collapsible — click the header to collapse or expand it. Spells within a group are presented in a compact list showing:
-
-**Intensity badge** — circular badge colour-coded by tier: smoke (1–2), amber (3–4), crimson (5–6), purple (7–10). Hovering shows the detection radius for that intensity level.
-
-**Status icons:**
-- 🔒 Lock — the spell requires attunement and the character is not attuned
-- ⚡ Link — this is an attunement spell (provides attunement, not a direct effect)
-- ⏳ Slow N — the spell requires N rounds of preparation before the roll is made
-
-**Duration** — how long the effect lasts.
-
-**Effect summary** — truncated first line of the effect text.
-
-Click the dice icon to open the casting roll dialog.
+Spells are listed grouped by school name. Each school group is collapsible. Spells show an Intensity badge, status icons (lock, link, hourglass), duration, and a truncated effect summary. Click the dice icon to open the casting roll dialog.
 
 ### Casting a Spell
 
-The roll dialog for spells shows a spell information banner:
-- **Intensity difficulty** — "Width of your set must equal or exceed Intensity N" (an Intensity 3 spell requires a set of at least 3 dice — any Height)
-- **Slow rating** — if the spell is slow, shows how many rounds of preparation are required before the roll
-- **Attunement Required** tag — if applicable
-- **Attunement Spell** tag — if this spell grants attunement
+The roll dialog for spells shows a spell information banner with the Intensity difficulty, Slow rating, and attunement flags. The attribute pre-selects the school's associated attribute.
 
-The attribute pre-selects the school's associated attribute. The Sorcery skill is pre-selected.
-
-If the spell has `attunementRequired: true` and the character is not attuned, a warning notification fires before the dialog opens. The roll proceeds regardless — the GM adjudicates.
+If a spell has a Slow rating, casting it starts a countdown. The character cannot take other actions while the spell charges. At the start of the round when the spell is ready to release, the owning player is notified via a private whisper. The **Complete Slow Spell** action type in the Advanced Declaration dialog pre-populates the spell for casting when that round arrives.
 
 ### Roll Result
 
-Spell roll chat cards include a spell result block below the sets:
+Spell roll chat cards include:
 
-- **Spell Fires** (green) if any set's Width equals or exceeds the spell's Intensity; **Spell Fizzled** (red) otherwise
-- **Detection radius** — how far away any character can detect the casting with a Sense + Eerie roll (any match succeeds; no Height/Width threshold)
-- **Roll Sense + Eerie** button — appears on successful spells at Intensity 2+, opening a pre-configured detection roll dialog for any nearby character
+- **Spell Fires / Fizzled** — based on whether any set's Width meets or beats the Intensity
+- **Detection radius** — how far away characters can detect the casting with Sense + Eerie (any match succeeds)
+- **Roll Sense + Eerie** button — appears on successful spells at Intensity 2+
 - **Counter This Spell** button — applies Counterspell Gobble Dice against the caster's sets
-- **Slow** — reminder of preparation rounds required; a notification also posts when the next roll opportunity arrives
-- **School, Duration** — contextual tags
+- **Slow / School / Duration** — contextual tags
 - **Dodgeable / Parriable / Armor Blocks** — shown if the spell has attack properties
 
 ### Spell Properties
-
-Each spell item tracks:
 
 | Property | Description |
 |---|---|
@@ -280,7 +329,7 @@ Each spell item tracks:
 | Casting Stat | The attribute that pairs with Sorcery for this spell |
 | Pool | Freeform pool description hint |
 | Damage | Damage formula if this is an attack spell |
-| Attunement Required | A temporary attunement spell must be cast before this spell; the attunement spell itself does nothing except enable the next casting |
+| Attunement Required | A temporary attunement spell must be cast before this spell |
 | Is Attunement Spell | This spell grants temporary attunement |
 | Dodgeable | Targets may attempt to Dodge |
 | Parriable | Targets may attempt to Parry |
@@ -296,15 +345,15 @@ The threat sheet supports a **Creature Mode** toggle for individual monsters, be
 
 #### Skills
 
-The Skills section has a **+** button to add skills via a dialog. The dialog offers a dropdown of all predefined combat skills (Fight, Bite, Claw, Kick, Ram, Constrict, Trample, Grapple, Dodge, Parry, Athletics, Climb, Swim, Run, Stealth) and perception skills (Hearing, Sight, Scrutinize, Smell), with already-added skills filtered out. A "Custom" option allows adding homebrew skills by name. Values can be set to a number (e.g. 3), **ED** (Expert Die), or **MD** (Master Die).
-
-Each skill row has a cog button to edit the value and an × button to delete the skill. Skills support a dice count combined with an optional Expert Die or Master Die (e.g. Fight 3 + ED, or Bite 4 + MD), matching how character skills work in the rules. Skills are auto-paired with the correct attribute (Body for combat skills, Coordination for agility skills, Sense for perception skills) and displayed in a sorted, labelled two-column layout.
+The Skills section has a **+** button to add skills via a dialog. The dialog offers a dropdown of all predefined combat and perception skills (Fight, Bite, Claw, Kick, Ram, Constrict, Trample, Grapple, Dodge, Parry, Athletics, Climb, Swim, Run, Stealth, Hearing, Sight, Scrutinize, Smell), with already-added skills filtered out. A "Custom" option allows adding homebrew skills by name. Skills support a dice count combined with an optional Expert Die or Master Die (e.g. Fight 3 + ED, or Bite 4 + MD).
 
 #### Attacks
 
-The Attacks section has a **+** button to add a new attack with default values. Each attack row has a cog button that toggles an inline config panel where you can edit the attack's name, paired attribute (Body/Coordination/Sense), skill key, damage formula, slow rating, and notes. All fields auto-save on change. Attacks can be rolled directly from their row, and deleted via the × button.
+The Attacks section has a **+** button to add a new attack with default values. Each attack row has a cog button that toggles an inline config panel for editing the attack's name, paired attribute, skill key, damage formula, slow rating, and notes. Attacks can be rolled directly from their row.
 
-Special creature mechanics supported via flags include: free Gobble Dice per round (big cats), charge accumulation (rhinos), constriction holds (boas), morale attacks (elephants), and venom delivery. Per-combat flags are cleaned up automatically when a combat encounter ends.
+In the Advanced Declaration dialog, creature attacks appear in the **Attack** selector — the GM can declare which attack the creature is making and launch the appropriate pool roll directly.
+
+Special creature mechanics supported via flags include: free Gobble Dice per round (big cats), charge accumulation (rhinos), constriction holds (boas), morale attacks (elephants), and venom delivery.
 
 ### Bestiary Compendium
 
@@ -322,15 +371,13 @@ A GM-only **Hazard Roller** is accessible from the Token Controls toolbar (skull
 
 **Fire** — set the fire intensity. Damage is applied through the standard damage infrastructure.
 
-**Poison** — select a poison from the world item list. The system displays the poison's potency, major and minor effects, and delivery method. A "Resist" button prompts targeted tokens to roll the appropriate resistance check (typically Body + Vigor) against the poison's difficulty.
+**Poison** — select a poison from the world item list. The system displays the poison's potency, major and minor effects, and delivery method. A "Resist" button prompts targeted tokens to roll the appropriate resistance check.
 
-**Area** — generic Area Damage roller for spells, creature abilities, traps, and other effects. Set the source name, dice count (1–30), and damage type (Shock/Killing). A live pool preview updates as inputs change. Routes through the standard damage infrastructure, handling both character and creature-mode targets. Armour does not apply (RAW Ch1 p.10).
+**Area** — generic Area Damage roller for spells, creature abilities, traps, and other effects. Set the source name, dice count (1–30), and damage type (Shock/Killing). Armour does not apply (RAW Ch1 p.10).
 
 ### Poison Items
 
-Poisons are a dedicated item type tracking potency, major and minor effects, difficulty, and delivery method. Weapons can be flagged as poisoned with a reference to a specific poison item — when the weapon hits, the poison's effects are available for application.
-
-The system ships with a **Poisons** compendium pack containing representative poison items.
+Poisons are a dedicated item type tracking potency, major and minor effects, difficulty, and delivery method. Weapons can be flagged as poisoned with a reference to a specific poison item. The system ships with a **Poisons** compendium pack.
 
 ---
 
@@ -342,24 +389,17 @@ Companies are organisations — armies, guilds, courts, cults — with five Qual
 
 Quality scores are both permanent values and hit point pools. Damage is tracked separately as a temporary overlay; overflow causes permanent loss.
 
-**Company Actions** — ten standard actions defined by RAW, each combining two Quality ratings into a single dice pool. You may use only one Quality if the other is penalised or reserved. Actions: Attack, Defend, Espionage, Counter-Espionage, Being Informed, Policing, Rise in Stature, Improve Culture, Train and Levy Troops, and Unconventional Warfare.
+**Company Actions** — ten standard actions defined by RAW, each combining two Quality ratings into a single dice pool: Attack, Defend, Espionage, Counter-Espionage, Being Informed, Policing, Rise in Stature, Improve Culture, Train and Levy Troops, and Unconventional Warfare.
 
 **Assets** — companies can own item assets (fortifications, fleets, magical resources) tracked in an asset list.
 
 ### The Faction Dashboard
 
-A dedicated application showing all companies in the world simultaneously. View quality scores, current damage, and company relationships on one screen. Open from the sidebar tools or via the macro API.
+A dedicated application showing all companies in the world simultaneously. View quality scores, current damage, and company relationships on one screen. Open from the sidebar tools or via `game.reign.openFactionDashboard()`.
 
 ### Company Creation (Companymancer)
 
-The Companymancer generator creates companies from scratch:
-
-1. **Name and concept** — title and brief description
-2. **Quality allocation** — distribute points across the five qualities within the campaign budget (configurable in settings)
-3. **Actions** — pre-declare which company actions are available
-4. **Assets** — add starting assets from the compendium or create custom ones
-
-The campaign budget is configurable per world in **World Settings → Reign Settings → Campaign Budget**.
+The Companymancer generator creates companies from scratch with name, quality allocation, actions, and starting assets. The campaign budget is configurable per world in **World Settings**.
 
 ---
 
@@ -367,19 +407,17 @@ The campaign budget is configurable per world in **World Settings → Reign Sett
 
 ### The Charactermancer
 
-Open the Charactermancer from the character sheet header or by clicking the creation wand icon on an empty character. Two creation methods are available:
+Open the Charactermancer from the character sheet header. Two creation methods are available:
 
 ### One-Roll Creation
 
 Roll once to determine the character's life path. The result is interpreted through the active **One-Roll Table** — a JSON file that maps set Width and Height to life stages, skill grants, and narrative prompts.
 
 1. **Roll the Bones** — one ORE roll determines the entire life path
-2. **Accept or Reroll** — review the result and reroll if desired (GM may limit rerolls)
+2. **Accept or Reroll** — review the result and reroll if desired
 3. **Life Path** — each set maps to a life stage: childhood, apprenticeship, journeyman years, recent history
-4. **Waste Dice** — waste maps to the Waste chart, granting small bonuses, background details, or complications
+4. **Waste Dice** — waste maps to the Waste chart, granting small bonuses or complications
 5. **Apply** — the result is written directly to the character
-
-The biography output includes a "Gained:" summary for each life path stage and a final character summary block.
 
 ### Point Buy Creation
 
@@ -389,21 +427,19 @@ Manual allocation within a point budget (default 85 points):
 - **Skills** — 1 point per level
 - **Expert Die** — 1 point per skill
 - **Master Die** — 5 points per skill
-- **Sorcery** — 1 point per level, same as skills; Expert and Master dice available at the same costs
+- **Sorcery** — 1 point per level; Expert and Master dice available at the same costs
 - **Advantages & Problems** — advantages cost their listed point value; problems refund them
 - **Equipment** — starting weapons, armour, and gear
 
 ### School Selection (Both Methods)
 
-When any Sorcery investment is made, a **Magical School** picker appears. Schools are loaded from the active One-Roll Table JSON and presented as a card grid. Each card shows the school name, associated attribute, casting method, and domain. Clicking a card selects it; clicking again deselects it for a generalist sorcerer.
+When any Sorcery investment is made, a **Magical School** picker appears. Schools are loaded from the active One-Roll Table JSON and presented as a card grid showing school name, associated attribute, casting method, and domain.
 
 On creation, the selected school writes its name, domain, method, and associated attribute to the character's esoterica fields. The attunement notes textarea is pre-seeded with the school's attunement description.
 
-Different worlds using custom One-Roll Table JSON files automatically get their own school lists. See **World Settings** below.
-
 ### One-Roll Table Validation
 
-When the charactermancer loads a One-Roll Table JSON, it validates the file against the expected schema. Blocking errors (missing required keys, parse failures) halt loading and post a structured red error card to chat. Advisory warnings (missing optional keys like `schools`, malformed entries) post an amber card but allow loading to continue.
+When the charactermancer loads a One-Roll Table JSON, it validates the file against the expected schema. Blocking errors post a red error card to chat. Advisory warnings post an amber card but allow loading to continue.
 
 ---
 
@@ -411,9 +447,18 @@ When the charactermancer loads a One-Roll Table JSON, it validates the file agai
 
 Access via **Game Settings → Configure Settings → Reign Settings**.
 
+### Declaration Mode
+
+Controls how the declaration phase works in combat.
+
+- **Simple — toggle only (default)** — each combatant row shows a circle icon that the player clicks to confirm their declaration. Rolling during declaration phase automatically marks the character as declared.
+- **Advanced — declaration dialog** — the toggle is replaced by a **Declare** button that opens a structured dialog capturing action type, weapon or skill selection, and optional free-text description. Supports multi-action slot building with pool selector, slow weapon readying, and slow spell completion. See [Declaration System](#declaration-system) for full documentation.
+
+This is a world-level setting. The GM sets it once; all players see the same interface. Changing it takes effect immediately without requiring a world reload.
+
 ### Available One-Roll Tables
 
-A comma-separated list of JSON file paths (relative to the Foundry data directory) specifying which One-Roll Tables are available for character creation. The first path in the list is the primary table — used by the school picker and the one-roll generator.
+A comma-separated list of JSON file paths (relative to the Foundry data directory) specifying which One-Roll Tables are available for character creation. The first path is the primary table — used by the school picker and one-roll generator.
 
 The system ships with `systems/reign/data/oneroll-default.json`. To add a custom setting:
 
@@ -428,7 +473,6 @@ The system ships with `systems/reign/data/oneroll-default.json`. To add a custom
 ```
 2. Place it in your Foundry user data directory
 3. Add its path to the One-Roll Tables setting
-4. The charactermancer will offer it as an option on next open
 
 **The `schools` array** (optional — omitting it hides the school picker):
 ```json
@@ -447,14 +491,14 @@ The system ships with `systems/reign/data/oneroll-default.json`. To add a custom
 
 ### Campaign Budget
 
-The point budget for company creation in the Companymancer. Default: varies by setting recommendation. Raise for more powerful starting companies.
+The point budget for company creation in the Companymancer. Default varies by setting recommendation. Raise for more powerful starting companies.
 
 ### Post-Combat Recovery
 
-Controls how Shock is recovered after combat ends. Options:
+Controls how Shock is recovered after combat ends:
 - **Half Recovery (RAW default)** — Shock taken during combat is halved, rounded up
-- **Full Recovery** — all combat Shock clears (heroic house rule)
-- **No Automatic Recovery** — GM handles recovery manually (lethal house rule)
+- **Full Recovery** — all combat Shock clears
+- **No Automatic Recovery** — GM handles recovery manually
 
 ---
 
@@ -485,7 +529,7 @@ Active Effects in Reign modify actor data through Foundry's standard Active Effe
 | Action Economy | `system.modifiers.actionEconomy.ignoreMultiPenaltySkills` | Exempt skills from multi-action penalty (comma-separated) |
 | Hit Location | `system.modifiers.combat.forceHitLocation` | Override rolled hit location |
 | Hit Location | `system.modifiers.combat.shiftHitLocationUp` | Shift hit location up N steps |
-| Immunities | `system.modifiers.systemFlags.ignoreFatiguePenalties` | Ignore fatigue |
+| Immunities | `system.modifiers.systemFlags.ignoreFatiguePenalties` | Ignore fatigue and armor penalties |
 | Immunities | `system.modifiers.systemFlags.ignoreHeavyArmorSwim` | Swim in heavy armor |
 | Immunities | `system.modifiers.systemFlags.cannotUseTwoHanded` | Block two-handed weapon use |
 
@@ -507,9 +551,22 @@ Effects from equipped items are active only while the item is equipped. Advantag
 
 ## For Game Masters
 
+### GM Toolbar
+
+A persistent **GM Toolbar** sits at the top of the screen during play. It shows:
+
+- **World Month** — derived from the highest chronicle entry across all companies
+- **Combat Phase** — current phase (Declaration / Resolution) and round number when combat is active
+- **Declaration Progress** — count of declared vs total combatants during declaration phase, sorted in RAW declaration order (Sense ascending)
+- **Party Vitals** — compact health and morale overview for all PCs and scene threats
+- **Quick Roll** — fast access to character or creature rolls for the selected token
+- **Token Peek** — a summary of the selected token's relevant stats
+
+During declaration phase, the party vitals panel sorts combatants in the RAW order: lowest Sense first, GMCs before PCs on ties. This matches the combat tracker sort so the GM always sees the same order in both places.
+
 ### One-Roll Table Format
 
-The One-Roll Table JSON maps ORE results to life path outcomes. The default table ships with the system. A custom table can implement any setting.
+The One-Roll Table JSON maps ORE results to life path outcomes.
 
 **Top-level structure:**
 ```json
@@ -540,17 +597,6 @@ Each result entry within a stage:
   "sorcery": 0,
   "advantages": ["Tough"],
   "wealth": 1
-}
-```
-
-**Waste entries** (keyed by chart letter):
-```json
-"A": {
-  "name": "Chart A: The Common Lot",
-  "results": {
-    "1": { "label": "Waste result 1", "skills": { "haggle": 1 } },
-    ...
-  }
 }
 ```
 
@@ -594,41 +640,23 @@ The `game.reign` global exposes core functions for macro use:
 
 ## Recent Changes
 
+### v3.2.0 — Declaration System & Combat Round Improvements
+
+Full declaration phase system with simple and advanced modes, structured action capture, multi-action pool selection, per-set assignment on chat cards, slow weapon ready notifications, and non-character combatant support in the declaration dialog.
+
+See [CHANGELOG.md](CHANGELOG.md) for full technical detail.
+
+### v3.1.x — Roll Dialog & Chat Card
+
+Maneuver live rules preview in the roll dialog. Passion text and toggles in the roll dialog. Gobble selection prompt promoted to the top of the chat card. Pin escape roll button. Re-roll button with last roll context. Defence whisper implementation and revision.
+
 ### v3.0.1 — Creature Sheet UX
 
-Creature skill management — skills can now be added, edited, and deleted directly from the creature sheet via dialogs and inline buttons. Attack editing — each attack row gains a cog-toggle config panel for editing name, attribute, skill, damage formula, slow rating, and notes inline. Skills now support dice + ED/MD simultaneously (e.g. Fight 3 + ED). Hit location Heights replaced with clickable d10 face buttons — click to toggle faces on/off, coloured per location. Fixed ArrayField form submission bug that caused hit location Heights, Shock, and Killing to reset when any field was edited. Added missing schema fields for Movement, Trainability, Tricks, and Special Rules so they persist correctly. GM Toolbar bugfix — creature-mode Token Peek pool preview now correctly reads skill values. Generic Area Damage roller added as a 4th tab in the Hazard Roller for spells, creature abilities, and other area effects.
+Creature skill management with add/edit/delete dialogs. Attack editing via inline config panels. Combined dice + ED/MD skill format. Clickable Height selectors. ArrayField form submission bugfix. Missing schema fields for movement, trainability, tricks, and special rules. Generic Area Damage roller.
 
 ### v3.0.0 — Creatures, Hazards & Poisons
 
-Creature Mode added to the threat sheet — a full bestiary system with custom hit locations, creature-specific attributes and skills (including ED/MD support), named attacks, and special mechanics (free Gobble Dice, charge accumulation, constriction, morale attacks, venom). Hazard Roller added as a GM-only toolbar button with tabbed dialogs for falling, fire, and poison hazards. Poisons added as a dedicated item type with potency, effects, difficulty, and delivery tracking. Weapons gain poison reference fields. Bestiary and Poisons compendium packs added.
-
-### v2.8.0 — Quality of Life
-
-Counterspell integration — a "Counter This Spell" gobble button on spell chat cards applying Gobble Dice against caster sets. Eerie detection prompt — a "Roll Sense + Eerie" button on successful spell cards opening a pre-configured detection roll dialog. One-Roll Table validation with structured error/warning cards posted to chat. Quick Dice Roller — standalone ORE roller button in the chat sidebar controls bar.
-
-### v2.6.0 — Presentation Pass
-
-Threat and company sheet consistency audit — all legacy CSS classes replaced with the shared utility system. Dark mode sweep — fourteen new semantic CSS variables with full light/dark mode values replacing ~35 hardcoded hex values. Charactermancer biography formatting rebuilt with "Gained:" summaries and a final character summary block. Redirect maneuver accessible from the Dodge roll dialog. Submission Hold called shot restricted to limb locations.
-
-### v2.5.0 — Combat Manoeuvre Automation
-
-Fifteen maneuvers fully automated across two tiers. Positional maneuvers (Pin, Restrain, Stand, Shove, Slam) apply status effects to targeted tokens via chat card buttons. Damage-modifying maneuvers (Strangle, Iron Kiss, Redirect, Submission Hold) track state across rounds via combatant flags. Tier 2 maneuvers gain a GM resolution button.
-
-### v2.4.0 — Active Effects Phase 2
-
-Sorcery group added to the Active Effect dictionary. New AE paths: `forceHitLocation`, `shiftHitLocationUp`, `appendManeuvers`, `minHeight`, `squishLimit`, `bonusTiming`, `ignoreMultiPenaltySkills`. Attunement-to-Perfect transition offers automatic AE creation.
-
-### v2.3.0 — Sorcery Elevation & School System
-
-The magic system fully rebuilt. Spells track Intensity, Slow, duration, and interaction flags. Esoterica tab redesigned with structured school and attunement panels. Magical schools defined in One-Roll Table JSON. Charactermancer school picker added.
-
-### v2.2.0 — Architecture & Chat Optimisation
-
-DRY extraction of hit location constants, scroll mixin, effect dictionary, and damage commit utility. Slimmed chat flag projection. Faction dashboard instance tracking improved.
-
-### v2.1.0 — Critical Bug Fixes
-
-Company conquest reward pre-damage snapshot fix. Shock recovery respects preCombatShock flag. Double-deletion in custom skills/moves resolved.
+Creature Mode on the threat sheet. Hazard Roller with falling, fire, and poison tabs. Poisons as a dedicated item type. Bestiary and Poisons compendium packs.
 
 ---
 

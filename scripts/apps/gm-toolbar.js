@@ -132,17 +132,34 @@ function _getPartyVitals() {
     const phase = combat.getFlag("reign", "phase") || "declaration";
 
     if (phase === "declaration") {
-      // Declaration phase: undeclared first (need attention), then declared, then non-combatants
+      // Declaration phase: mirror the RAW declaration order from _sortCombatants.
+      // Within each declared/undeclared group: Sense asc → GMC before PC → Sight asc.
+      // Non-combatants go last. Declared combatants go after undeclared (they've acted).
       entries.sort((a, b) => {
         const combA = combat.combatants.find(c => c.actorId === a.id);
         const combB = combat.combatants.find(c => c.actorId === b.id);
         const inA = !!combA;
         const inB = !!combB;
+        // Non-combatants last
         if (inA !== inB) return inA ? -1 : 1;
         if (inA && inB) {
+          // Declared combatants after undeclared
           const declA = combA.getFlag("reign", "declared") ? 1 : 0;
           const declB = combB.getFlag("reign", "declared") ? 1 : 0;
-          if (declA !== declB) return declA - declB; // Undeclared first
+          if (declA !== declB) return declA - declB;
+          // Within the same declared state, apply RAW declaration commitment order
+          // 1. Sense ascending (least aware declares first)
+          const senseA = combA.actor?.system?.attributes?.sense?.value ?? 0;
+          const senseB = combB.actor?.system?.attributes?.sense?.value ?? 0;
+          if (senseA !== senseB) return senseA - senseB;
+          // 2. GMC before PC (tied Sense: non-player-owned declares first)
+          const isPcA = combA.actor?.hasPlayerOwner ? 1 : 0;
+          const isPcB = combB.actor?.hasPlayerOwner ? 1 : 0;
+          if (isPcA !== isPcB) return isPcA - isPcB;
+          // 3. Sight ascending (tiebreaker within same type)
+          const sightA = combA.actor?.system?.skills?.sight?.value ?? 0;
+          const sightB = combB.actor?.system?.skills?.sight?.value ?? 0;
+          if (sightA !== sightB) return sightA - sightB;
         }
         return a.name.localeCompare(b.name);
       });

@@ -311,6 +311,29 @@
                                 {{/if}}
                             </div>
                         </div>
+
+                        {{!-- 8b: Multi-action set assignment ─────────────────────────────────
+                             Only shown on multi-action rolls that used the declaration dialog.
+                             Renders an assignment dropdown until assigned, then a read-only label. --}}
+                        {{#if ../isMultiAction}}
+                          {{#if (lookup ../setAssignments @index)}}
+                            <div class="reign-set-assignment-label">
+                              <i class="fas fa-arrow-right reign-text-success"></i>
+                              Assigned: <strong>{{lookup ../setAssignments @index}}</strong>
+                            </div>
+                          {{else}}
+                            <div class="reign-set-assignment-controls">
+                              <select class="set-assign-select" data-set-index="{{@index}}">
+                                <option value="">— Assign to action… —</option>
+                                {{#each ../declaredActions as |action|}}
+                                  <option value="{{action.label}}">{{action.label}}</option>
+                                {{/each}}
+                              </select>
+                              <button class="reign-btn-small set-assign-btn" data-set-index="{{@index}}" title="Assign this set to the selected action">Assign</button>
+                            </div>
+                          {{/if}}
+                        {{/if}}
+
                     </div>
                 {{/each}}
             </div>

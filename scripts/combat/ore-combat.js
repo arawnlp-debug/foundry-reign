@@ -154,16 +154,18 @@ export class ReignCombat extends Combat {
    * Resets initiative, declaration flags, shield assignments, and aim state for all participants.
    * PACKAGE C: Clears per-round shield coverage flags and processes aim state persistence.
    * ITEM-1: Notifies owning players when a slow weapon or slow spell becomes ready.
+   * ITEM-8: Clears declarationText and declarationAction flags each round.
    */
   async nextRound() {
     // ITEM-1: Fire before super.nextRound() so this.round is still the outgoing round,
     // which is the value compared against stored cooldown flags.
     await this._notifySlowReady();
-
     const updates = this.combatants.map(c => ({
       _id: c.id,
       initiative: null,
-      "flags.reign.declared": false
+      "flags.reign.declared": false,
+      "flags.reign.declarationText": "",       // ITEM-8: clear declaration text each round
+      "flags.reign.declarationAction": null    // ITEM-8: clear declaration action each round
     }));
     
     await this.updateEmbeddedDocuments("Combatant", updates);

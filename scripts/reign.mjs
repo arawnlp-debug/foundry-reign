@@ -7,13 +7,15 @@ import { ReignActorSheet } from "./sheets/character-sheet.js";
 import { ReignCompanySheet } from "./sheets/company-sheet.js";
 import { ReignThreatSheet } from "./sheets/threat-sheet.js";
 import { ReignItemSheet } from "./sheets/item-sheet.js";
-import { generateOREChatHTML, applyItemEffectsToTargets, assignGobbleSet, postOREChat } from "./helpers/chat.js";
+import { generateOREChatHTML, applyItemEffectsToTargets, assignGobbleSet, postOREChat, assignSetToAction } from "./helpers/chat.js";
 import { applyDamageToTarget, applyScatteredDamageToTarget, applyHealingToTarget, applyFirstAidToTarget, applyOffensiveMoraleAttack, applyManeuverStatus, applyStrangleDamage, setupIronKiss, executeIronKiss, applyRedirectDamage, applySubmissionHold } from "./combat/damage.js";
 import { applyCompanyDamageToTarget } from "./combat/company-damage.js";
 import { consumeGobbleDie, diveForCover } from "./combat/defense.js";
 import { ReignCombat } from "./combat/ore-combat.js";
 import { parseORE, calculateInitiative } from "./helpers/ore-engine.js";
 import { CharacterRoller, calculateOREPool } from "./helpers/character-roller.js";
+import { ThreatRoller } from "./helpers/threat-roller.js";
+import { skillAttrMap } from "./helpers/config.js";
 import { ReignCharactermancer } from "./generators/charactermancer.js";
 import { ReignCompanymancer } from "./generators/companymancer.js";
 import { FactionDashboard } from "./apps/faction-dashboard.js";
@@ -102,6 +104,20 @@ Hooks.once("init", async () => {
       half: "Half — rounded up (RAW default)",
       all:  "All — full recovery (House Rule: heroic)",
       none: "None — no recovery (House Rule: lethal)"
+    }
+  });
+  // ------------------------------
+
+  game.settings.register("reign", "declarationMode", {
+    name: "Declaration Mode",
+    hint: "Simple: the current toggle-only workflow. Advanced: a structured dialog that captures the declared action, stat/skill, and opens the roll dialog pre-configured.",
+    scope: "world",
+    config: true,
+    type: String,
+    default: "simple",
+    choices: {
+      simple:   "Simple — toggle only (default)",
+      advanced: "Advanced — declaration dialog"
     }
   });
   // ------------------------------
@@ -545,6 +561,21 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
 
           await assignGobbleSet(msg, width, height);
       });
+  });
+
+  // 8b: Multi-action set assignment
+  element.querySelectorAll(".set-assign-btn").forEach(btn => {
+    btn.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      if (!msg) return;
+      if (!msg.isAuthor && !game.user.isGM) return ui.notifications.warn("Only the GM or the rolling player can assign sets.");
+      const setIndex = parseInt(btn.dataset.setIndex);
+      const card = btn.closest(".reign-chat-card");
+      const select = card?.querySelector(`.set-assign-select[data-set-index="${setIndex}"]`);
+      const actionLabel = select?.value;
+      if (!actionLabel) return ui.notifications.warn("Select an action before assigning.");
+      await assignSetToAction(msg, setIndex, actionLabel);
+    });
   });
 
   // --- ITEM 8: Dive for Cover button on Dodge cards ---
@@ -1069,6 +1100,689 @@ Hooks.on("updateCombatant", async (combatant, changes, context, userId) => {
   }
 });
 
+/**
+ * ITEM-8 (Advanced Mode): Opens a structured declaration dialog for the given combatant.
+ *
+ * The dialog captures:
+ *  - A free-text description of the declared action (public, shown in the tracker)
+ *  - An action type (No Roll / Attack / Defense / Skill Roll / Multi-action /
+ *    Ready Slow Weapon / Complete Slow Spell)
+ *  - Context-sensitive sub-fields for each action type
+ *
+ * On "Confirm (No Roll)": writes declarationText and declarationAction flags,
+ *   sets declared = true. No roll dialog is opened.
+ * On "Confirm + Roll": writes flags, sets declared, then calls
+ *   CharacterRoller.rollCharacter() with the relevant dataset pre-populated.
+ *
+ * Multi-action: the penalty preview is shown in the dialog, but the player must
+ *   match the slot count in the roll dialog's Multi-Actions field manually.
+ *   (The roll dialog already manages this math; we avoid touching it here.)
+ *
+ * @param {Combatant} combatant
+ * @param {Combat} combat
+ */
+/**
+ * ITEM-8a: Intermediate pool selector for multi-action declarations.
+ *
+ * Shown after "Confirm + Roll" when the player has declared multiple actions.
+ * Presents each declared action with its computed base pool so the player
+ * can choose which single pool to roll. The multi-action penalty is then
+ * applied by the roll dialog via the preMultiActions hint.
+ *
+ * @param {Actor}  actor
+ * @param {Array}  actions      — action objects built by extractForm
+ * @param {Array}  allSkillOpts — full skill options array for attr lookup
+ * @param {number} slotCount    — total number of declared actions
+ * @returns {Promise<Object|null>} rollCharacter-compatible dataset, or null if cancelled
+ */
+async function _openPoolSelectorDialog(actor, actions, allSkillOpts, slotCount) {
+  const system = actor.system;
+
+  function describePool(action) {
+    if (action.type === "attack") {
+      const weapon = actor.items.get(action.itemId);
+      if (!weapon) return "—";
+      return weapon.system.pool || "—";
+    }
+    if (action.type === "defense") {
+      const attrKey  = action.subtype === "dodge" ? "coordination" : "body";
+      const attrVal  = parseInt(system.attributes?.[attrKey]?.value) || 0;
+      const skillVal = parseInt(system.skills?.[action.subtype]?.value) || 0;
+      const attrLabel = attrKey.charAt(0).toUpperCase() + attrKey.slice(1);
+      return `${attrLabel} ${attrVal} + ${action.label} ${skillVal} = ${attrVal + skillVal}d`;
+    }
+    if (action.type === "skill") {
+      const opt     = allSkillOpts.find(s => s.value === action.skillKey);
+      const attrKey = opt?.attr || "none";
+      const attrVal = attrKey !== "none" ? (parseInt(system.attributes?.[attrKey]?.value) || 0) : 0;
+      let skillVal  = 0;
+      const skey    = action.skillKey || "";
+      if (skey.startsWith("static_"))      skillVal = parseInt(system.skills?.[skey.replace("static_", "")]?.value) || 0;
+      else if (skey.startsWith("custom_")) skillVal = parseInt(system.customSkills?.[skey.replace("custom_", "")]?.value) || 0;
+      else if (skey.startsWith("esoterica_")) skillVal = parseInt(system.esoterica?.sorcery) || 0;
+      const attrLabel = attrKey !== "none" ? attrKey.charAt(0).toUpperCase() + attrKey.slice(1) : "";
+      return `${attrLabel} ${attrVal} + ${action.label} ${skillVal} = ${attrVal + skillVal}d`;
+    }
+    return "—";
+  }
+
+  const radioHtml = actions.map((action, i) => {
+    const poolDesc = describePool(action);
+    return `
+      <div class="form-group" style="margin-bottom:0.4rem">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+          <input type="radio" name="poolChoice" value="${i}" ${i === 0 ? "checked" : ""}/>
+          <span>
+            <strong>${foundry.utils.escapeHTML(action.label)}</strong>
+            <span class="reign-text-muted reign-text-small"> — ${foundry.utils.escapeHTML(poolDesc)}</span>
+          </span>
+        </label>
+      </div>`;
+  }).join("");
+
+  const content = `
+    <form class="reign-dialog-form">
+      <p class="reign-text-small reign-text-muted reign-mb-small">
+        <i class="fas fa-info-circle"></i>
+        ${slotCount} declared actions — pool penalty −${slotCount - 1}d.
+        Each set from this roll can be assigned to one action during resolution.
+        The roll dialog will open with Multi-Actions pre-set to ${slotCount}.
+      </p>
+      <hr class="reign-divider"/>
+      ${radioHtml}
+    </form>`;
+
+  const choiceIndex = await reignDialog(
+    "Multi-action — Choose Pool",
+    content,
+    null,
+    {
+      width: 420,
+      buttons: [{
+        action: "confirm",
+        label: "Roll This Pool",
+        default: true,
+        callback: (e, b, d) => {
+          const checked = d.element.querySelector('[name="poolChoice"]:checked');
+          return checked !== null ? parseInt(checked.value) : 0;
+        }
+      }]
+    }
+  );
+
+  if (choiceIndex === null || choiceIndex === undefined) return null;
+
+  const chosen = actions[choiceIndex];
+  if (!chosen) return null;
+
+  // Convert the chosen action into a rollCharacter-compatible dataset
+  const opt     = allSkillOpts.find(s => s.value === chosen.skillKey);
+  const attrKey = opt?.attr || "none";
+
+  if (chosen.type === "attack") {
+    const weapon = actor.items.get(chosen.itemId);
+    return weapon ? { type: "item", key: chosen.itemId, label: weapon.name } : null;
+  }
+  if (chosen.type === "defense") {
+    const attr = chosen.subtype === "dodge" ? "coordination" : "body";
+    return { type: "skill", key: chosen.subtype, label: chosen.label, defaultAttr: attr };
+  }
+  if (chosen.type === "skill") {
+    const skey = chosen.skillKey || "";
+    if (skey.startsWith("static_"))      return { type: "skill",       key: skey.replace("static_", ""),  label: chosen.label, defaultAttr: attrKey };
+    if (skey.startsWith("custom_"))      return { type: "customSkill", key: skey.replace("custom_", ""),  label: chosen.label, defaultAttr: attrKey };
+    if (skey.startsWith("esoterica_"))   return { type: "esoterica",   key: "sorcery",                    label: chosen.label, defaultAttr: "knowledge" };
+  }
+  return null;
+}
+
+/**
+ * ITEM-8 (Advanced Mode): Opens a structured declaration dialog for the given combatant.
+ *
+ * Supports character, creature (threat+creatureMode), and mob (threat) actors.
+ * On "Confirm (No Roll)": writes declarationText and declarationAction flags, sets declared.
+ * On "Confirm + Roll":
+ *   - Characters: opens CharacterRoller. Multi-action first shows the pool selector (8a).
+ *   - Creatures:  calls actor.sheet._rollCreaturePool() with the selected attack/skill.
+ *   - Mobs:       calls ThreatRoller.rollThreat().
+ *
+ * @param {Combatant} combatant
+ * @param {Combat}    combat
+ */
+async function _openDeclarationDialog(combatant, combat) {
+  const actor = combatant.actor;
+  if (!actor) return;
+
+  if (!game.user.isGM && !combatant.isOwner) {
+    return ui.notifications.warn("You do not have permission to declare for this combatant.");
+  }
+
+  // ── Actor type flags ──────────────────────────────────────────────────────
+  const isCharacter = actor.type === "character";
+  const isCreature  = actor.type === "threat" && !!actor.system.creatureMode;
+  const isMob       = actor.type === "threat" && !actor.system.creatureMode;
+
+  // ── Context ───────────────────────────────────────────────────────────────
+  const system = actor.system;
+
+  // Characters use item-based weapons; creatures use creatureAttacks; mobs don't use items.
+  const equippedWeapons  = isCharacter ? actor.items.filter(i => i.type === "weapon" && i.system.equipped) : [];
+  const creatureAttacks  = isCreature  ? (system.creatureAttacks || []) : [];
+
+  const weaponCooldown       = combatant.getFlag("reign", "slowCooldown") ?? -1;
+  const slowWeaponsInCooldown = equippedWeapons.filter(
+    w => (w.system.qualities?.slow ?? 0) > 0 && game.combat.round <= weaponCooldown
+  );
+
+  const activeCast     = combatant.getFlag("reign", "activeCast");
+  const canCompleteCast = !!(activeCast && game.combat?.round >= activeCast.round);
+
+  // ── Character skill option lists ──────────────────────────────────────────
+  const staticSkillOpts = Object.entries(skillAttrMap)
+    .map(([key, attr]) => ({
+      value: `static_${key}`,
+      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " / "),
+      attr
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const customSkillOpts = Object.entries(system.customSkills || {}).map(([id, sk]) => ({
+    value: `custom_${id}`,
+    label: sk.customLabel || "Custom Skill",
+    attr: sk.attribute || "none"
+  }));
+
+  const hasEsoterica   = (parseInt(system.esoterica?.sorcery) || 0) > 0 || !!system.esoterica?.schoolName;
+  const esotericaLabel = system.esoterica?.schoolName || "Sorcery";
+
+  const allSkillOpts = [
+    ...staticSkillOpts,
+    ...customSkillOpts,
+    ...(hasEsoterica ? [{ value: "esoterica_sorcery", label: esotericaLabel, attr: "knowledge" }] : [])
+  ];
+
+  const skillAttrLookup = {};
+  for (const opt of allSkillOpts) skillAttrLookup[opt.value] = opt.attr;
+
+  // ── HTML option strings ───────────────────────────────────────────────────
+  const attrLabels = {
+    body: "Body", coordination: "Coordination", sense: "Sense",
+    knowledge: "Knowledge", command: "Command", charm: "Charm"
+  };
+
+  const weaponOptionsHtml = equippedWeapons.length > 0
+    ? equippedWeapons.map(w => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)}</option>`).join("")
+    : `<option value="">— No weapons equipped —</option>`;
+
+  const slowWeaponOptionsHtml = slowWeaponsInCooldown.length > 0
+    ? slowWeaponsInCooldown.map(w => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)}</option>`).join("")
+    : `<option value="">— No slow weapons in cooldown —</option>`;
+
+  const skillOptionsHtml = allSkillOpts
+    .map(s => `<option value="${s.value}">${foundry.utils.escapeHTML(s.label)}</option>`)
+    .join("");
+
+  const attrOptionsHtml = Object.entries(attrLabels)
+    .map(([k, l]) => `<option value="${k}">${l}</option>`)
+    .join("");
+
+  // Creature attack selector
+  const creatureAttackOptionsHtml = creatureAttacks.length > 0
+    ? creatureAttacks.map((atk, i) =>
+        `<option value="${i}">${foundry.utils.escapeHTML(atk.name)} (${atk.attribute}+${atk.skill || "—"})</option>`
+      ).join("")
+    : `<option value="">— No attacks defined —</option>`;
+
+  // Creature skill selectors
+  const creatureSkillOptionsHtml = Object.entries(system.creatureSkills || {})
+    .map(([key, sk]) => {
+      const val = typeof sk === "object" ? (sk.value ?? 0) : sk;
+      return `<option value="${key}">${foundry.utils.escapeHTML(key)} (${val})</option>`;
+    }).join("") || `<option value="">— No skills defined —</option>`;
+
+  const creatureAttrOptionsHtml = Object.entries(system.creatureAttributes || {})
+    .map(([key, val]) => `<option value="${key}">${foundry.utils.escapeHTML(key)} (${val})</option>`)
+    .join("") || `<option value="">— No attributes defined —</option>`;
+
+  // ── Multi-action slot builder (characters only) ───────────────────────────
+  function buildSlotHtml(n) {
+    const removeBtn = n > 2
+      ? `<a class="remove-slot reign-text-danger" data-slot="${n}" title="Remove action" style="cursor:pointer;margin-left:4px"><i class="fas fa-times"></i></a>`
+      : "";
+    return `
+      <div class="decl-multi-slot reign-mt-small" data-slot="${n}">
+        <div class="flexrow reign-gap-small" style="align-items:center">
+          <span class="reign-text-small reign-text-muted" style="min-width:5rem">Action ${n}:</span>
+          <select name="slotType_${n}" data-slot="${n}" class="slot-type-select">
+            <option value="attack">Attack</option>
+            <option value="defense">Defense</option>
+            <option value="skill">Skill Roll</option>
+          </select>
+          ${removeBtn}
+        </div>
+        <div class="slot-fields reign-ml-small reign-mt-small">
+          <div class="form-group flexrow" data-slotfield="attack_${n}">
+            <label class="reign-col-2 reign-text-small">Weapon</label>
+            <select name="slotWeapon_${n}" class="reign-col-3">${weaponOptionsHtml}</select>
+          </div>
+          <div class="form-group flexrow" data-slotfield="defense_${n}" style="display:none">
+            <label class="reign-col-2 reign-text-small">Type</label>
+            <select name="slotDefense_${n}" class="reign-col-3">
+              <option value="dodge">Dodge</option>
+              <option value="parry">Parry</option>
+            </select>
+          </div>
+          <div class="form-group flexrow" data-slotfield="skill_${n}" style="display:none">
+            <label class="reign-col-2 reign-text-small">Skill</label>
+            <select name="slotSkill_${n}" class="slot-skill-select reign-col-3" data-slot="${n}">${skillOptionsHtml}</select>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Action type dropdown options (actor-type aware) ───────────────────────
+  let actionTypeOptionsHtml = `<option value="noroll">No Roll / Narrative</option>`;
+  if (isCharacter || (isCreature && creatureAttacks.length > 0) || isMob) {
+    actionTypeOptionsHtml += `<option value="attack">${isMob ? "Group Attack" : "Attack"}</option>`;
+  }
+  if (isCharacter || isCreature) {
+    actionTypeOptionsHtml += `
+      <option value="defense">Defense</option>
+      <option value="skill">Skill Roll</option>`;
+  }
+  if (isCharacter) {
+    actionTypeOptionsHtml += `<option value="multi">Multi-action</option>`;
+    if (slowWeaponsInCooldown.length > 0) actionTypeOptionsHtml += `<option value="readySlow">Ready Slow Weapon</option>`;
+    if (canCompleteCast) actionTypeOptionsHtml += `<option value="completeCast">Complete Slow Spell (${foundry.utils.escapeHTML(activeCast.name)})</option>`;
+  }
+
+  // ── Attack sub-field HTML (actor-type aware) ──────────────────────────────
+  let attackFieldHtml = "";
+  if (isCharacter) {
+    attackFieldHtml = `
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Weapon</label>
+        <select name="attackWeapon" class="reign-col-3">${weaponOptionsHtml}</select>
+      </div>`;
+  } else if (isCreature) {
+    attackFieldHtml = `
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Attack</label>
+        <select name="creatureAttack" class="reign-col-3">${creatureAttackOptionsHtml}</select>
+      </div>`;
+  } else if (isMob) {
+    attackFieldHtml = `
+      <p class="reign-text-small reign-text-muted">
+        <i class="fas fa-users"></i>
+        Rolls the full group attack pool (Magnitude + adjustments).
+      </p>`;
+  }
+
+  // ── Skill sub-field HTML (actor-type aware) ───────────────────────────────
+  let skillFieldHtml = "";
+  if (isCharacter) {
+    skillFieldHtml = `
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Skill</label>
+        <select name="skillKey" id="decl-skill-select" class="reign-col-3">${skillOptionsHtml}</select>
+      </div>
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Stat</label>
+        <select name="skillAttr" id="decl-skill-attr" class="reign-col-3">${attrOptionsHtml}</select>
+      </div>`;
+  } else if (isCreature) {
+    skillFieldHtml = `
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Skill</label>
+        <select name="creatureSkill" class="reign-col-3">${creatureSkillOptionsHtml}</select>
+      </div>
+      <div class="form-group flexrow">
+        <label class="reign-col-2">Attribute</label>
+        <select name="creatureAttr" class="reign-col-3">${creatureAttrOptionsHtml}</select>
+      </div>`;
+  }
+
+  // ── Dialog content ────────────────────────────────────────────────────────
+  const content = `
+    <form class="reign-dialog-form">
+
+      <div class="form-group flexrow reign-mb-small">
+        <label class="reign-col-2">Declaration</label>
+        <input type="text" name="declarationText" class="reign-col-3"
+          placeholder="Describe your action…" autocomplete="off"/>
+      </div>
+
+      <div class="form-group flexrow reign-mb-small">
+        <label class="reign-col-2">Action Type</label>
+        <select name="actionType" id="decl-action-type" class="reign-col-3">
+          ${actionTypeOptionsHtml}
+        </select>
+      </div>
+
+      <hr class="reign-divider"/>
+
+      <!-- Attack -->
+      <div class="decl-fields" id="decl-attack" style="display:none">
+        ${attackFieldHtml}
+      </div>
+
+      <!-- Defense -->
+      <div class="decl-fields" id="decl-defense" style="display:none">
+        <div class="form-group flexrow">
+          <label class="reign-col-2">Type</label>
+          <select name="defenseType" class="reign-col-3">
+            <option value="dodge">Dodge</option>
+            <option value="parry">Parry</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Skill Roll -->
+      <div class="decl-fields" id="decl-skill" style="display:none">
+        ${skillFieldHtml}
+      </div>
+
+      <!-- Multi-action (characters only) -->
+      ${isCharacter ? `
+      <div class="decl-fields" id="decl-multi" style="display:none">
+        <div id="multi-slot-container">
+          ${buildSlotHtml(1)}
+          ${buildSlotHtml(2)}
+        </div>
+        <div class="flexrow reign-mt-small reign-gap-small" style="align-items:center">
+          <a id="add-slot-btn" style="cursor:pointer" class="reign-text-small">
+            <i class="fas fa-plus"></i> Add Action
+          </a>
+          <span id="multi-penalty-preview" class="reign-text-small reign-text-muted"></span>
+        </div>
+        <p class="reign-text-small reign-text-muted reign-mt-small">
+          <i class="fas fa-info-circle"></i>
+          You will choose which pool to roll after confirming. Sets are assigned to actions during resolution.
+        </p>
+      </div>` : ""}
+
+      <!-- Ready Slow Weapon (characters only) -->
+      ${isCharacter ? `
+      <div class="decl-fields" id="decl-readySlow" style="display:none">
+        <div class="form-group flexrow">
+          <label class="reign-col-2">Weapon</label>
+          <select name="slowWeapon" class="reign-col-3">${slowWeaponOptionsHtml}</select>
+        </div>
+        <p class="reign-text-small reign-text-muted">
+          <i class="fas fa-clock"></i> This round is spent readying. No roll required.
+        </p>
+      </div>` : ""}
+
+      <!-- Complete Slow Spell (characters only) -->
+      ${isCharacter && canCompleteCast ? `
+      <div class="decl-fields" id="decl-completeCast" style="display:none">
+        <p class="reign-text-small">
+          <i class="fas fa-magic reign-text-magic"></i>
+          <strong>${foundry.utils.escapeHTML(activeCast.name)}</strong> is ready to release this round.
+          Click <em>Confirm + Roll</em> to cast.
+        </p>
+      </div>` : ""}
+
+    </form>`;
+
+  // ── Form data extraction (shared by both button callbacks) ────────────────
+  function extractForm(el) {
+    const f = el.querySelector("form");
+    const actionType      = f.querySelector('[name="actionType"]')?.value || "noroll";
+    const declarationText = f.querySelector('[name="declarationText"]')?.value?.trim() || "";
+    const actions = [];
+    let primaryDataset = null;
+
+    if (actionType === "attack") {
+      if (isCharacter) {
+        const itemId = f.querySelector('[name="attackWeapon"]')?.value || "";
+        const weapon = actor.items.get(itemId);
+        actions.push({ type: "attack", itemId, label: weapon?.name || "Attack" });
+        if (weapon) primaryDataset = { type: "item", key: itemId, label: weapon.name };
+
+      } else if (isCreature) {
+        const atkIdx = parseInt(f.querySelector('[name="creatureAttack"]')?.value) || 0;
+        const atk    = creatureAttacks[atkIdx];
+        if (atk) {
+          actions.push({ type: "creatureAttack", attackIndex: atkIdx, label: atk.name });
+          primaryDataset = {
+            type: "creature",
+            attrKey:  atk.attribute || "body",
+            skillKey: atk.skill || "",
+            label:    atk.name,
+            itemData: {
+              name: atk.name, type: "weapon",
+              system: { damage: atk.damage, qualities: { slow: atk.isSlow || 0 } }
+            }
+          };
+        }
+
+      } else if (isMob) {
+        actions.push({ type: "mobAttack", label: "Group Attack" });
+        primaryDataset = { type: "mob", label: "Group Attack" };
+      }
+
+    } else if (actionType === "defense") {
+      const defType = f.querySelector('[name="defenseType"]')?.value || "dodge";
+      const label   = defType === "dodge" ? "Dodge" : "Parry";
+      const attr    = defType === "dodge" ? "coordination" : "body";
+      actions.push({ type: "defense", subtype: defType, label });
+      primaryDataset = { type: "skill", key: defType, label, defaultAttr: attr };
+
+    } else if (actionType === "skill") {
+      if (isCharacter) {
+        const skillVal = f.querySelector('[name="skillKey"]')?.value  || "none";
+        const attrVal  = f.querySelector('[name="skillAttr"]')?.value || "none";
+        const skillOpt = allSkillOpts.find(s => s.value === skillVal);
+        const label    = skillOpt?.label || "Skill Roll";
+        actions.push({ type: "skill", skillKey: skillVal, attr: attrVal, label });
+        if (skillVal.startsWith("static_"))      primaryDataset = { type: "skill",       key: skillVal.replace("static_", ""),  label, defaultAttr: attrVal };
+        else if (skillVal.startsWith("custom_")) primaryDataset = { type: "customSkill", key: skillVal.replace("custom_", ""),  label, defaultAttr: attrVal };
+        else if (skillVal.startsWith("esoterica_")) primaryDataset = { type: "esoterica", key: "sorcery",                       label, defaultAttr: attrVal };
+
+      } else if (isCreature) {
+        const skillKey = f.querySelector('[name="creatureSkill"]')?.value || "";
+        const attrKey  = f.querySelector('[name="creatureAttr"]')?.value  || "body";
+        const label    = skillKey ? `${skillKey} (${attrKey})` : "Skill Roll";
+        actions.push({ type: "creatureSkill", skillKey, attrKey, label });
+        primaryDataset = { type: "creature", attrKey, skillKey, label };
+      }
+
+    } else if (actionType === "multi") {
+      // Characters only — slot builder
+      const slotEls = [...(f.querySelector("#multi-slot-container")?.querySelectorAll(".decl-multi-slot") || [])];
+      for (const slot of slotEls) {
+        const n        = slot.dataset.slot;
+        const slotType = slot.querySelector(`[name="slotType_${n}"]`)?.value || "attack";
+        if (slotType === "attack") {
+          const itemId = slot.querySelector(`[name="slotWeapon_${n}"]`)?.value || "";
+          const weapon = actor.items.get(itemId);
+          actions.push({ type: "attack", itemId, label: weapon?.name || "Attack" });
+        } else if (slotType === "defense") {
+          const defType = slot.querySelector(`[name="slotDefense_${n}"]`)?.value || "dodge";
+          const label   = defType === "dodge" ? "Dodge" : "Parry";
+          const attr    = defType === "dodge" ? "coordination" : "body";
+          actions.push({ type: "defense", subtype: defType, label });
+        } else if (slotType === "skill") {
+          const skillVal = slot.querySelector(`[name="slotSkill_${n}"]`)?.value || "none";
+          const skillOpt = allSkillOpts.find(s => s.value === skillVal);
+          actions.push({ type: "skill", skillKey: skillVal, label: skillOpt?.label || "Skill" });
+        }
+      }
+      // primaryDataset for multi is resolved in the pool selector step after the dialog closes
+
+    } else if (actionType === "readySlow") {
+      const itemId = f.querySelector('[name="slowWeapon"]')?.value || "";
+      const weapon = actor.items.get(itemId);
+      actions.push({ type: "readySlow", itemId, label: `Ready ${weapon?.name || "weapon"}` });
+
+    } else if (actionType === "completeCast" && canCompleteCast) {
+      actions.push({ type: "completeCast", itemId: activeCast.itemId, label: activeCast.name });
+      primaryDataset = { type: "item", key: activeCast.itemId, label: activeCast.name };
+    }
+
+    return { actionType, declarationText, actions, primaryDataset };
+  }
+
+  // ── Dialog ────────────────────────────────────────────────────────────────
+  const result = await reignDialog(
+    `Declare Action — ${foundry.utils.escapeHTML(actor.name)}`,
+    content,
+    null,
+    {
+      width: 460,
+      buttons: [
+        {
+          action: "noroll",
+          label: "Confirm (No Roll)",
+          callback: (e, b, d) => ({ roll: false, ...extractForm(d.element) })
+        },
+        {
+          action: "roll",
+          label: "Confirm + Roll",
+          default: true,
+          callback: (e, b, d) => ({ roll: true, ...extractForm(d.element) })
+        }
+      ],
+      render: (event, el) => {
+        const f = el.querySelector("form");
+        if (!f) return;
+
+        const actionTypeSelect = f.querySelector("#decl-action-type");
+        const allFieldGroups   = f.querySelectorAll(".decl-fields");
+        const rollBtn          = el.querySelector('[data-action="roll"]');
+
+        function updateFieldVisibility() {
+          const val = actionTypeSelect?.value || "noroll";
+          allFieldGroups.forEach(g => g.style.display = "none");
+          const target = f.querySelector(`#decl-${val}`);
+          if (target) target.style.display = "";
+          if (rollBtn) rollBtn.disabled = (val === "noroll" || val === "readySlow");
+        }
+        actionTypeSelect?.addEventListener("change", updateFieldVisibility);
+        updateFieldVisibility();
+
+        // Auto-populate Stat when Skill changes (character only)
+        const skillSelect     = f.querySelector("#decl-skill-select");
+        const skillAttrSelect = f.querySelector("#decl-skill-attr");
+        function syncSkillAttr() {
+          const attr = skillAttrLookup[skillSelect?.value];
+          if (attr && skillAttrSelect) skillAttrSelect.value = attr;
+        }
+        skillSelect?.addEventListener("change", syncSkillAttr);
+        syncSkillAttr();
+
+        // ── Multi-action slot wiring (characters only) ──────────────────────
+        if (!isCharacter) return;
+
+        const slotContainer  = f.querySelector("#multi-slot-container");
+        const penaltyPreview = f.querySelector("#multi-penalty-preview");
+        const addSlotBtn     = f.querySelector("#add-slot-btn");
+        let slotCount = 2;
+
+        function updatePenaltyPreview() {
+          if (penaltyPreview) {
+            penaltyPreview.textContent = `Pool penalty: −${slotCount - 1}d (${slotCount} actions)`;
+          }
+        }
+        updatePenaltyPreview();
+
+        function wireSlot(n) {
+          const slotTypeSelect = f.querySelector(`[name="slotType_${n}"]`);
+          if (!slotTypeSelect) return;
+          function updateSlotFields() {
+            const val  = slotTypeSelect.value;
+            const atkF = f.querySelector(`[data-slotfield="attack_${n}"]`);
+            const defF = f.querySelector(`[data-slotfield="defense_${n}"]`);
+            const sklF = f.querySelector(`[data-slotfield="skill_${n}"]`);
+            if (atkF) atkF.style.display = val === "attack"  ? "" : "none";
+            if (defF) defF.style.display = val === "defense" ? "" : "none";
+            if (sklF) sklF.style.display = val === "skill"   ? "" : "none";
+          }
+          slotTypeSelect.addEventListener("change", updateSlotFields);
+          updateSlotFields();
+          const removeBtn = f.querySelector(`.remove-slot[data-slot="${n}"]`);
+          if (removeBtn) {
+            removeBtn.addEventListener("click", () => {
+              const slotEl = slotContainer?.querySelector(`.decl-multi-slot[data-slot="${n}"]`);
+              if (slotEl) slotEl.remove();
+              slotCount--;
+              updatePenaltyPreview();
+              if (addSlotBtn && slotCount < 4) addSlotBtn.style.display = "";
+            });
+          }
+        }
+
+        wireSlot(1);
+        wireSlot(2);
+
+        addSlotBtn?.addEventListener("click", () => {
+          if (slotCount >= 4) return;
+          slotCount++;
+          slotContainer?.insertAdjacentHTML("beforeend", buildSlotHtml(slotCount));
+          wireSlot(slotCount);
+          updatePenaltyPreview();
+          if (slotCount >= 4 && addSlotBtn) addSlotBtn.style.display = "none";
+        });
+      }
+    }
+  );
+
+  if (!result) return;
+
+  // ── Write flags and mark declared ─────────────────────────────────────────
+  const { actionType, declarationText, actions, primaryDataset, roll } = result;
+
+  const activeCombat    = game.combats.get(combat.id);
+  if (!activeCombat) return;
+  const activeCombatant = activeCombat.combatants.get(combatant.id);
+  if (!activeCombatant) return;
+
+  await activeCombatant.setFlag("reign", "declared",          true);
+  await activeCombatant.setFlag("reign", "declarationText",   declarationText);
+  await activeCombatant.setFlag("reign", "declarationAction", {
+    type: actionType,
+    actions,
+    penalty: Math.max(0, actions.length - 1)
+  });
+
+  // ── Open roll dialog if requested ─────────────────────────────────────────
+  if (roll) {
+    if (isCharacter) {
+      if (actionType === "multi" && actions.length > 1) {
+        // 8a: Pool selector — player picks which pool to roll, then roll dialog opens
+        // with Multi-Actions pre-set to the slot count.
+        const chosenDataset = await _openPoolSelectorDialog(actor, actions, allSkillOpts, actions.length);
+        if (!chosenDataset) return;
+        await CharacterRoller.rollCharacter(actor, { ...chosenDataset, preMultiActions: actions.length });
+      } else if (primaryDataset) {
+        await CharacterRoller.rollCharacter(actor, primaryDataset);
+      } else {
+        ui.notifications.info(`${actor.name} declared: "${declarationText || actionType}". No roll configured.`);
+      }
+
+    } else if (actor.type === "threat") {
+      if (isCreature && primaryDataset) {
+        // Creature rolls go through the threat sheet's _rollCreaturePool
+        await actor.sheet._rollCreaturePool(
+          actor,
+          primaryDataset.attrKey,
+          primaryDataset.skillKey,
+          primaryDataset.label,
+          primaryDataset.itemData || null
+        );
+      } else if (isMob) {
+        await ThreatRoller.rollThreat(actor, {});
+      } else {
+        ui.notifications.info(`${actor.name} declared. Roll from the actor sheet.`);
+      }
+
+    } else {
+      ui.notifications.info(`${actor.name} declared. Roll from the actor sheet.`);
+    }
+  }
+}
+
 Hooks.on("renderCombatTracker", (app, html, context, options) => {
   const combat = game.combat;
   if (!combat) return;
@@ -1152,6 +1866,7 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
       }
   }
 
+  const declarationMode = game.settings.get("reign", "declarationMode") || "simple";
   const combatants = element.querySelectorAll(".combatant");
   combatants.forEach(li => {
       const cid = li.dataset.combatantId;
@@ -1166,13 +1881,14 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
           if (rollBtn) rollBtn.style.display = "none";
 
           if (isDeclaring) {
-              // CLEANED UI: Styles removed, classes added
+
+            if (declarationMode === "simple") {
+              // ── SIMPLE MODE: current toggle behaviour, unchanged ───────────
               initDiv.innerHTML = `
                 <a class="combatant-control reign-declare-btn ${isDeclared ? 'confirmed' : 'pending'}" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}">
                     <i class="${isDeclared ? 'fas fa-check-circle' : 'far fa-circle'}"></i>
                 </a>
               `;
-              
               const declareBtn = initDiv.querySelector(".reign-declare-btn");
               if (declareBtn) {
                   declareBtn.addEventListener("click", async (ev) => {
@@ -1186,6 +1902,39 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
                       await activeCombatant.setFlag("reign", "declared", !isDeclared);
                   });
               }
+
+            } else {
+              // ── ADVANCED MODE: declaration dialog ─────────────────────────
+              if (isDeclared) {
+                const declText  = c.getFlag("reign", "declarationText") || "";
+                const shortText = declText.length > 26 ? declText.slice(0, 26) + "…" : declText;
+                initDiv.innerHTML = `
+                  <a class="combatant-control reign-declare-btn confirmed" data-combatant-id="${cid}"
+                     title="${foundry.utils.escapeHTML(declText || 'Declaration Confirmed')}">
+                    <i class="fas fa-check-circle"></i>
+                    ${shortText ? `<span class="reign-decl-text reign-text-small reign-text-muted">${foundry.utils.escapeHTML(shortText)}</span>` : ""}
+                  </a>`;
+              } else {
+                initDiv.innerHTML = `
+                  <button class="reign-declare-dialog-btn" data-combatant-id="${cid}" title="Open Declaration Dialog">
+                    <i class="fas fa-scroll"></i> Declare
+                  </button>`;
+                const dialogBtn = initDiv.querySelector(".reign-declare-dialog-btn");
+                if (dialogBtn) {
+                  dialogBtn.addEventListener("click", async (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const activeCombat = game.combats.get(combat.id);
+                    if (!activeCombat) return;
+                    const activeCombatant = activeCombat.combatants.get(cid);
+                    if (!activeCombatant) return;
+                    if (!isGM && !activeCombatant.isOwner) return ui.notifications.warn("You do not have permission to declare for this combatant.");
+                    await _openDeclarationDialog(activeCombatant, activeCombat);
+                  });
+                }
+              }
+            }
+
           } else {
               // ISSUE-029 FIX: Display initiative as "W×H" rather than the raw decimal
               // (e.g. "2×10" instead of "210.90") so players can read it at a glance.

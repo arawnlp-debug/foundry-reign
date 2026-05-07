@@ -290,6 +290,10 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     wasteDmg: wasteData, 
     itemUuid: itemData?.uuid || null,
     hasEffects: !!itemData?.hasEffects,
+    // 8b: Multi-action set assignment
+    isMultiAction: (flags.multiActions || 1) > 1 && (flags.declaredActions || []).length > 0,
+    declaredActions: flags.declaredActions || [],
+    setAssignments: flags.setAssignments || {},
     // ── Spell metadata ──────────────────────────────────────────────────
     isSpell: isSpell,
     spellIntensity: spellIntensity,
@@ -380,6 +384,38 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
     }
   }
 
+  // ITEM-8 Option A: Rolling during declaration phase is sufficient to declare.
+  // Applies in both simple and advanced modes. A roll with no sets is still a
+  // declaration — the character attempted an action and committed to a pool.
+  if (game.combat && actor) {
+    const combatPhase = game.combat.getFlag("reign", "phase") || "declaration";
+    if (combatPhase === "declaration") {
+      const undeclaredCombatants = game.combat.combatants.filter(
+        c => c.actorId === actor.id && !c.getFlag("reign", "declared")
+      );
+      if (undeclaredCombatants.length > 0) {
+        await game.combat.updateEmbeddedDocuments("Combatant",
+          undeclaredCombatants.map(c => ({ _id: c.id, "flags.reign.declared": true }))
+        );
+      }
+    }
+  }
+
+  // 8b: For multi-action rolls, read the declared action list from the combatant flag so
+  // the chat card can offer per-set assignment. Only populated if the player used the
+  // advanced declaration dialog AND declared a multi action this round.
+  let declaredActions = [];
+  if ((flags.multiActions || 1) > 1 && game.combat && actor) {
+    const combatant = game.combat.combatants.find(c => c.actorId === actor.id);
+    const declarationAction = combatant?.getFlag("reign", "declarationAction");
+    if (declarationAction?.type === "multi" && Array.isArray(declarationAction.actions) && declarationAction.actions.length > 0) {
+      declaredActions = declarationAction.actions.map(a => ({
+        label: foundry.utils.escapeHTML(a.label || "Action"),
+        type: a.type || "unknown"
+      }));
+    }
+  }
+
   const actorType = actor?.type || "character";
   
   // Slim projection: only serialize the fields actually consumed by chat cards and damage applicators.
@@ -409,7 +445,7 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
     }
   } : null;
   
-  const flavor = await generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData, flags, parsed);
+  const flavor = await generateOREChatHTML(actorType, label, totalPool, results, expertDie, masterDiceCount, itemData, { ...flags, declaredActions, setAssignments: flags.setAssignments || {} }, parsed);
 
   // ✅ Serialize `advancedMods` natively into `rollFlags`
   // advancedMods is passed inside flags by the roller — extract it cleanly so
@@ -418,7 +454,7 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
   const messageFlags = { 
     reign: { 
         actorType, label: safeLabel, totalPool, results, expertDie, masterDiceCount, 
-        itemData, rollFlags: { ...flags, advancedMods: resolvedAdvancedMods },
+        itemData, rollFlags: { ...flags, advancedMods: resolvedAdvancedMods, declaredActions, setAssignments: {} },
         isDefense, defenseType, gobbleDice,
         // ISSUE-024/025: Stamp current combat round so gobble/spoil lookups can filter by round.
         combatRound: game.combat?.round ?? undefined
@@ -472,6 +508,43 @@ export async function assignGobbleSet(message, width, height) {
     });
     
     ui.notifications.info(`Assigned ${width}x${height} as Gobble Dice.`);
+}
+
+/**
+ * 8b: Assigns a rolled set to a declared action on a multi-action chat card.
+ *
+ * Stores the assignment in rollFlags.setAssignments and re-renders the card
+ * in-place, following the same pattern as assignGobbleSet.
+ *
+ * @param {ChatMessage} message   - The chat message to update.
+ * @param {number}      setIndex  - Zero-based index of the set in the sets array.
+ * @param {string}      actionLabel - Label of the declared action to assign to.
+ */
+export async function assignSetToAction(message, setIndex, actionLabel) {
+  const flags = message.flags?.reign;
+  if (!flags) return;
+
+  const updatedRollFlags = foundry.utils.deepClone(flags.rollFlags || {});
+  updatedRollFlags.setAssignments = {
+    ...(updatedRollFlags.setAssignments || {}),
+    [String(setIndex)]: actionLabel
+  };
+
+  const newContent = await generateOREChatHTML(
+    flags.actorType,
+    flags.label,
+    flags.totalPool,
+    flags.results,
+    flags.expertDie,
+    flags.masterDiceCount,
+    flags.itemData,
+    updatedRollFlags
+  );
+
+  await message.update({
+    content: newContent,
+    "flags.reign.rollFlags": updatedRollFlags
+  });
 }
 
 /**
