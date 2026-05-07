@@ -197,9 +197,11 @@ export class ReignCompanyData extends foundry.abstract.TypeDataModel {
     }
 
     prepareDerivedData() {
+        const qualityMods = this.modifiers?.qualities || {};
         for (const key of Object.keys(this.qualities)) {
             const q = this.qualities[key];
-            q.effective = Math.max(0, q.value - (q.damage || 0) - (q.uses || 0));
+            const aeBonus = parseInt(qualityMods[key] || 0);
+            q.effective = Math.max(0, q.value - (q.damage || 0) - (q.uses || 0) + aeBonus);
         }
     }
 }

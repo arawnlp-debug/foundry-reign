@@ -920,6 +920,49 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       await handlePoisonResist(resistType, targetId, 0);
     });
   });
+
+  // ── BATCH C ITEM-11: Re-roll last ↺ ──────────────────────────────────────
+  // Reads lastRollContext from the rolling actor's flags and re-runs the
+  // identical dice pool without opening the dialog.
+  element.querySelectorAll(".reign-reroll-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (!msg?.isAuthor && !game.user.isGM) return ui.notifications.warn("Only the rolling player or GM can re-roll this.");
+      const actorId = msg?.speaker?.actor;
+      const actor = actorId ? game.actors.get(actorId) : null;
+      if (!actor) return ui.notifications.warn("Cannot find the rolling character.");
+      const context = actor.getFlag("reign", "lastRollContext");
+      if (!context) return ui.notifications.warn("No previous roll context found for this character.");
+      await CharacterRoller.reroll(actor, context);
+    });
+  });
+
+  // ── BATCH C ITEM-2: Pin escape roll ──────────────────────────────────────
+  // Opens a Body+Fight dialog for the pinned character with difficulty pre-set
+  // to max(attackerBody, attackerFight) per RAW Ch7.
+  element.querySelectorAll(".attempt-escape-btn").forEach(btn => {
+    btn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const attackerBody  = parseInt(btn.dataset.attackerBody)  || 0;
+      const attackerFight = parseInt(btn.dataset.attackerFight) || 0;
+      const difficulty = Math.max(attackerBody, attackerFight);
+
+      // Resolve the pinned character — whoever clicks this is the defender
+      const actor = game.user.character
+        ?? canvas.tokens?.controlled?.[0]?.actor
+        ?? game.actors.find(a => a.type === "character" && a.isOwner);
+      if (!actor) return ui.notifications.warn("No character found. Select your token first.");
+
+      await CharacterRoller.rollCharacter(actor, {
+        type: "skill",
+        key: "fight",
+        label: "Escape Pin",
+        defaultAttr: "body",
+        difficulty
+      });
+    });
+  });
+
 });
 
 Hooks.on("preCreateItem", (item, data, options, userId) => {

@@ -493,6 +493,7 @@
     "QRPoolTooLow": "Pool reduced below 1 — action fails.",
     "QRMDYourRoll": "Your Roll so far",
     "QRMDAssign": "Assign a face value to your Master Die.",
-    "QRFinalize": "Finalize Sets"
+    "QRFinalize": "Finalize Sets",
+    "EffectMultiWarning": "This effect has multiple modifiers. Opening Advanced Editor."
   }
 }

@@ -567,3 +567,63 @@
     border-color: var(--reign-color-blood);
     box-shadow: 0 2px 6px rgba(200, 50, 50, 0.5);
 }
+/* ====================================================
+   BATCH B — Chat Card Enhancements
+   ITEM-4: Gobble selection prompt + amber border
+   ITEM-2: Pin escape button
+   ITEM-11: Re-roll button in card header
+==================================================== */
+
+/* ── ITEM-4: Amber pulse when awaiting gobble selection ── */
+@keyframes reign-gobble-pulse {
+    0%, 100% { border-color: var(--reign-bg-iron); }
+    50%       { border-color: var(--reign-color-amber); box-shadow: 0 0 6px rgba(200, 139, 0, 0.4); }
+}
+
+.reign-chat-card.reign-awaiting-gobble {
+    animation: reign-gobble-pulse 2s ease-in-out 3;  /* pulses 3 times then settles */
+}
+
+.reign-gobble-select-prompt {
+    background: var(--reign-bg-amber);
+    border: 1px solid var(--reign-color-amber);
+    border-left: 3px solid var(--reign-color-amber);
+    border-radius: var(--reign-radius-md);
+    padding: 8px 12px;
+    font-size: var(--reign-text-sm);
+    color: var(--reign-text-dark);
+    display: block;
+    line-height: 1.5;
+}
+
+/* ── ITEM-11: Re-roll button in card header ── */
+.reign-reroll-btn {
+    margin-left: auto;        /* push to far right of flex header */
+    background: none;
+    border: 1px solid rgba(139, 31, 31, 0.3);
+    border-radius: var(--reign-radius-sm);
+    color: var(--reign-color-blood);
+    font-size: var(--reign-text-base);
+    font-weight: bold;
+    cursor: pointer;
+    padding: 1px 7px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity var(--reign-transition-fast), background var(--reign-transition-fast);
+}
+
+.reign-reroll-btn:hover {
+    opacity: 1;
+    background: var(--reign-bg-blood-subtle);
+}
+
+/* ── ITEM-2: Pin escape button — styled as a secondary action ── */
+.attempt-escape-btn {
+    background: var(--reign-bg-iron) !important;
+    border-color: var(--reign-bg-iron-light) !important;
+    font-style: italic;
+}
+
+.attempt-escape-btn:hover {
+    filter: brightness(1.2);
+}

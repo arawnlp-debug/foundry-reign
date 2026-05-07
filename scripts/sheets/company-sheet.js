@@ -1,10 +1,11 @@
 // scripts/sheets/company-sheet.js
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 import { CompanyRoller } from "../helpers/company-roller.js";
-import { REIGN } from "../helpers/config.js";
+import { REIGN, getItemEffectExtras } from "../helpers/config.js";
 import { reignConfirm, reignDialog } from "../helpers/dialog-util.js";
 import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
 import { parseORE } from "../helpers/ore-engine.js";
+import { sanitiseItemDescription } from "../helpers/html-util.js";
 
 export class ReignCompanySheet extends ScrollPreserveMixin(HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2)) {
   static DEFAULT_OPTIONS = {
@@ -309,13 +310,7 @@ export class ReignCompanySheet extends ScrollPreserveMixin(HandlebarsApplication
       const item = this.document.items.get(target.dataset.itemId);
       if (!item) return;
       const safeName = foundry.utils.escapeHTML(item.name);
-      let rawDesc = String(item.system.notes || item.system.effect || item.system.description || "");
-      rawDesc = rawDesc
-        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-        .replace(/<img[\s\S]*?>/gi, "")
-        .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
-        .replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, "")
-        .replace(/<embed[\s\S]*?>/gi, "");
+      const rawDesc = sanitiseItemDescription(item.system.notes || item.system.effect || item.system.description || "");
         
       const safeDesc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(rawDesc, {
         async: true,
@@ -374,24 +369,18 @@ export class ReignCompanySheet extends ScrollPreserveMixin(HandlebarsApplication
   // ==========================================
 
   _getEffectDictionary() {
-      const dict = [];
-      const qualities = { might: "Might", treasure: "Treasure", influence: "Influence", territory: "Territory", sovereignty: "Sovereignty" };
-
-      for (const [k, v] of Object.entries(qualities)) {
-          dict.push({ group: "Company Qualities", value: `system.qualities.${k}.value`, label: `Bonus ${v}`, mode: 2 });
-      }
-      return dict;
+      return getItemEffectExtras();
   }
 
   async _handleEffectBuilder(effectId = null) {
       const effect = effectId ? this.document.effects.get(effectId) : null;
       
       if (effect && effect.changes.length > 1) {
-          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning") || "This effect has multiple modifiers. Opening Advanced Editor.");
+          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning"));
           return effect.sheet.render(true);
       }
 
-      const change = effect && effect.changes.length > 0 ? effect.changes[0] : { key: "system.qualities.might.value", value: "1", mode: 2 };
+      const change = effect && effect.changes.length > 0 ? effect.changes[0] : { key: "system.modifiers.qualities.might", value: "1", mode: 2 };
       const effectName = effect ? effect.name : `${this.document.name} Asset/Problem`;
 
       const dict = this._getEffectDictionary();

@@ -235,7 +235,12 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
                 holdShock: tierResult.holdShock || 0,
                 wrenchKilling: tierResult.wrenchKilling || 0,
                 holdHeight: flags.calledShot || 0,
-                hasSubmissionHold: !!tierResult.holdShock
+                hasSubmissionHold: !!tierResult.holdShock,
+                // BATCH B ITEM-2: Pin escape — attacker stats for escape difficulty.
+                // attackerBody/attackerFight stamped by character-roller.js (Batch C).
+                isPinManeuver: maneuverDef.id === "pin",
+                attackerBody: maneuverDef.attackerBody || 0,
+                attackerFight: maneuverDef.attackerFight || 0
             };
 
             // Morale Attack calculation for Threaten and Display Kill
@@ -298,6 +303,9 @@ export async function generateOREChatHTML(actorType, label, totalPool, results, 
     spellArmorBlocks: isSpell && !!itemData.system.armorBlocks,
     spellIsAttunementSpell: isSpell && !!itemData.system.isAttunementSpell,
     spellAttunementRequired: isSpell && !!itemData.system.attunementRequired,
+    // BATCH B ITEM-10: Incoming defence status — populated by Batch C when a defender rolls.
+    // Null on initial render; the attack card is updated in-place when defence arrives.
+    defenceStatus: flags.defenceStatus || null,
     // ISSUE-034: Signal the template when gobble dice were automatically assigned (single set)
     gobbleDiceAutoAssigned: !!(flags.gobbleDiceAutoAssigned)
   };

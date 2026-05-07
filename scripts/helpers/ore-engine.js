@@ -1,4 +1,5 @@
 // scripts/helpers/ore-engine.js
+import { HIT_LOCATIONS_SET } from "./config.js";
 
 export function computeLocationDamage(currentShock, currentKilling, incomingShock, incomingKilling, max) {
   currentShock = parseInt(currentShock) || 0;
@@ -290,9 +291,6 @@ export function parseDamageFormula(formulaStr, width) {
 // HIT REDIRECT VALIDATION HELPER
 // ==========================================
 
-/** Canonical set of valid character hit location keys. */
-const VALID_HIT_LOCATIONS = new Set(["head", "torso", "armR", "armL", "legR", "legL"]);
-
 /**
  * Resolves a hit-redirect for a given location key. If the actor has an Active Effect
  * redirect configured for that location, returns the validated target key.
@@ -307,7 +305,7 @@ export function resolveHitRedirect(actor, locKey) {
   if (!redirectTarget || redirectTarget.trim() === "") return { locKey, wasRedirected: false };
 
   const target = redirectTarget.trim();
-  if (!VALID_HIT_LOCATIONS.has(target)) {
+  if (!HIT_LOCATIONS_SET.has(target)) {
     const actorName = actor?.name || "Unknown";
     console.warn(`Reign | Invalid hit redirect on ${actorName}: "${locKey}" → "${target}" is not a valid location key. Keeping original location.`);
     ui.notifications.warn(`${actorName} has an invalid hit redirect ("${target}"). Damage applied to original location.`);

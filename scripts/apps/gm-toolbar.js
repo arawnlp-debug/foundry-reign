@@ -63,14 +63,7 @@ function _getTokenPoolHint() {
       if (attacks.length > 0) {
         const atk = attacks[0];
         const attrVal = actor.system.creatureAttributes?.[atk.attribute] || 0;
-        const skillRaw = actor.system.creatureSkills?.[atk.skill];
-        // Support both legacy (number/"ED"/"MD") and structured ({value, expert, master}) formats
-        let skillVal = 0;
-        if (skillRaw && typeof skillRaw === "object") {
-          skillVal = (skillRaw.value || 0) + ((skillRaw.expert || skillRaw.master) ? 1 : 0);
-        } else {
-          skillVal = (skillRaw === "MD" || skillRaw === "ED") ? 1 : (parseInt(skillRaw) || 0);
-        }
+        const skillVal = actor.system.creatureSkills?.[atk.skill]?.value || 0;
         return { label: `${actor.name}: ${atk.name || "Attack"}`, pool: attrVal + skillVal, actorName: actor.name };
       }
     }
@@ -99,35 +92,25 @@ function _getTokenPoolHint() {
 
 const HEALTH_LOCS = ["head", "torso", "armR", "armL", "legR", "legL"];
 
-/** Build vitals data for PCs + GMCs + threats on the active scene.
- *  PCs (isGMC=false) always shown. GMCs only shown when on canvas and not hidden.
- *  Threats shown only when they have a token on canvas and are not hidden.
+/** Build vitals data for PCs + threats on the active scene.
+ *  PCs always shown. Threats shown only when they have a token on canvas.
  *  Sorted by combat turn order during encounters, alphabetically otherwise. */
 function _getPartyVitals() {
   const combat = game.combat?.started ? game.combat : null;
   const sceneTokens = canvas?.tokens?.placeables || [];
 
-  // ── Gather PCs (non-GMC characters) — always shown ──
-  const allChars = game.actors.filter(a => a.type === "character");
-  const pcs = allChars.filter(a => !a.system.isGMC);
+  // ── Gather PCs ──
+  let pcs = game.actors.filter(a => a.type === "character" && (
+    a.hasPlayerOwner || game.users.some(u => u.character?.id === a.id)
+  ));
+  if (pcs.length === 0) pcs = game.actors.filter(a => a.type === "character");
 
-  // ── Gather GMCs — only if they have a visible (non-hidden) token on canvas ──
-  const visibleCharTokenActorIds = new Set();
-  for (const token of sceneTokens) {
-    const actor = token.actor;
-    if (!actor || actor.type !== "character") continue;
-    if (token.document.hidden) continue;
-    visibleCharTokenActorIds.add(actor.id);
-  }
-  const gmcs = allChars.filter(a => a.system.isGMC && visibleCharTokenActorIds.has(a.id));
-
-  // ── Gather threats — only if visible (non-hidden) token on canvas ──
+  // ── Gather threats with tokens on canvas ──
   const threatActorIds = new Set();
   const threats = [];
   for (const token of sceneTokens) {
     const actor = token.actor;
     if (!actor || actor.type !== "threat") continue;
-    if (token.document.hidden) continue;
     if (threatActorIds.has(actor.id)) continue; // Dedupe linked tokens
     threatActorIds.add(actor.id);
     threats.push(actor);
@@ -137,11 +120,7 @@ function _getPartyVitals() {
   const entries = [];
 
   for (const actor of pcs) {
-    entries.push(_buildCharacterVital(actor, combat, false));
-  }
-
-  for (const actor of gmcs) {
-    entries.push(_buildCharacterVital(actor, combat, true));
+    entries.push(_buildCharacterVital(actor, combat));
   }
 
   for (const actor of threats) {
@@ -150,23 +129,44 @@ function _getPartyVitals() {
 
   // ── Sort ──
   if (combat) {
-    // During combat: order by combatant turn order (from the sorted tracker)
-    const turnOrder = combat.turns?.map(c => c.actorId) || [];
-    entries.sort((a, b) => {
-      const idxA = turnOrder.indexOf(a.id);
-      const idxB = turnOrder.indexOf(b.id);
-      // Combatants first (in turn order), non-combatants last (alphabetical)
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-      if (idxA !== -1) return -1;
-      if (idxB !== -1) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    const phase = combat.getFlag("reign", "phase") || "declaration";
+
+    if (phase === "declaration") {
+      // Declaration phase: undeclared first (need attention), then declared, then non-combatants
+      entries.sort((a, b) => {
+        const combA = combat.combatants.find(c => c.actorId === a.id);
+        const combB = combat.combatants.find(c => c.actorId === b.id);
+        const inA = !!combA;
+        const inB = !!combB;
+        if (inA !== inB) return inA ? -1 : 1;
+        if (inA && inB) {
+          const declA = combA.getFlag("reign", "declared") ? 1 : 0;
+          const declB = combB.getFlag("reign", "declared") ? 1 : 0;
+          if (declA !== declB) return declA - declB; // Undeclared first
+        }
+        return a.name.localeCompare(b.name);
+      });
+    } else {
+      // Resolve phase: sort by initiative descending (higher = faster = acts first in ORE)
+      // Combatants with no initiative yet go to the end
+      entries.sort((a, b) => {
+        const combA = combat.combatants.find(c => c.actorId === a.id);
+        const combB = combat.combatants.find(c => c.actorId === b.id);
+        const inA = !!combA;
+        const inB = !!combB;
+        if (inA !== inB) return inA ? -1 : 1;
+        if (inA && inB) {
+          const initA = combA.initiative ?? -1;
+          const initB = combB.initiative ?? -1;
+          if (initA !== initB) return initB - initA; // Higher initiative first
+        }
+        return a.name.localeCompare(b.name);
+      });
+    }
   } else {
-    // Out of combat: PCs first, then GMCs, then threats — each group alphabetical
+    // Out of combat: PCs alphabetical, then threats alphabetical
     entries.sort((a, b) => {
-      const rankA = a.isPC ? 0 : a.isGMC ? 1 : 2;
-      const rankB = b.isPC ? 0 : b.isGMC ? 1 : 2;
-      if (rankA !== rankB) return rankA - rankB;
+      if (a.isPC !== b.isPC) return a.isPC ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
   }
@@ -175,7 +175,7 @@ function _getPartyVitals() {
 }
 
 /** Build a vitals entry for a character actor. */
-function _buildCharacterVital(actor, combat, isGMC = false) {
+function _buildCharacterVital(actor, combat) {
   const health = actor.system.health || {};
   const effMax  = actor.system.effectiveMax || {};
 
@@ -196,9 +196,15 @@ function _buildCharacterVital(actor, combat, isGMC = false) {
   const conditions = statuses.filter(s => ["dazed","prone","blind","pinned","restrained","bleeding"].includes(s));
 
   let declared = null;
+  let initiative = null;
+  let phase = null;
   if (combat) {
+    phase = combat.getFlag("reign", "phase") || "declaration";
     const combatant = combat.combatants.find(c => c.actorId === actor.id);
-    if (combatant) declared = !!combatant.getFlag("reign", "declared");
+    if (combatant) {
+      declared = !!combatant.getFlag("reign", "declared");
+      initiative = combatant.initiative;
+    }
   }
 
   return {
@@ -207,7 +213,9 @@ function _buildCharacterVital(actor, combat, isGMC = false) {
     worstState, conditions,
     hasConditions: conditions.length > 0,
     declared, inCombat: declared !== null,
-    isPC: !isGMC, isGMC, isThreat: false
+    initiative, hasInitiative: initiative !== null && initiative !== undefined,
+    isResolvePhase: phase !== "declaration" && phase !== null,
+    isPC: true, isThreat: false
   };
 }
 
@@ -242,9 +250,15 @@ function _buildThreatVital(actor, combat) {
   }
 
   let declared = null;
+  let initiative = null;
+  let phase = null;
   if (combat) {
+    phase = combat.getFlag("reign", "phase") || "declaration";
     const combatant = combat.combatants.find(c => c.actorId === actor.id);
-    if (combatant) declared = !!combatant.getFlag("reign", "declared");
+    if (combatant) {
+      declared = !!combatant.getFlag("reign", "declared");
+      initiative = combatant.initiative;
+    }
   }
 
   return {
@@ -253,6 +267,8 @@ function _buildThreatVital(actor, combat) {
     worstState, conditions: [],
     hasConditions: false,
     declared, inCombat: declared !== null,
+    initiative, hasInitiative: initiative !== null && initiative !== undefined,
+    isResolvePhase: phase !== "declaration" && phase !== null,
     isPC: false, isThreat: true
   };
 }

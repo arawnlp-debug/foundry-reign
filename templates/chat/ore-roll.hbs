@@ -1,6 +1,8 @@
-<div class="reign-chat-card">
+<div class="reign-chat-card {{#if needsGobbleSelection}}reign-awaiting-gobble{{/if}}">
     <header class="reign-roll-title">
         <i class="fas fa-dice-d10"></i> Rolling {{label}}
+        {{!-- BATCH B ITEM-11: Re-roll button — handler in reign.mjs reads lastRollContext from actor flags --}}
+        <button class="reign-reroll-btn" data-action="rerollLast" title="Re-roll with the same settings">↺</button>
     </header>
 
     {{#if (gt multiActions 1)}}
@@ -236,6 +238,21 @@
                                         <i class="fas fa-person-running"></i> Wrench Free ({{set.maneuverOutcome.wrenchKilling}} Killing to self)
                                     </button>
                                 {{/if}}
+
+                                {{!-- BATCH B ITEM-2: Pin escape roll button.
+                                     RAW Ch7: escape = Body+Fight or Coord+Grapple vs pinner's Body or Grapple (whichever higher).
+                                     ED in Grapple: -1d penalty. MD in Grapple: -2d penalty. Fight ED/MD gives no bonus.
+                                     attackerBody/attackerFight stamped by character-roller.js (Batch C). --}}
+                                {{#if set.maneuverOutcome.isPinManeuver}}
+                                {{#if set.isSuccess}}
+                                <button class="reign-btn-maneuver-secondary reign-btn-primary attempt-escape-btn"
+                                    data-attacker-body="{{set.maneuverOutcome.attackerBody}}"
+                                    data-attacker-fight="{{set.maneuverOutcome.attackerFight}}"
+                                    title="Roll to escape the pin — Body + Fight or Coordination + Grapple">
+                                    <i class="fas fa-person-running"></i> Attempt Escape (Pinned character)
+                                </button>
+                                {{/if}}
+                                {{/if}}
                             </div>
 
                             {{!-- Secondary Actions: Compact icon row --}}
@@ -301,6 +318,15 @@
             <div class="reign-banner reign-banner-fail">No Sets Found</div>
         {{/if}}
     </div>
+
+    {{!-- BATCH B ITEM-4: Gobble selection prompt promoted to immediately after sets.
+         When a defence roll has multiple sets, the player must choose before the
+         attacker can apply damage. Surfacing this here prevents it being missed. --}}
+    {{#if needsGobbleSelection}}
+    <div class="reign-gobble-select-prompt">
+        ⚠ <strong>Select Your Gobble Dice</strong> — you rolled multiple sets. Click <i class="fas fa-hand-pointer"></i> on one set above to lock it in as your active defence.
+    </div>
+    {{/if}}
 
     {{!-- ── SPELL RESULT BLOCK ──────────────────────────────────────── --}}
     {{#if isSpell}}
@@ -379,22 +405,13 @@
     {{/if}}
     {{!-- ── END SPELL RESULT BLOCK ──────────────────────────────────── --}}
 
-    {{!-- Gobble Dice counter or Selection Prompt on Defense cards --}}
+    {{!-- Gobble Dice tracker — shows available dice once assigned.
+         The selection prompt is now rendered above the sets tray (BATCH B ITEM-4). --}}
     {{#if isDefense}}
-        {{#if needsGobbleSelection}}
-            <div class="reign-gobble-tracker reign-gobble-warning">
-                <div class="reign-section-title reign-gobble-select-title">
-                    <i class="fas fa-exclamation-triangle"></i> Select Gobble Dice
-                </div>
-                <div class="reign-gobble-prompt">
-                    You rolled multiple sets! Click the <i class="fas fa-hand-pointer"></i> icon on a set above to lock it in as your active Gobble Dice.
-                </div>
-            </div>
-        {{else}}
+        {{#unless needsGobbleSelection}}
             <div class="reign-gobble-tracker">
                 <div class="reign-section-title reign-gobble-available-title">
                     <i class="fas fa-shield-alt"></i> Available Gobble Dice ({{gobbleCount}})
-                    {{!-- ISSUE-034: Confirm auto-assignment so players know it happened --}}
                     {{#if gobbleDiceAutoAssigned}}
                         <span class="reign-text-muted reign-text-small"> — auto-assigned from your only set</span>
                     {{/if}}
@@ -409,7 +426,7 @@
                     {{/if}}
                 </div>
             </div>
-        {{/if}}
+        {{/unless}}
     {{/if}}
 
     <div class="reign-callout">

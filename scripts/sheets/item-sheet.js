@@ -100,7 +100,7 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
       const effect = effectId ? this.document.effects.get(effectId) : null;
       
       if (effect && effect.changes.length > 1) {
-          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning") || "This effect has multiple modifiers. Opening Advanced Editor.");
+          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning"));
           return effect.sheet.render(true);
       }
 
@@ -202,6 +202,7 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
                           this.document.createEmbeddedDocuments("ActiveEffect", [{
                               name: "New Advanced Effect",
                               img: this.document.img || "icons/svg/aura.svg",
+                              transfer: true,
                               disabled: startDisabled
                           }]).then(effs => effs[0].sheet.render(true));
                       }
@@ -220,6 +221,7 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
                   name: result.name,
                   img: this.document.img || "icons/svg/aura.svg",
                   origin: this.document.uuid,
+                  transfer: true,
                   disabled: startDisabled,
                   changes: changes
               }]);

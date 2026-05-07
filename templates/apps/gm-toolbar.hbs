@@ -73,11 +73,13 @@
     <div class="gt-vitals-portrait gt-health-{{this.worstState}} {{#if this.isThreat}}gt-vitals-threat{{/if}}" data-actor-id="{{this.id}}" data-gt-action="vitals-select" title="{{this.name}}{{#if this.isThreat}} (Threat){{/if}}{{#if this.hasConditions}} — {{#each this.conditions}}{{this}} {{/each}}{{/if}}">
         <img src="{{this.img}}" alt="{{this.name}}" />
         {{#if this.inCombat}}
-            {{#if this.declared}}
-            <span class="gt-vitals-badge gt-badge-declared" title="Declared">✓</span>
-            {{else}}
-            <span class="gt-vitals-badge gt-badge-undeclared" title="Not yet declared">?</span>
-            {{/if}}
+            {{#unless this.isResolvePhase}}
+                {{#if this.declared}}
+                <span class="gt-vitals-badge gt-badge-declared" title="Declared">✓</span>
+                {{else}}
+                <span class="gt-vitals-badge gt-badge-undeclared" title="Not yet declared">?</span>
+                {{/if}}
+            {{/unless}}
         {{/if}}
         {{#if this.hasConditions}}
         <span class="gt-vitals-badge gt-badge-condition" title="{{#each this.conditions}}{{this}} {{/each}}">!</span>

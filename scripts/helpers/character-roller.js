@@ -418,6 +418,12 @@ export class CharacterRoller {
         const isSubmerged = actor.statuses.has("submerged") || actor.statuses.has("swimming") || actor.statuses.has("underwater");
         const defaultEnvContext = (showEnvContext && isSubmerged) ? "swimming" : "none";
 
+        // BATCH A ITEM-12: Passion text — shown alongside toggle labels so players
+        // can make an informed decision without needing to remember their biography.
+        const passionMission = system.biography?.mission?.trim() || "";
+        const passionDuty    = system.biography?.duty?.trim()    || "";
+        const passionCraving = system.biography?.craving?.trim() || "";
+
         const templateData = {
             defaultAttr, attrOptions, showSkillSelect, defaultSkill, skillOptions, isCombatRoll, calledShotOptions,
             difficulty: finalDifficulty, showEnvContext, autoBonus, autoPenalty, penaltyTitle, initialEdValue, initialMdValue,
@@ -427,7 +433,10 @@ export class CharacterRoller {
             isEerieDetection,
             eerieDetectionRadius,
             eerieSpellName,
-            defaultEnvContext
+            defaultEnvContext,
+            passionMission,
+            passionDuty,
+            passionCraving
         };
 
         if (DEBUG_ROLLS) console.log("Reign Roller | Rendering HTML Template...");
@@ -606,6 +615,9 @@ export class CharacterRoller {
 
                       if (mId === "none") {
                           lastManeuver = "none";
+                          // BATCH A ITEM-7: Clear the preview panel when no maneuver is selected
+                          const previewEl = element.querySelector("#maneuver-preview");
+                          if (previewEl) { previewEl.style.display = "none"; previewEl.innerHTML = ""; }
                           updatePool();
                           return;
                       }
@@ -663,6 +675,30 @@ export class CharacterRoller {
                       }
 
                       lastManeuver = mId;
+
+                      // BATCH A ITEM-7: Populate the live rules preview panel.
+                      // All data comes from the MANEUVERS definition — no extra fetch needed.
+                      const previewEl = element.querySelector("#maneuver-preview");
+                      if (previewEl && mDef) {
+                          const catMap = { simple: "Simple Maneuver", advanced: "Advanced Combat", expert: "Expert" };
+                          const catLabel = catMap[mDef.category] || mDef.category;
+                          const penParts = [];
+                          if (mDef.poolPenalty < 0) penParts.push(`${mDef.poolPenalty}d`);
+                          if (mDef.difficulty > 0)  penParts.push(`Difficulty ${mDef.difficulty}`);
+                          if (mDef.firstRoundOnly)  penParts.push("First round only");
+                          if (mDef.isMultiAction)   penParts.push("Requires 2 actions");
+                          const metaStr = penParts.length ? penParts.join(" · ") : "No modifiers";
+                          const rulesStr = mDef.rulesText ? game.i18n.localize(mDef.rulesText) : "";
+                          previewEl.innerHTML = `
+                              <div class="reign-maneuver-preview-header">
+                                  <span class="reign-maneuver-preview-cat">${catLabel}</span>
+                                  <span class="reign-maneuver-preview-meta">${metaStr}</span>
+                              </div>
+                              ${rulesStr ? `<p class="reign-maneuver-preview-rules">${rulesStr}</p>` : ""}
+                          `;
+                          previewEl.style.display = "";
+                      }
+
                       updatePool();
                   });
               }
@@ -675,7 +711,53 @@ export class CharacterRoller {
                   input.addEventListener("change", updatePool);
               });
      
-              enforceExclusivity(); 
+              enforceExclusivity();
+
+              // BATCH C ITEM-11: Pre-fill dialog fields from a stored lastRollContext.
+              // Called by the ↺ re-roll handler and the Pin escape button.
+              const prefill = dataset?.prefillContext;
+              if (prefill) {
+                  const setField = (name, value) => {
+                      if (value === undefined || value === null) return;
+                      const el = f.querySelector(`[name="${name}"]`);
+                      if (el) el.value = value;
+                  };
+                  setField("bonus",        prefill.bonus);
+                  setField("penalty",      prefill.penalty);
+                  setField("totalActions", prefill.multiActions);
+                  setField("calledShot",   prefill.calledShot);
+                  setField("difficulty",   prefill.difficulty);
+                  setField("ed",           prefill.ed);
+                  // Maneuver: set value then fire change so the preview and pool update
+                  if (prefill.maneuver && prefill.maneuver !== "none") {
+                      const mSel = f.querySelector('[name="maneuver"]');
+                      if (mSel) {
+                          mSel.value = prefill.maneuver;
+                          mSel.dispatchEvent(new Event("change"));
+                      }
+                  }
+                  updatePool();
+              }
+
+              // BATCH A ITEM-12: Wire passion toggle buttons.
+              // Each group has three buttons (Against / Neutral / Aligned) backed by a hidden input.
+              // Clicking a button updates the hidden input and recalculates the pool preview.
+              element.querySelectorAll(".reign-passion-toggles").forEach(group => {
+                  const passionName = group.dataset.passion;
+                  const hiddenInput = f.querySelector(`[name="${passionName}"]`);
+                  const btns = group.querySelectorAll(".reign-passion-btn");
+
+                  btns.forEach(btn => {
+                      btn.addEventListener("click", () => {
+                          btns.forEach(b => b.classList.remove("active"));
+                          btn.classList.add("active");
+                          if (hiddenInput) {
+                              hiddenInput.value = btn.dataset.value;
+                              updatePool();
+                          }
+                      });
+                  });
+              }); 
             }
           }
         );
@@ -778,6 +860,8 @@ export class CharacterRoller {
             bonusWidth: skillMods.bonusWidth || 0,
             bonusTiming: skillMods.bonusTiming || 0,
             squishLimit: skillMods.squishLimit || 0,
+            bonusDamageShock:   combatMods.bonusDamageShock   || 0,
+            bonusDamageKilling: combatMods.bonusDamageKilling || 0,
             ignoreArmorTarget: combatMods.ignoreArmorTarget || 0,
             forceHitLocation: combatMods.forceHitLocation || 0,
             shiftHitLocationUp: combatMods.shiftHitLocationUp || 0,
@@ -805,7 +889,11 @@ export class CharacterRoller {
                 rulesText: mDef.rulesText,
                 // Snapshot attacker stats needed for Display Kill / Threaten morale math
                 attackerCommand: parseInt(system.attributes?.command?.value) || 0,
-                attackerIntimidate: parseInt(system.skills?.intimidate?.value) || 0
+                attackerIntimidate: parseInt(system.skills?.intimidate?.value) || 0,
+                // BATCH C ITEM-2: Attacker Body and Fight for Pin escape difficulty.
+                // RAW Ch7: escape difficulty = max(pinner's Body, pinner's Grapple/Fight)
+                attackerBody: parseInt(system.attributes?.body?.value) || 0,
+                attackerFight: parseInt(system.skills?.fight?.value) || 0
             };
 
             // Add maneuver to pool breakdown for visibility
@@ -842,20 +930,36 @@ export class CharacterRoller {
                 if (myCombatant) await myCombatant.unsetFlag("reign", "shoveBonusAgainst");
             }
 
+            const rollFlagsForContext = { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: poolMath.wasCapped, isAttack: isAttackRoll, isDefense: isDefenseRoll, poolBreakdown, advancedMods };
+            let chatMsg = null;
+
             if (rawSkillKey === "counterspell") {
                 const parsed = parseORE(finalResults);
                 if (parsed.sets.length > 0) {
-                    const bestSet = parsed.sets[0]; 
+                    const bestSet = parsed.sets[0];
                     let csHtml = `<div class="reign-chat-card reign-card-magic"><h3 class="reign-text-magic">Counterspell Declared</h3><p class="reign-text-large reign-mb-small">The caster anchors their magic with <strong>${bestSet.text}</strong>.</p><p class="reign-text-small reign-text-muted">This produces <strong>${bestSet.width} Gobble Dice</strong> at Height <strong>${bestSet.height}</strong>. Each can cancel one die from an incoming spell set of equal or lower Height.</p></div>`;
-                    await postOREChat(actor, label || "Counterspell", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: poolMath.wasCapped, isAttack: false, isDefense: true, poolBreakdown: poolBreakdown, advancedMods: advancedMods }, rollInstance);
+                    chatMsg = await postOREChat(actor, label || "Counterspell", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { ...rollFlagsForContext, isAttack: false, isDefense: true }, rollInstance);
                     await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: csHtml });
                 } else {
-                    await postOREChat(actor, label || "Counterspell", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: poolMath.wasCapped, isAttack: false, isDefense: true, poolBreakdown: poolBreakdown, advancedMods: advancedMods }, rollInstance);
+                    chatMsg = await postOREChat(actor, label || "Counterspell", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { ...rollFlagsForContext, isAttack: false, isDefense: true }, rollInstance);
                     await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: `<div class="reign-chat-card reign-card-danger"><h3 class="reign-text-danger">Counterspell Fizzled</h3><p>The caster failed to anchor the spell. They are unprotected!</p></div>` });
                 }
             } else {
-                await postOREChat(actor, label || "Action", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, { multiActions: rollData.multiActions, calledShot: rollData.calledShot, difficulty: rollData.difficulty, wasCapped: poolMath.wasCapped, isAttack: isAttackRoll, isDefense: isDefenseRoll, poolBreakdown: poolBreakdown, advancedMods: advancedMods }, rollInstance);
+                chatMsg = await postOREChat(actor, label || "Action", poolMath.diceToRoll, finalResults, edCount > 0 ? edVal : 0, mdCount, itemRef, rollFlagsForContext, rollInstance);
             }
+
+            // BATCH C ITEM-11: Store roll context for ↺ re-roll.
+            // CharacterRoller.reroll() reads this to replay the same dice without re-opening the dialog.
+            await actor.setFlag("reign", "lastRollContext", {
+                label:      label || "Action",
+                totalPool:  poolMath.diceToRoll,
+                normalDice: poolMath.normalDiceCount,
+                edFace:     edCount > 0 ? edVal : 0,
+                mdCount,
+                itemId:     itemRef?.id || null,
+                rollFlags:  rollFlagsForContext
+            });
+
             if (DEBUG_ROLLS) console.log("Reign Roller | Execution Complete.");
         };
 
@@ -886,6 +990,68 @@ export class CharacterRoller {
     } catch (err) {
         console.error("Reign Roller | CRITICAL EXCEPTION CAUGHT:", err);
         ui.notifications.error("The roll crashed silently. Check the F12 console to see exactly why.");
+    }
+  }
+
+
+  // ==========================================
+  // BATCH C ITEM-11: REROLL LAST CONTEXT
+  // ==========================================
+
+  /**
+   * Re-runs the last stored roll for an actor without reopening the dialog.
+   * Called by the ↺ button on chat cards via reign.mjs.
+   * @param {Actor} actor
+   * @param {Object} context - stored lastRollContext from actor flags
+   */
+  static async reroll(actor, context) {
+    try {
+      let results = [];
+      let rollInstance = null;
+
+      // normalDice may be absent on older stored contexts — derive it safely
+      const normalDice = context.normalDice
+        ?? Math.max(0, context.totalPool - context.mdCount - (context.edFace > 0 ? 1 : 0));
+
+      if (normalDice > 0) {
+        rollInstance = new Roll(`${normalDice}d10`);
+        await rollInstance.evaluate();
+        results = rollInstance.dice[0]?.results.map(r => r.result) || [];
+      }
+      if (context.edFace > 0) results.push(context.edFace);
+
+      const itemRef = context.itemId ? actor.items.get(context.itemId) : null;
+
+      if (context.mdCount > 0) {
+        results.sort((a, b) => b - a);
+        let mdHtml = `<form class="reign-dialog-form">
+          <p class="reign-text-large reign-mb-small reign-mt-0"><strong>Roll so far:</strong> ${results.join(", ")}</p>
+          <p class="reign-text-small reign-text-muted reign-mb-medium">Assign Master Dice faces.</p>
+          <div class="dialog-grid dialog-grid-2">`;
+        for (let i = 0; i < context.mdCount; i++) {
+          mdHtml += `<div class="form-group"><label>MD ${i + 1} Face:</label><input type="number" id="mdFace${i}" value="10" min="1" max="10"/></div>`;
+        }
+        mdHtml += `</div></form>`;
+
+        const mdResult = await reignDialog(
+          "Assign Master Dice",
+          mdHtml,
+          (e, b, d) => {
+            const faces = [];
+            for (let i = 0; i < context.mdCount; i++) faces.push(parseInt(d.element.querySelector(`#mdFace${i}`)?.value) || 10);
+            return faces;
+          },
+          { defaultLabel: "Finalize Sets" }
+        );
+
+        if (!mdResult) return;
+        results.push(...mdResult);
+      }
+
+      await postOREChat(actor, context.label, context.totalPool, results, context.edFace, context.mdCount, itemRef, context.rollFlags || {}, rollInstance);
+    } catch (err) {
+      console.error("Reign Roller | Reroll failed:", err);
+      ui.notifications.error("Re-roll failed — check the console for details.");
     }
   }
 

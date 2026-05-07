@@ -204,7 +204,13 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
 
     // ── Attack config: save field changes directly (no name attributes in form)
     //    Uses {render: false} so the config panel stays open while editing.
-    html.addEventListener("change", ev => {
+    //    Uses "input" (not "change") so saves fire on every keystroke rather than
+    //    on blur — this prevents data loss when the config panel is closed before
+    //    the text field is explicitly blurred (hiding a parent suppresses "change"
+    //    in some browsers but never suppresses "input").
+    //    DOM-patches the visible attack name span for immediate feedback, mirroring
+    //    the same pattern used by the location config handler.
+    html.addEventListener("input", ev => {
       const input = ev.target.closest("[data-atk-field]");
       if (!input) return;
       const idx = parseInt(input.dataset.atkIndex);
@@ -218,6 +224,13 @@ export class ReignThreatSheet extends ScrollPreserveMixin(HandlebarsApplicationM
       if (input.type === "number") val = parseInt(val) || 0;
       attacks[idx][field] = val;
       this.document.update({ "system.creatureAttacks": attacks }, { render: false });
+
+      // ── Patch the visible attack name span so it updates without a re-render ──
+      if (field === "name") {
+        const wrap = html.querySelector(`.cs-attack-row-wrap[data-attack-index="${idx}"]`);
+        const nameEl = wrap?.querySelector(".cs-attack-name");
+        if (nameEl) nameEl.textContent = val;
+      }
     });
 
     // ── Height picker: toggle face buttons to assign/remove heights per location

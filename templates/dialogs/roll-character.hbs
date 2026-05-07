@@ -112,6 +112,8 @@
           </optgroup>
           {{/if}}
       </select>
+      {{!-- BATCH A ITEM-7: Live rules preview — populated by JS on maneuver select change --}}
+      <div id="maneuver-preview" class="reign-maneuver-preview" style="display:none"></div>
   </div>
   {{/if}}
 
@@ -121,12 +123,50 @@
     <div class="form-group"><label>Penalty Dice (-d):</label><input type="number" name="penalty" value="{{autoPenalty}}" title="{{penaltyTitle}}"/></div>
   </div>
     
-  <div class="form-group">
-    <label>Passions:</label>
+  {{!-- BATCH A ITEM-12: Passion toggles with live text. Hidden inputs keep the same names
+       the dialog callback reads (pMiss/pDuty/pCrav), so no changes needed downstream. --}}
+  <div class="form-group reign-dialog-section">
+    <label>Passions
+      <small class="reign-passion-hint">
+        <span>aligned: +1d</span>
+        <span>against: −1d</span>
+      </small>
+    </label>
     <div class="dialog-grid dialog-grid-3">
-      <div class="reign-passion-group"><label>Mission</label><select name="pMiss"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
-      <div class="reign-passion-group"><label>Duty</label><select name="pDuty"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
-      <div class="reign-passion-group"><label>Craving</label><select name="pCrav"><option value="1">Aligned (+1d)</option><option value="0" selected>Neutral</option><option value="-1">Against (-1d)</option></select></div>
+
+      <div class="reign-passion-group">
+        <span class="reign-passion-label">Mission</span>
+        {{#if passionMission}}<span class="reign-passion-text">{{passionMission}}</span>{{/if}}
+        <div class="reign-passion-toggles" data-passion="pMiss">
+          <button type="button" class="reign-passion-btn against" data-value="-1">Against</button>
+          <button type="button" class="reign-passion-btn neutral active" data-value="0">Neutral</button>
+          <button type="button" class="reign-passion-btn aligned" data-value="1">Aligned</button>
+        </div>
+        <input type="hidden" name="pMiss" value="0"/>
+      </div>
+
+      <div class="reign-passion-group">
+        <span class="reign-passion-label">Duty</span>
+        {{#if passionDuty}}<span class="reign-passion-text">{{passionDuty}}</span>{{/if}}
+        <div class="reign-passion-toggles" data-passion="pDuty">
+          <button type="button" class="reign-passion-btn against" data-value="-1">Against</button>
+          <button type="button" class="reign-passion-btn neutral active" data-value="0">Neutral</button>
+          <button type="button" class="reign-passion-btn aligned" data-value="1">Aligned</button>
+        </div>
+        <input type="hidden" name="pDuty" value="0"/>
+      </div>
+
+      <div class="reign-passion-group">
+        <span class="reign-passion-label">Craving</span>
+        {{#if passionCraving}}<span class="reign-passion-text">{{passionCraving}}</span>{{/if}}
+        <div class="reign-passion-toggles" data-passion="pCrav">
+          <button type="button" class="reign-passion-btn against" data-value="-1">Against</button>
+          <button type="button" class="reign-passion-btn neutral active" data-value="0">Neutral</button>
+          <button type="button" class="reign-passion-btn aligned" data-value="1">Aligned</button>
+        </div>
+        <input type="hidden" name="pCrav" value="0"/>
+      </div>
+
     </div>
   </div>
   

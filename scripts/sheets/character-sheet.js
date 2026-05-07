@@ -11,6 +11,7 @@ import { skillAttrMap, HIT_LOCATIONS, HIT_LOCATION_LABELS, getEffectDictionary }
 // Import the extracted dialog utilities
 import { reignDialog, reignConfirm } from "../helpers/dialog-util.js";
 import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
+import { sanitiseItemDescription } from "../helpers/html-util.js";
 
 /**
  * Main application class for rendering Character Actor sheets.
@@ -439,7 +440,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
           const item = this.document.items.get(target.dataset.itemId);
           if (!item) return;
           const safeName = foundry.utils.escapeHTML(item.name);
-          let rawDesc = String(item.system.notes || item.system.effect || "").replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<img[\s\S]*?>/gi, "").replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "").replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, "").replace(/<embed[\s\S]*?>/gi, "");
+          const rawDesc = sanitiseItemDescription(item.system.notes || item.system.effect || "");
           const safeDesc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(rawDesc, { async: true, secrets: this.document.isOwner, relativeTo: this.document });
           
           // For spells, include intensity, school and duration in chat
@@ -622,7 +623,7 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       const effect = effectId ? this.document.effects.get(effectId) : null;
       
       if (effect && effect.changes.length > 1) {
-          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning") || "This effect has multiple modifiers. Opening Advanced Editor.");
+          ui.notifications.warn(game.i18n.localize("REIGN.EffectMultiWarning"));
           return effect.sheet.render(true);
       }
 

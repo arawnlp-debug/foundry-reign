@@ -100,11 +100,11 @@ export function getEffectDictionary() {
  */
 export function getItemEffectExtras() {
   return [
-    { group: "Company Qualities", value: "system.qualities.might.value", label: "Might (Bonus / Penalty)", mode: 2 },
-    { group: "Company Qualities", value: "system.qualities.treasure.value", label: "Treasure (Bonus / Penalty)", mode: 2 },
-    { group: "Company Qualities", value: "system.qualities.influence.value", label: "Influence (Bonus / Penalty)", mode: 2 },
-    { group: "Company Qualities", value: "system.qualities.territory.value", label: "Territory (Bonus / Penalty)", mode: 2 },
-    { group: "Company Qualities", value: "system.qualities.sovereignty.value", label: "Sovereignty (Bonus / Penalty)", mode: 2 },
+    { group: "Company Qualities", value: "system.modifiers.qualities.might",       label: "Might (Bonus / Penalty)",       mode: 2 },
+    { group: "Company Qualities", value: "system.modifiers.qualities.treasure",    label: "Treasure (Bonus / Penalty)",    mode: 2 },
+    { group: "Company Qualities", value: "system.modifiers.qualities.influence",   label: "Influence (Bonus / Penalty)",   mode: 2 },
+    { group: "Company Qualities", value: "system.modifiers.qualities.territory",   label: "Territory (Bonus / Penalty)",   mode: 2 },
+    { group: "Company Qualities", value: "system.modifiers.qualities.sovereignty", label: "Sovereignty (Bonus / Penalty)", mode: 2 },
   ];
 }
 

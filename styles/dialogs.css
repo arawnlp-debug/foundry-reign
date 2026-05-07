@@ -9,68 +9,142 @@
 .reign-dialog-window { 
     max-width: 95vw !important; 
     max-height: 90vh !important; 
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important; 
-    border-radius: 8px !important; 
-    overflow: hidden; 
+    box-shadow: var(--reign-shadow-elevated) !important;
+    border-radius: var(--reign-radius-lg) !important; 
+    overflow: hidden;
+    display: flex !important;
+    flex-direction: column !important;
+    border: 1px solid var(--reign-bg-iron-light) !important;
 }
 
 .reign-dialog-window .window-header { 
     background: var(--reign-bg-iron); 
-    color: var(--reign-text-light); 
-    border-bottom: 2px solid var(--reign-color-blood); 
+    color: var(--reign-text-light);
+    font-family: var(--reign-font-display);
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid var(--reign-color-blood);
+    flex-shrink: 0;
+}
+
+/* Title text inside the header */
+.reign-dialog-window .window-title {
+    font-family: var(--reign-font-display);
+    font-size: var(--reign-text-base);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .reign-dialog-window .window-content { 
-    background: transparent; /* V14 GHOST FIX: Background moved to .reign-dialog-form */
+    background: transparent;
     color: var(--reign-text-dark); 
     font-family: var(--reign-font-flavor); 
-    /* V14 DIALOG CUT-OFF FIX */
-    overflow-y: auto !important; 
+    /* Single scroll context: window-content fills and scrolls, outer frame stays fixed */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto !important;
+    /* System scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--reign-scrollbar-thumb) var(--reign-scrollbar-track);
+}
+
+.reign-dialog-window .window-content::-webkit-scrollbar {
+    width: var(--reign-scrollbar-width);
+}
+.reign-dialog-window .window-content::-webkit-scrollbar-track {
+    background: var(--reign-scrollbar-track);
+}
+.reign-dialog-window .window-content::-webkit-scrollbar-thumb {
+    background: var(--reign-scrollbar-thumb);
+    border-radius: 3px;
+}
+.reign-dialog-window .window-content::-webkit-scrollbar-thumb:hover {
+    background: var(--reign-scrollbar-hover);
 }
 
 /* -----------------------------------------
-    DIALOG FORMS & INPUTS
+    DIALOG FORM — Parchment base with grain
 ----------------------------------------- */
 .reign-dialog-form { 
-    background: var(--reign-bg-parchment); /* V14 GHOST FIX: Background applied to the inner form */
-    padding: 15px 10px; 
+    /* Full parchment treatment matching the character sheet */
+    background: var(--reign-bg-parchment);
+    background-image: var(--reign-parchment-surface);
+    box-shadow: var(--reign-shadow-parchment);
+    padding: 16px 14px; 
     display: flex; 
     flex-direction: column; 
-    gap: 15px; 
-    border-radius: 4px;
+    gap: 12px;
 }
 
 .reign-dialog-form p { 
-    margin: 5px 0; 
-    line-height: 1.4; 
+    margin: 4px 0; 
+    line-height: 1.5;
+    font-family: var(--reign-font-flavor);
 }
 
+/* -----------------------------------------
+    LABELS — Cinzel display font, uppercase
+----------------------------------------- */
 .reign-dialog-form .form-group { 
-    margin-bottom: 12px; 
+    margin-bottom: 0;
 }
 
 .reign-dialog-form label { 
+    font-family: var(--reign-font-display);
     font-weight: bold; 
     text-transform: uppercase; 
-    font-size: 0.85em; 
+    font-size: 0.8em; 
     color: var(--reign-text-dark); 
     display: block; 
-    margin-bottom: 6px; 
-    letter-spacing: 1px; 
+    margin-bottom: 5px; 
+    letter-spacing: 0.08em;
 }
 
+/* -----------------------------------------
+    INPUTS & SELECTS — System themed
+----------------------------------------- */
 .reign-dialog-form input[type="number"], 
 .reign-dialog-form input[type="text"], 
 .reign-dialog-form select {
-  width: 100%; 
-  border: var(--reign-border-light); 
-  background: var(--reign-bg-paper); 
-  color: var(--reign-text-dark); 
-  border-radius: 4px; 
-  padding: 8px; 
-  font-family: var(--reign-font-flavor); 
-  box-shadow: var(--reign-shadow-inset); 
-  font-size: 1em;
+    width: 100%; 
+    border: var(--reign-border-medium);
+    background: var(--reign-bg-paper); 
+    color: var(--reign-text-dark); 
+    border-radius: var(--reign-radius-md); 
+    padding: 7px 10px; 
+    font-family: var(--reign-font-flavor); 
+    box-shadow: var(--reign-shadow-inset);
+    font-size: var(--reign-text-base);
+    transition: border-color var(--reign-transition-fast), box-shadow var(--reign-transition-fast);
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Select — custom arrow using blood-red svg */
+.reign-dialog-form select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b1f1f' fill-opacity='0.7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+
+/* Focus — blood-red ring, matching sheet */
+.reign-dialog-form input[type="number"]:focus,
+.reign-dialog-form input[type="text"]:focus,
+.reign-dialog-form select:focus {
+    outline: none;
+    border-color: var(--reign-color-blood);
+    box-shadow: var(--reign-focus-glow), var(--reign-shadow-inset);
+}
+
+/* Disabled / readonly */
+.reign-dialog-form input[readonly],
+.reign-dialog-form input:disabled,
+.reign-dialog-form select:disabled {
+    background: var(--reign-bg-vellum);
+    color: var(--reign-text-muted);
+    cursor: default;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 /* -----------------------------------------
@@ -78,7 +152,7 @@
 ----------------------------------------- */
 .reign-dialog-form .dialog-grid { 
     display: grid; 
-    gap: 15px; 
+    gap: 12px; 
     width: 100%; 
 }
 
@@ -98,9 +172,10 @@
     display: flex; 
     align-items: center; 
     gap: 5px; 
-    font-size: 0.9em; 
+    font-size: var(--reign-text-sm); 
     cursor: pointer; 
-    text-transform: none; 
+    text-transform: none;
+    font-family: var(--reign-font-flavor);
     font-weight: bold; 
     color: var(--reign-text-muted); 
 }
@@ -113,50 +188,76 @@
 }
 
 /* -----------------------------------------
-    FOOTER BUTTONS
+    SECTION DIVIDERS — Diamond motif
 ----------------------------------------- */
-.reign-dialog-window footer.window-footer button {
-  font-family: var(--reign-font-flavor); 
-  font-weight: bold; 
-  text-transform: uppercase; 
-  background: var(--reign-bg-iron); 
-  border: 1px solid var(--reign-bg-iron-light); 
-  color: var(--reign-text-light); 
-  border-radius: 4px; 
-  transition: all 0.2s ease; 
-  cursor: pointer; 
-  padding: 10px; 
-  letter-spacing: 1px; 
-  box-shadow: var(--reign-shadow-drop);
-}
-
-.reign-dialog-window footer.window-footer button:hover { 
-    background: var(--reign-color-blood); 
-    border-color: var(--reign-color-blood-dark); 
-    transform: translateY(-1px); 
+.reign-dialog-section { 
+    padding-top: 12px;
+    border-top: none;
+    /* Use the system diamond divider instead of a plain dashed line */
+    background-image: var(--reign-divider);
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: 100% 8px;
 }
 
 /* -----------------------------------------
-    UTILITIES MIGRATED FROM JS
+    FOOTER BUTTONS
+----------------------------------------- */
+.reign-dialog-window footer.window-footer {
+    background: var(--reign-bg-iron);
+    border-top: 1px solid var(--reign-bg-iron-light);
+    flex-shrink: 0;
+}
+
+.reign-dialog-window footer.window-footer button {
+    font-family: var(--reign-font-display); 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    background: var(--reign-color-blood);
+    border: 1px solid var(--reign-color-blood-dark);
+    color: var(--reign-text-light); 
+    border-radius: var(--reign-radius-md);
+    transition: filter var(--reign-transition-fast), transform var(--reign-transition-fast);
+    cursor: pointer; 
+    padding: 10px 16px;
+    letter-spacing: 0.08em;
+    box-shadow: var(--reign-shadow-drop);
+}
+
+.reign-dialog-window footer.window-footer button:hover { 
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+
+/* Cancel / secondary buttons */
+.reign-dialog-window footer.window-footer button.dialog-button--secondary,
+.reign-dialog-window footer.window-footer button[data-action="close"] {
+    background: var(--reign-bg-ash);
+    border-color: var(--reign-bg-iron);
+}
+
+/* -----------------------------------------
+    UTILITIES
 ----------------------------------------- */
 .reign-dialog-form .reign-mt-0 { margin-top: 0 !important; }
 .reign-dialog-form .reign-mb-small { margin-bottom: 5px; }
-.reign-dialog-form .reign-mb-medium { margin-bottom: 15px; }
+.reign-dialog-form .reign-mb-medium { margin-bottom: 12px; }
 
-.reign-dialog-form .reign-text-large { font-size: 1.1em; }
-.reign-dialog-form .reign-text-small { font-size: 0.9em; }
+.reign-dialog-form .reign-text-large { font-size: var(--reign-text-lg); }
+.reign-dialog-form .reign-text-small { font-size: var(--reign-text-sm); }
 .reign-dialog-form .reign-text-center { text-align: center; }
 .reign-dialog-form .reign-text-bold { font-weight: bold; }
 
-.reign-text-danger { color: var(--reign-red) !important; }
-.reign-text-info { color: var(--reign-blue) !important; }
-.reign-text-magic { color: var(--reign-purple) !important; }
-.reign-text-muted { color: var(--reign-text-muted) !important; }
+.reign-text-danger  { color: var(--reign-red) !important; }
+.reign-text-info    { color: var(--reign-blue) !important; }
+.reign-text-magic   { color: var(--reign-purple) !important; }
+.reign-text-muted   { color: var(--reign-text-muted) !important; }
+.reign-text-success { color: var(--reign-color-emerald) !important; }
 
 .reign-cursor-help { cursor: help; }
 
 /* -----------------------------------------
-    RESPONSIVE MEDIA QUERIES
+    RESPONSIVE
 ----------------------------------------- */
 @media (max-width: 600px) {
     .reign-dialog-form .dialog-grid-2, 
@@ -166,35 +267,36 @@
 }
 
 /* -----------------------------------------
-    COMPANY ROLLER DIALOG
+    POOL PREVIEW BAR
 ----------------------------------------- */
 .reign-dialog-pool-preview { 
-    background: var(--reign-bg-iron); 
+    background: var(--reign-bg-iron);
+    background-image: var(--reign-grain);
     color: var(--reign-text-light); 
-    padding: 10px; 
+    padding: 10px 16px; 
     text-align: center; 
-    font-size: 1.2em; 
+    font-size: var(--reign-text-lg);
     font-weight: bold; 
-    border-radius: 4px; 
-    margin-bottom: 15px; 
-    border: var(--reign-border-heavy); 
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5); 
-    font-family: var(--reign-font-data);
+    border-radius: var(--reign-radius-md);
+    border: 2px solid var(--reign-bg-iron-light);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.4), var(--reign-shadow-drop);
+    font-family: var(--reign-font-display);
+    letter-spacing: 0.06em;
 }
+
 .reign-dialog-warchest { 
-    font-size: 0.75em; 
+    font-size: var(--reign-text-xs);
     color: var(--reign-color-brass); 
     margin-top: 8px; 
     font-weight: normal; 
-    border-top: var(--reign-border-dashed); 
+    border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 5px; 
     font-family: var(--reign-font-flavor);
 }
-.reign-dialog-section { 
-    margin-top: 10px; 
-    padding-top: 10px; 
-    border-top: var(--reign-border-dashed); 
-}
+
+/* -----------------------------------------
+    MISCELLANEOUS FORM UTILITIES
+----------------------------------------- */
 .reign-checkbox-group { 
     display: flex; 
     flex-direction: column; 
@@ -208,23 +310,28 @@
 }
 .reign-flex-2 { flex: 2; }
 .reign-flex-1 { flex: 1; text-align: center; }
-/* ── SPELL DIALOG INFO BANNER ───────────────────────────────── */
+
+/* -----------------------------------------
+    SPELL DIALOG INFO BANNER
+----------------------------------------- */
 .reign-spell-dialog-info {
     background: linear-gradient(135deg, var(--reign-bg-blood-wash), var(--reign-bg-sorcery-muted));
     border: 1px solid var(--reign-color-blood);
-    border-radius: 4px;
+    border-radius: var(--reign-radius-md);
     padding: 8px 12px;
-    margin-bottom: 10px;
-    font-size: 0.85em;
+    font-size: var(--reign-text-sm);
 }
 .reign-spell-dialog-header {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.9em;
+    font-size: var(--reign-text-sm);
     margin-bottom: 6px;
     color: var(--reign-color-blood);
+    font-family: var(--reign-font-display);
     font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 .reign-spell-dialog-row {
     display: flex;
@@ -239,7 +346,7 @@
     font-family: var(--reign-font-data);
 }
 .reign-spell-dialog-tag {
-    font-size: 0.75em;
+    font-size: var(--reign-text-xs);
     padding: 2px 7px;
     border-radius: 10px;
     font-weight: bold;
@@ -250,11 +357,145 @@
 .reign-spell-dialog-tag.locked  { background: var(--reign-bg-brass-subtle); color: var(--reign-color-amber); border: 1px solid var(--reign-color-amber); }
 
 /* ====================================================
-   G1 + G2: HAZARD ROLLER — Tab Styles
-   Appended to styles/dialogs.css
+   BATCH A — Roll Dialog Enhancements
+   ITEM-7: Maneuver Live Rules Preview
+   ITEM-12: Passion Toggle Buttons
 ==================================================== */
 
-/* ── Tab Bar ─────────────────────────────────────── */
+/* ── ITEM-7: Maneuver preview panel ────────────────── */
+.reign-maneuver-preview {
+    margin-top: 8px;
+    background: var(--reign-bg-vellum);
+    border: 1px solid var(--reign-bg-iron-light);
+    border-left: 3px solid var(--reign-color-blood);
+    border-radius: 0 var(--reign-radius-md) var(--reign-radius-md) 0;
+    padding: 8px 12px;
+    font-size: var(--reign-text-sm);
+    line-height: 1.4;
+}
+
+.reign-maneuver-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.reign-maneuver-preview-cat {
+    font-family: var(--reign-font-display);
+    font-weight: bold;
+    color: var(--reign-color-blood);
+    text-transform: uppercase;
+    font-size: 0.82em;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.reign-maneuver-preview-meta {
+    color: var(--reign-text-muted);
+    font-size: 0.9em;
+}
+
+.reign-maneuver-preview-rules {
+    margin: 0;
+    color: var(--reign-text-dark);
+}
+
+/* ── ITEM-12: Passion toggle buttons ───────────────── */
+.reign-passion-hint {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.85em;
+    font-weight: normal;
+    color: var(--reign-text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 3px;
+    font-family: var(--reign-font-flavor);
+}
+
+.reign-passion-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reign-passion-label {
+    font-family: var(--reign-font-display);
+    font-weight: bold;
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--reign-text-dark);
+}
+
+.reign-passion-text {
+    font-size: var(--reign-text-xs);
+    color: var(--reign-text-muted);
+    font-style: italic;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.3;
+    font-family: var(--reign-font-flavor);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2em;
+}
+
+.reign-passion-toggles {
+    display: flex;
+    gap: 2px;
+}
+
+.reign-passion-btn {
+    flex: 1;
+    padding: 5px 3px;
+    font-size: var(--reign-text-xs);
+    font-family: var(--reign-font-display);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--reign-border-light);
+    border-radius: var(--reign-radius-sm);
+    background: var(--reign-bg-paper);
+    color: var(--reign-text-muted);
+    cursor: pointer;
+    transition: background var(--reign-transition-fast), color var(--reign-transition-fast), border-color var(--reign-transition-fast);
+    line-height: 1.2;
+}
+
+.reign-passion-btn:hover:not(.active) {
+    background: var(--reign-bg-vellum);
+    color: var(--reign-text-dark);
+    border-color: var(--reign-bg-iron-light);
+}
+
+.reign-passion-btn.neutral.active {
+    background: var(--reign-bg-iron);
+    color: var(--reign-text-light);
+    border-color: var(--reign-bg-iron);
+}
+
+.reign-passion-btn.aligned.active {
+    background: var(--reign-color-emerald);
+    color: var(--reign-text-light);
+    border-color: var(--reign-color-emerald);
+}
+
+.reign-passion-btn.against.active {
+    background: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    border-color: var(--reign-color-blood-dark);
+}
+
+/* ====================================================
+   G1 + G2: HAZARD ROLLER — Tab Styles
+==================================================== */
+
 .reign-hazard-roller .hazard-tab-bar {
     display: flex;
     gap: 2px;
@@ -268,7 +509,7 @@
     background: var(--reign-bg-vellum);
     border: 1px solid var(--reign-bg-iron-light);
     border-bottom: none;
-    border-radius: 4px 4px 0 0;
+    border-radius: var(--reign-radius-md) var(--reign-radius-md) 0 0;
     font-family: var(--reign-font-display);
     font-size: var(--reign-text-sm);
     font-weight: bold;
@@ -276,7 +517,7 @@
     letter-spacing: 0.5px;
     color: var(--reign-text-muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--reign-transition-fast);
 }
 
 .reign-hazard-roller .hazard-tab-btn:hover {
@@ -296,7 +537,6 @@
     margin-right: 4px;
 }
 
-/* ── Tab Panels ──────────────────────────────────── */
 .reign-hazard-roller .hazard-tab-panel {
     display: none;
 }
@@ -305,7 +545,6 @@
     display: block;
 }
 
-/* ── Apply Buttons ───────────────────────────────── */
 .reign-hazard-roller .reign-btn-execute {
     width: 100%;
     margin-top: 10px;
@@ -313,14 +552,14 @@
     background: var(--reign-color-blood);
     color: var(--reign-text-light);
     border: 2px solid var(--reign-color-blood-dark);
-    border-radius: 4px;
+    border-radius: var(--reign-radius-md);
     font-family: var(--reign-font-display);
     font-weight: bold;
     font-size: var(--reign-text-base);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.08em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: filter var(--reign-transition-fast), transform var(--reign-transition-fast);
     box-shadow: var(--reign-shadow-drop);
 }
 
@@ -337,12 +576,13 @@
 .reign-poison-effects {
     background: var(--reign-bg-blood-muted);
     border: 1px solid var(--reign-bg-blood-subtle);
-    border-radius: 4px;
+    border-radius: var(--reign-radius-md);
     padding: 8px 12px;
     margin: 8px 0;
 }
 
 .reign-poison-effects p {
     margin: 4px 0;
-    font-size: 0.9em;
+    font-size: var(--reign-text-sm);
 }
+
