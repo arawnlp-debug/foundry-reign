@@ -54,7 +54,8 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       advancedEditEffect: this.prototype._onAdvancedEditEffect,
       editImage: this.prototype._onEditImage,
       toggleGMC: this.prototype._onToggleGMC,
-      toggleSpellGroup: this.prototype._onToggleSpellGroup
+      toggleSpellGroup: this.prototype._onToggleSpellGroup,
+      toggleHideLocked: this.prototype._onToggleHideLocked
     }
   };
 
@@ -468,6 +469,14 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
       if (group) group.classList.toggle("collapsed");
   }
 
+  // Toggle the "hide locked spells" filter on the esoterica tab
+  _onToggleHideLocked(event, target) {
+      event.preventDefault();
+      if (!this._spellFilter) this._spellFilter = { school: "all", hideLocked: false };
+      this._spellFilter.hideLocked = !this._spellFilter.hideLocked;
+      this.render(false);
+  }
+
   async _onToggleShieldLocation(event, target) {
       event.preventDefault();
       if (this._isTogglingShield) return; 
@@ -752,6 +761,17 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
   _onRender(context, options) {
     super._onRender(context, options);
     this.element.classList.toggle("reign-gmc", !!context.isGMC);
+
+    // Spell school filter — select is not a named form field so won't submit;
+    // we wire it manually to update the ephemeral _spellFilter state and re-render.
+    const schoolSelect = this.element.querySelector("[data-spell-filter-school]");
+    if (schoolSelect) {
+        schoolSelect.addEventListener("change", (ev) => {
+            if (!this._spellFilter) this._spellFilter = { school: "all", hideLocked: false };
+            this._spellFilter.school = ev.currentTarget.value;
+            this.render(false);
+        });
+    }
   }
 
   _onFirstRender(context, options) {
@@ -962,6 +982,40 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
         .sort((a, b) => a.isUngrouped ? 1 : b.isUngrouped ? -1 : a.school.localeCompare(b.school));
     context.spellGroups   = spellGroups;
     context.hasSpellGroups = spellGroups.length > 1 || (spellGroups.length === 1 && !spellGroups[0].isUngrouped);
+
+    // ── SPELL FILTER (ITEM-17) ──────────────────────────────────────────────
+    // Lazily initialise ephemeral filter state. Resets on sheet close, which is
+    // intentional — this is a browsing aid, not persistent data.
+    if (!this._spellFilter) this._spellFilter = { school: "all", hideLocked: false };
+
+    // Named schools for the dropdown (unfiltered — the list never collapses on itself).
+    context.spellSchools = spellGroups
+        .filter(g => !g.isUngrouped)
+        .map(g => g.school);
+
+    // Gate flag: show the filter bar at all only when the character has spells.
+    context.hasAnySpells = buckets.spell.length > 0;
+
+    // Apply school narrowing to the grouped view.
+    let filteredGroups = spellGroups;
+    if (this._spellFilter.school !== "all") {
+        filteredGroups = filteredGroups.filter(g => g.school === this._spellFilter.school);
+    }
+
+    // Apply locked filter to both the grouped view and the flat fallback list.
+    if (this._spellFilter.hideLocked) {
+        filteredGroups = filteredGroups
+            .map(g => ({ ...g, spells: g.spells.filter(s => !s.isLocked) }))
+            .filter(g => g.spells.length > 0);
+        context.spells = context.spells.filter(s => !s.isLocked);
+    }
+
+    // Re-assign filtered state (overwriting the unfiltered values set above).
+    context.spellGroups    = filteredGroups;
+    context.hasSpellGroups = filteredGroups.length > 1 || (filteredGroups.length === 1 && !filteredGroups[0].isUngrouped);
+    context.spellFilterSchool    = this._spellFilter.school;
+    context.spellFilterHideLocked = this._spellFilter.hideLocked;
+    // ── END SPELL FILTER ───────────────────────────────────────────────────
 
     // Pass school stat so the casting attrs panel can highlight the associated attribute
     context.schoolStat = (system.esoterica?.schoolStat || "").toLowerCase();

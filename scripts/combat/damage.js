@@ -242,6 +242,36 @@ function getStatusAlertHtml(targetActor, localHealth) {
 }
 
 /**
+ * ITEM-3: Posts a public broadcast card when a PC dies from damage.
+ * Called only when a character transitions from alive → dead within the damage pipeline.
+ * Does NOT fire for manual health box edits or GM adjustments.
+ *
+ * @param {Actor} actor - The character actor who has just died.
+ * @param {Object} localHealth - The post-damage health state (for determining cause of death).
+ */
+async function postPCDeathCard(actor, localHealth) {
+  const safeName = foundry.utils.escapeHTML(actor.name);
+  const em = actor.system.effectiveMax;
+  const headMax = em?.head || 4;
+  const torsoMax = em?.torso || 10;
+
+  let cause = "Catastrophic injuries";
+  if (localHealth.head.killing >= headMax) {
+    cause = "Head destroyed";
+  } else if (localHealth.torso.killing >= torsoMax) {
+    cause = "Torso destroyed";
+  }
+
+  await ChatMessage.create({
+    content: `<div class="reign-chat-card reign-card-critical">
+      <div class="reign-status-banner dead">☠ DEAD</div>
+      <h3 style="margin: 8px 0 4px;">${safeName}</h3>
+      <p class="reign-text-muted reign-text-small">${cause} — beyond any recovery.</p>
+    </div>`
+  });
+}
+
+/**
  * Calculates and applies standard primary attack damage.
  * V14 UPDATE: Injects Advanced Combat Modifiers (Bonus Damage, Hit Shifting, Armor Bypass, Appended Maneuvers)
  * PACKAGE A: Threat targets use RAW binary elimination instead of magnitude damage.
@@ -563,7 +593,17 @@ export async function applyDamageToTarget(width, height, dmgString, ap = 0, isMa
     }
 
     // Apply Math Back to Database
+    const wasAlreadyDead = targetActor.type === "character" && targetActor.statuses.has("dead");
     await commitHealth(targetActor, localHealth);
+
+    // ITEM-3: Broadcast a public death card when a PC dies from this hit.
+    // wasAlreadyDead guards against double-posting on subsequent hits to a dead character.
+    if (targetActor.type === "character" && !wasAlreadyDead) {
+      const em = targetActor.system.effectiveMax;
+      const isNowDead = (localHealth.head.killing >= (em?.head || 4)) ||
+                        (localHealth.torso.killing >= (em?.torso || 10));
+      if (isNowDead) await postPCDeathCard(targetActor, localHealth);
+    }
 
     // Render Results
     let maneuverHtml = "";
@@ -706,7 +746,17 @@ export async function applyScatteredDamageToTarget(facesArrayStr, damageType, ap
       }
     }
 
+    // ITEM-3: Capture dead state before commit so the broadcast guard is accurate.
+    const wasAlreadyDeadScattered = !isHealing && targetActor.statuses.has("dead");
     await commitHealth(targetActor, localHealth);
+
+    // ITEM-3: Broadcast death card for scattered damage kills.
+    if (!isHealing && !wasAlreadyDeadScattered) {
+      const em = targetActor.system.effectiveMax;
+      const isNowDead = (localHealth.head.killing >= (em?.head || 4)) ||
+                        (localHealth.torso.killing >= (em?.torso || 10));
+      if (isNowDead) await postPCDeathCard(targetActor, localHealth);
+    }
 
     if (isHealing) {
         const summaryHtml = damageSummary.length > 0 ? damageSummary.join("<br>") : "<em>No damage required healing!</em>";

@@ -176,6 +176,26 @@
         <a class="item-create control-btn" data-action="itemCreate" data-type="spell" title="Add Spell"><i class="fas fa-plus"></i></a>
       </div>
 
+      {{!-- SPELL FILTER BAR (ITEM-17) --}}
+      {{#if hasAnySpells}}
+      <div class="reign-spell-filter-bar">
+        {{#if spellSchools.length}}
+        <select class="reign-spell-filter-select" data-spell-filter-school title="Filter by school">
+          <option value="all" {{#if (eq spellFilterSchool 'all')}}selected{{/if}}>All Schools</option>
+          {{#each spellSchools as |school|}}
+          <option value="{{school}}" {{#if (eq ../spellFilterSchool school)}}selected{{/if}}>{{school}}</option>
+          {{/each}}
+        </select>
+        {{/if}}
+        <button type="button"
+          class="reign-spell-filter-btn {{#if spellFilterHideLocked}}active{{/if}}"
+          data-action="toggleHideLocked"
+          title="{{#if spellFilterHideLocked}}Showing only accessible spells{{else}}Click to hide spells requiring attunement you don't have{{/if}}">
+          <i class="fas fa-lock"></i> Hide Locked
+        </button>
+      </div>
+      {{/if}}
+
       <div class="reign-spell-scroll">
         {{#if spells.length}}
 

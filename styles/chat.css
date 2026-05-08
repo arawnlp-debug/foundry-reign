@@ -263,6 +263,11 @@
 .reign-die:hover { transform: scale(1.15) rotate(5deg); filter: drop-shadow(0px 4px 3px rgba(0,0,0,0.35)); transition: transform 0.15s ease, filter 0.15s ease; }
 .reign-die.matched:hover { filter: drop-shadow(0px 4px 4px rgba(139, 31, 31, 0.4)); }
 
+/* ── Timing gate inline dice (ITEM-13) ── */
+/* Sizes reign-die children for inline chat use outside of .ore-set context. */
+.reign-timing-dice { display: inline-flex; gap: 3px; align-items: center; vertical-align: middle; }
+.reign-timing-dice .reign-die.matched { width: 24px; height: 24px; font-size: 0.85em; }
+
 /* -----------------------------------------
     TAGS & DETAILS
 ----------------------------------------- */

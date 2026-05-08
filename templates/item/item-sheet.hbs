@@ -177,6 +177,10 @@
       {{!-- SPELL ITEM UI --}}
       {{#if isSpell}}
       <div class="form-group-grid">
+        <div class="form-group cm-col-span-2">
+          <label>{{localize 'REIGN.School'}}</label>
+          <input type="text" name="system.school" value="{{system.school}}" placeholder="{{localize 'REIGN.SchoolNamePlaceholder'}}"/>
+        </div>
         <div class="form-group">
           <label>{{localize 'REIGN.Intensity'}}</label>
           <input type="number" name="system.intensity" value="{{system.intensity}}" min="1" max="10"/>
@@ -184,6 +188,10 @@
         <div class="form-group">
           <label>{{localize 'REIGN.CastingTime'}}</label>
           <input type="number" name="system.castingTime" value="{{system.castingTime}}" min="0"/>
+        </div>
+        <div class="form-group">
+          <label>Slow (rounds)</label>
+          <input type="number" name="system.slow" value="{{system.slow}}" min="0"/>
         </div>
         <div class="form-group">
           <label>{{localize 'REIGN.CastingStat'}}</label>
@@ -195,6 +203,10 @@
           <label>{{localize 'REIGN.SpellPool'}}</label>
           <input type="text" name="system.pool" value="{{system.pool}}" placeholder="{{localize 'REIGN.SpellPoolPlaceholder'}}"/>
         </div>
+        <div class="form-group">
+          <label>Duration</label>
+          <input type="text" name="system.duration" value="{{system.duration}}" placeholder="e.g. Concentration, 1 hour, Permanent"/>
+        </div>
         <div class="form-group cm-col-span-2">
           <label>{{localize 'REIGN.SpellDamageLabel'}}</label>
           <input type="text" name="system.damage" value="{{system.damage}}" placeholder="{{localize 'REIGN.SpellDamagePlaceholderHint'}}"/>
@@ -202,6 +214,36 @@
         <div class="form-group cm-col-span-2">
           <label>{{localize 'REIGN.Page'}}</label>
           <input type="text" name="system.page" value="{{system.page}}"/>
+        </div>
+      </div>
+      <div class="form-group reign-box-weapon">
+        <label class="reign-bold">Attunement</label>
+        <div class="checkbox-group">
+          <label title="Casting this spell requires active attunement — characters without it see the lock icon">
+            <input type="checkbox" name="system.attunementRequired" {{checked system.attunementRequired}}/>
+            Attunement Required
+          </label>
+          <label title="This spell itself grants or establishes attunement">
+            <input type="checkbox" name="system.isAttunementSpell" {{checked system.isAttunementSpell}}/>
+            Is Attunement Spell
+          </label>
+        </div>
+      </div>
+      <div class="form-group reign-box-weapon">
+        <label class="reign-bold">Defence Interactions</label>
+        <div class="checkbox-group">
+          <label title="Targets may attempt to dodge this spell">
+            <input type="checkbox" name="system.dodgeable" {{checked system.dodgeable}}/>
+            Dodgeable
+          </label>
+          <label title="Targets may attempt to parry this spell">
+            <input type="checkbox" name="system.parriable" {{checked system.parriable}}/>
+            Parriable
+          </label>
+          <label title="Armour reduces damage from this spell">
+            <input type="checkbox" name="system.armorBlocks" {{checked system.armorBlocks}}/>
+            Armour Blocks
+          </label>
         </div>
       </div>
       <div class="form-group-stacked">

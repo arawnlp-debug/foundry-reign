@@ -1016,6 +1016,66 @@
 .reign-spell-chat-meta { margin: 6px 0; }
 .reign-spell-chat-locked { color: var(--reign-color-brass, #b07d00); }
 
+/* ── SPELL FILTER BAR (ITEM-17) ──────────────────────────── */
+.reign-spell-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    background: var(--reign-bg-vellum);
+    border: 1px solid var(--reign-border-iron);
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+    margin-bottom: 6px;
+}
+
+.reign-spell-filter-select {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--reign-text-sm);
+    font-family: var(--reign-font-display);
+    background: var(--reign-bg-paper);
+    border: 1px solid var(--reign-border-iron);
+    border-radius: 3px;
+    padding: 3px 6px;
+    color: var(--reign-text-dark);
+    cursor: pointer;
+}
+
+.reign-spell-filter-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: var(--reign-bg-paper);
+    border: 1px solid var(--reign-border-iron);
+    border-radius: 3px;
+    font-size: var(--reign-text-sm);
+    font-family: var(--reign-font-display);
+    color: var(--reign-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.reign-spell-filter-btn:hover {
+    background: var(--reign-bg-parchment);
+    color: var(--reign-text-dark);
+    border-color: var(--reign-color-brass);
+}
+
+.reign-spell-filter-btn.active {
+    background: color-mix(in srgb, var(--reign-color-brass) 15%, var(--reign-bg-paper));
+    color: var(--reign-color-brass);
+    border-color: var(--reign-color-brass);
+    font-weight: bold;
+}
+
+.reign-spell-filter-btn.active i {
+    color: var(--reign-color-brass);
+}
+
 /* -----------------------------------------
     XP PROGRESSION UI
 ----------------------------------------- */

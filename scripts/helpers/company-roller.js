@@ -4,6 +4,7 @@ import { postOREChat } from "./chat.js";
 import { parseORE } from "./ore-engine.js";
 import { REIGN } from "./config.js";
 import { reignDialog } from "./dialog-util.js";
+import { applyCompanyDamageToTarget } from "../combat/company-damage.js";
 
 export class CompanyRoller {
   static async rollCompany(actor, dataset) {
@@ -26,7 +27,13 @@ export class CompanyRoller {
           presetOptions[k] = k === "none" ? v.label : (game.i18n.localize(v.label) || v.label);
         }
         
-        const qualityOptions = { "might": "Might", "treasure": "Treasure", "influence": "Influence", "territory": "Territory", "sovereignty": "Sovereignty" };
+        // Canonical quality label map — defined early for use throughout this function.
+        const qualityLabels = {
+          might: "Might", treasure: "Treasure", influence: "Influence",
+          territory: "Territory", sovereignty: "Sovereignty"
+        };
+
+        const qualityOptions = { ...qualityLabels };
         const qualityOptionsWithNone = { "none": "None", ...qualityOptions };
 
         const targetCompanies = game.actors
@@ -36,7 +43,6 @@ export class CompanyRoller {
 
         const templateData = { presetOptions, qualityOptions, qualityOptionsWithNone, key1, pledges, hasPledges, targetCompanies };
         
-        // V14 FIX: Using the exact namespaced renderTemplate to avoid global deprecation warnings
         const content = await renderTemplate("systems/reign/templates/dialogs/roll-company.hbs", templateData);
         
         const rollData = await reignDialog(
@@ -119,7 +125,7 @@ export class CompanyRoller {
                           labelQ1.innerText = "Erode: None";
                       } else {
                           erodeQ1Chk.disabled = false;
-                          labelQ1.innerText = `Erode: ${qualityOptions[q1] || q1}`;
+                          labelQ1.innerText = `Erode: ${qualityLabels[q1] || q1}`;
                       }
                   }
 
@@ -130,7 +136,7 @@ export class CompanyRoller {
                           labelQ2.innerText = "Erode: None";
                       } else {
                           erodeQ2Chk.disabled = false;
-                          labelQ2.innerText = `Erode: ${qualityOptions[q2] || q2}`;
+                          labelQ2.innerText = `Erode: ${qualityLabels[q2] || q2}`;
                       }
                   }
                 };
@@ -169,7 +175,7 @@ export class CompanyRoller {
         
         if (!rollData) return;
         
-        // --- EVALUATE THE ROLL ---
+        // ── EVALUATE THE ROLL ─────────────────────────────────────────────
         let val1 = system.qualities[rollData.q1]?.effective || 0;
         if (rollData.q1Limit !== null) val1 = Math.min(val1, rollData.q1Limit);
 
@@ -190,13 +196,12 @@ export class CompanyRoller {
 
         const parsed = parseORE(results, pledges.ed, pledges.md);
         const difficulty = rollData.difficulty || 0;
-        const successSet = parsed.sets.find(s => s.height >= difficulty);
+        const successSet = parsed.sets.find(s => s.height >= difficulty) ?? null;
 
-        // --- COMPOSE MAIN LABEL ---
-        let actionLabel = rollData.presetLabel ? rollData.presetLabel : "Company Action";
+        // ── COMPOSE MAIN LABEL ────────────────────────────────────────────
+        const actionLabel = rollData.presetLabel ?? "Company Action";
 
-        // --- BUILD POOL BREAKDOWN ---
-        const qualityLabels = { "might": "Might", "treasure": "Treasure", "influence": "Influence", "territory": "Territory", "sovereignty": "Sovereignty" };
+        // ── BUILD POOL BREAKDOWN ──────────────────────────────────────────
         let poolBreakdown = [];
         if (val1 > 0) {
             let q1Label = qualityLabels[rollData.q1] || rollData.q1;
@@ -214,76 +219,103 @@ export class CompanyRoller {
         if (pledges.ed > 0) poolBreakdown.push({ label: "Expert Die (War Chest)", value: `+1 (set to ${pledges.ed})`, isPenalty: false });
         if (pledges.md > 0) poolBreakdown.push({ label: "Master Die (War Chest)", value: `+1`, isPenalty: false });
 
-        // --- OUTPUT MAIN ORE CHAT CARD ---
+        // ── OUTPUT MAIN ORE CHAT CARD ─────────────────────────────────────
         await postOREChat(actor, actionLabel, diceToRoll, results, pledges.ed, pledges.md, null, { 
             targetQuality: rollData.targetQuality, 
-            wasCapped: wasCapped, 
+            wasCapped, 
             difficulty: rollData.difficulty,
-            poolBreakdown: poolBreakdown
+            poolBreakdown
         });
 
-        // ==========================================
-        // SECONDARY RESOLUTION CARD (HTML SAFE)
-        // ==========================================
-        let resolutionHtml = "";
+        // ══════════════════════════════════════════════════════════════════
+        //  ATTACK RESOLUTION (ITEM-14)
+        //  Damage is applied here; the result is returned as structured data
+        //  and folded into the resolution card below — no separate steal card.
+        //  Collapse ceremonies (Dissolution / Total Conquest) are posted by
+        //  applyCompanyDamageToTarget as standalone significant events.
+        // ══════════════════════════════════════════════════════════════════
+        const hasTarget = rollData.targetCompany !== "none" && rollData.targetQuality !== "none";
+        let attackResults = [];
 
-        // 1. Target Damage Resolution (Delegated to combat/company-damage.js for unified RAW math)
-        if (rollData.targetCompany !== "none" && rollData.targetQuality !== "none") {
+        if (hasTarget) {
             if (successSet) {
-                // Execute the verified Steal and Collapse logic
-                const { applyCompanyDamageToTarget } = await import("../combat/company-damage.js");
-                await applyCompanyDamageToTarget(successSet.width, rollData.targetQuality, actor);
-            } else {
-                resolutionHtml += `<div class="reign-text-danger reign-text-sm reign-mb-small"><i class="fas fa-shield-alt"></i> Attack failed to meet difficulty.</div>`;
+                attackResults = await applyCompanyDamageToTarget(successSet.width, rollData.targetQuality, actor);
             }
+            // If no successSet the attack missed — attackResults stays empty.
+            // The resolution card communicates the miss; no further action needed.
         }
 
-        // 2. Quality Degradation (Action Economy)
-        let qUpdates = {};
-        let degradedQualities = [];
-        
+        // ── QUALITY EROSION (Action Economy) ─────────────────────────────
+        // Compute effective values BEFORE the update for the display label
+        // (we show "effective now X" on the resolution card).
+        const qUpdates = {};
+        const degradedQualities = [];
+
         if (rollData.q1 !== "none" && rollData.erodeQ1) {
-            let currentUses = actor.system.qualities[rollData.q1]?.uses || 0;
-            qUpdates[`system.qualities.${rollData.q1}.uses`] = currentUses + 1;
-            degradedQualities.push(rollData.q1.toUpperCase());
+            const q1data   = system.qualities[rollData.q1];
+            const newUses  = (q1data?.uses || 0) + 1;
+            const newEff   = Math.max(0, (q1data?.value || 0) - (q1data?.damage || 0) - newUses);
+            qUpdates[`system.qualities.${rollData.q1}.uses`] = newUses;
+            degradedQualities.push({ label: qualityLabels[rollData.q1] || rollData.q1, newEffective: newEff });
         }
-        // Only erode q2 if it's not "none", not the same as q1, and the box was checked.
+
+        // Only erode q2 if it differs from q1 and erosion was requested.
         if (rollData.q2 !== "none" && rollData.q2 !== rollData.q1 && rollData.erodeQ2) {
-            let currentUses = actor.system.qualities[rollData.q2]?.uses || 0;
-            qUpdates[`system.qualities.${rollData.q2}.uses`] = currentUses + 1;
-            degradedQualities.push(rollData.q2.toUpperCase());
+            const q2data   = system.qualities[rollData.q2];
+            const newUses  = (q2data?.uses || 0) + 1;
+            const newEff   = Math.max(0, (q2data?.value || 0) - (q2data?.damage || 0) - newUses);
+            qUpdates[`system.qualities.${rollData.q2}.uses`] = newUses;
+            degradedQualities.push({ label: qualityLabels[rollData.q2] || rollData.q2, newEffective: newEff });
         }
-        
+
         if (Object.keys(qUpdates).length > 0) {
             await actor.update(qUpdates);
-            
-            let borderClass = resolutionHtml !== "" ? "reign-dialog-section-divider" : "";
-            
-            resolutionHtml += `
-                <div class="${borderClass}">
-                    <span class="reign-text-warning reign-text-bold reign-font-display">
-                        <i class="fas fa-hourglass-half"></i> Action Economy Fatigue
-                    </span><br>
-                    <span class="reign-text-sm">
-                        <strong>${degradedQualities.join(" & ")}</strong> degraded by 1 for the rest of the month.
-                    </span>
-                </div>
-            `;
         }
 
-        // Print the Secondary Resolution Card if there are effects to display
-        if (resolutionHtml !== "") {
+        // ── BUILD & POST RESOLUTION CARD (ITEM-14) ───────────────────────
+        // The first result covers the common single-target case.
+        const firstResult = attackResults[0] ?? null;
+
+        const resolutionData = {
+          actionLabel,
+          isSuccess: !!successSet,
+          difficulty,
+          successSet: successSet ? { width: successSet.width, height: successSet.height } : null,
+
+          hasTarget,
+          targetName: firstResult?.targetName ?? (hasTarget ? "Target" : null),
+          targetQualityLabel: qualityLabels[rollData.targetQuality] || rollData.targetQuality,
+
+          // attackResult is null when the attack missed (no successSet) or there
+          // was no target. It is populated only on a confirmed hit.
+          attackResult: firstResult ? {
+            isOverflow:    firstResult.isOverflow,
+            newValue:      firstResult.newValue,
+            stealTriggered: firstResult.stealTriggered,
+            stealIsTrivial: firstResult.stealIsTrivial,
+            qualityLabel:  firstResult.qualityLabel
+          } : null,
+
+          hasErosion: degradedQualities.length > 0,
+          degradedQualities,
+
+          hadWarChest: hasPledges
+        };
+
+        // Only post the resolution card if there is something to report.
+        const hasContent = hasTarget || resolutionData.hasErosion || hasPledges;
+        if (hasContent) {
+            const resolutionContent = await renderTemplate(
+                "systems/reign/templates/chat/company-resolution.hbs",
+                resolutionData
+            );
             await ChatMessage.create({
-                speaker: ChatMessage.getSpeaker({ actor: actor }),
-                content: `
-                    <div class="reign-chat-card reign-callout">
-                        ${resolutionHtml}
-                    </div>
-                `
+                speaker: ChatMessage.getSpeaker({ actor }),
+                content: resolutionContent
             });
         }
 
-        // --- RESET WAR CHEST ---
+        // ── RESET WAR CHEST ───────────────────────────────────────────────
         if (hasPledges) {
             await actor.update({
                 "system.pledges.bonus": 0,

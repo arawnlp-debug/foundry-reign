@@ -9,6 +9,21 @@ import { HIT_LOCATIONS } from "../helpers/config.js";
 // evaluateWeaponDamage has been removed. All call sites use parseDamageFormula instead.
 
 /**
+ * ITEM-13: Renders Width×Height as a row of die-face icons for use in chat cards.
+ * @param {number} width  - Number of dice to render.
+ * @param {number} height - The face value shown on each die.
+ * @param {string} style  - CSS modifier: "matched" (blood red) or "waste" (muted).
+ * @returns {string} HTML string.
+ */
+function renderTimingDice(width, height, style = "matched") {
+    if (width <= 0) return `<em class="reign-text-muted">(no set)</em>`;
+    const dice = Array.from({ length: width }, () =>
+        `<span class="reign-die ${style}">${height}</span>`
+    ).join("");
+    return `<span class="reign-timing-dice">${dice}</span>`;
+}
+
+/**
  * PACKAGE B HELPER: Checks whether a character has adequate equipment to parry
  * armed attacks safely (weapon, shield, or arm armor AR >= 1).
  *
@@ -66,6 +81,9 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
     const attackInit = attackSet.width + (attackSet.height / 100);
 
     let slowDefenders = 0;
+    // ITEM-13: Collect richer detail for failure messaging.
+    const slowDefenderDetails = [];       // { name, defWidth, defHeight }
+    const insufficientHeightDetails = []; // { name, heights: number[] }
 
     // ISSUE-024 FIX: Increased from 50 → 200 messages. Additionally filter by combat round
     // when the flag is present (stamped by postOREChat) to avoid stale cross-round gobbles.
@@ -102,7 +120,11 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
             hasHeight = gd.some(h => h >= targetSetHeight);
         }
 
-        if (!hasHeight) return false;
+        if (!hasHeight) {
+            // ITEM-13: Record for the failure chat card.
+            insufficientHeightDetails.push({ name: defActor?.name || "Unknown", heights: [...gd] });
+            return false;
+        }
 
         // P2 FIX: Enforce Width Timing — but NOT for Superior Interception (combineGobbleDice),
         // which RAW explicitly states applies "regardless of timing" (Ch7 p.140).
@@ -112,6 +134,8 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
         const defInit = defSet ? (defSet.width + (defSet.height / 100)) : 0;
 
         if (!defMods.combineGobbleDice && defInit < attackInit) {
+            // ITEM-13: Record for the failure chat card.
+            slowDefenderDetails.push({ name: defActor?.name || "Unknown", defWidth: defSet?.width || 0, defHeight });
             slowDefenders++;
             return false;
         }
@@ -155,9 +179,45 @@ export async function consumeGobbleDie(attackMsg, targetSetHeight) {
         }
 
         if (slowDefenders > 0) {
-            ui.notifications.warn(`Defense too slow! ${slowDefenders} defender(s) had the Height, but the attack (Width ${attackSet.width}) was faster.`);
+            // ITEM-13: Timing gate failure — show attacker and each slow defender as dice.
+            const attackDice = renderTimingDice(attackSet.width, attackSet.height, "matched");
+            const defLines = slowDefenderDetails.map(d => {
+                const safeName = foundry.utils.escapeHTML(d.name);
+                const defDice = renderTimingDice(d.defWidth, d.defHeight, "waste");
+                return `<p style="margin:4px 0;"><strong>${safeName}:</strong> ${defDice}</p>`;
+            }).join("");
+            await ChatMessage.create({
+                content: `<div class="reign-chat-card reign-card-warn">
+                  <h3 class="reign-text-warning"><i class="fas fa-shield-alt"></i> Defense Too Slow</h3>
+                  <p style="margin-bottom:4px;">Attack: ${attackDice}</p>
+                  <p class="reign-text-small reign-text-muted" style="margin-bottom:6px;">The following defender(s) had the height but acted too late:</p>
+                  ${defLines}
+                  <p class="reign-text-small reign-text-muted" style="margin-top:6px;">Wider sets act first. A higher Width beats a slower defense even at the same Height.</p>
+                </div>`
+            });
         } else {
-            ui.notifications.warn("No available Gobble Dice from any defender can counter this set (Insufficient Height).");
+            // ITEM-13: Height failure — show what gobble dice defenders actually had.
+            const neededDie = renderTimingDice(1, targetSetHeight, "matched");
+            let defLines = "";
+            if (insufficientHeightDetails.length > 0) {
+                defLines = insufficientHeightDetails.map(d => {
+                    const safeName = foundry.utils.escapeHTML(d.name);
+                    const dicePips = d.heights.map(h =>
+                        `<span class="reign-die waste">${h}</span>`
+                    ).join("");
+                    return `<p style="margin:4px 0;"><strong>${safeName}:</strong> <span class="reign-timing-dice">${dicePips}</span></p>`;
+                }).join("");
+            } else {
+                defLines = `<p class="reign-text-muted reign-text-small">No defense rolls found this round.</p>`;
+            }
+            await ChatMessage.create({
+                content: `<div class="reign-chat-card reign-card-warn">
+                  <h3 class="reign-text-warning"><i class="fas fa-shield-alt"></i> No Defense Available</h3>
+                  <p style="margin-bottom:4px;">Height needed: ${neededDie}</p>
+                  <p class="reign-text-small reign-text-muted" style="margin-bottom:6px;">Gobble dice available — none high enough:</p>
+                  ${defLines}
+                </div>`
+            });
         }
         return false;
     }
