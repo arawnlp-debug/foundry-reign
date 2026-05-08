@@ -28,10 +28,19 @@
           <input type="text" name="system.damage" value="{{system.damage}}" placeholder="{{localize 'REIGN.SpellDamagePlaceholder'}}"/>
         </div>
         <div class="form-group">
-          <label>{{localize 'REIGN.AttackPool'}}</label>
+          {{!-- ITEM-9: Structured skill binding. When non-empty, the roller uses this directly
+               instead of parsing the Attack Pool text. Choosing "— (use Attack Pool text) —"
+               preserves existing behaviour for all weapons created before this was added. --}}
+          <label>{{localize 'REIGN.SkillBinding'}}</label>
+          <select name="system.skillKey" class="cm-w100">
+            {{selectOptions weaponSkillOptions selected=system.skillKey}}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>{{localize 'REIGN.AttackPool'}} <span class="reign-text-muted reign-text-small">(display / fallback)</span></label>
           <input type="text" name="system.pool" value="{{system.pool}}"/>
         </div>
-        <div class="form-group cm-col-span-2">
+        <div class="form-group">
           <label>{{localize 'REIGN.RangeReach'}}</label>
           <input type="text" name="system.range" value="{{system.range}}"/>
         </div>

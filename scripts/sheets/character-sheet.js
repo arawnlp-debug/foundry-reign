@@ -13,6 +13,20 @@ import { reignDialog, reignConfirm } from "../helpers/dialog-util.js";
 import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
 import { sanitiseItemDescription } from "../helpers/html-util.js";
 
+// ITEM-9: Human-readable labels for static skill keys, used to compute resolvedPoolLabel
+// for the weapon list display. Kept here and in item-sheet.js pending consolidation
+// into config.js in a future batch.
+const STATIC_SKILL_LABELS = {
+  athletics: "Athletics", endurance: "Endurance", fight: "Fight", parry: "Parry",
+  run: "Run", vigor: "Vigor", climb: "Climb", dodge: "Dodge", ride: "Ride",
+  stealth: "Stealth", counterspell: "Counterspell", healing: "Healing",
+  languageNative: "Language (Native)", lore: "Lore", strategy: "Strategy",
+  tactics: "Tactics", eerie: "Eerie", empathy: "Empathy", hearing: "Hearing",
+  scrutinize: "Scrutinize", sight: "Sight", inspire: "Inspire",
+  intimidate: "Intimidate", jest: "Jest", fascinate: "Fascinate",
+  graces: "Graces", lie: "Lie", plead: "Plead"
+};
+
 /**
  * Main application class for rendering Character Actor sheets.
  */
@@ -912,6 +926,20 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
                 if (sys.qualities?.massive) q.push("Massive");
                 if (sys.qualities?.area) q.push(`Area ${sys.qualities.area}d`);
                 if (q.length) tooltip += ` | ${q.join(", ")}`;
+
+                // ITEM-9: Resolve the pool label for display in combat-inventory.hbs.
+                // Prefer the structured skillKey when set; fall back to the raw pool string.
+                const sk = sys.skillKey || "";
+                if (sk) {
+                    if (sk.startsWith("custom:")) {
+                        const customId = sk.slice(7);
+                        item.resolvedPoolLabel = system.customSkills?.[customId]?.customLabel || sys.pool || "";
+                    } else {
+                        item.resolvedPoolLabel = STATIC_SKILL_LABELS[sk] || sys.pool || sk;
+                    }
+                } else {
+                    item.resolvedPoolLabel = sys.pool || "";
+                }
             } else if (item.type === "armor") {
                 tooltip = `AR: ${sys.ar || 0} | Weight: ${(sys.armorWeight || 'none').toUpperCase()}`;
                 

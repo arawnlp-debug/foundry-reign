@@ -3,11 +3,12 @@ const { renderTemplate } = foundry.applications.handlebars;
 import { parseORE } from "./ore-engine.js";
 import { postOREChat } from "./chat.js";
 import { reignDialog, reignAlert, reignClose } from "./dialog-util.js";
+import { BaseORERoller } from "./base-roller.js";
 
 // AUDIT FIX B12: Import the standalone pool calculator correctly
 import { calculateOREPool } from "./character-roller.js";
 
-export class WealthRoller {
+export class WealthRoller extends BaseORERoller {
   static async rollWealthPurchase(actor) {
     const system = actor.system;
     const currentWealth = system.wealth?.value || 0;
@@ -103,9 +104,8 @@ export class WealthRoller {
         }
 
         let diceToRoll = Math.min(currentWealth, 10);
-        const roll = new Roll(`${diceToRoll}d10`);
-        await roll.evaluate();
-        const results = roll.dice[0]?.results.map(r => r.result) || [];
+        // ITEM-19: Use BaseORERoller.rollDice for consistent dice evaluation.
+        const { results } = await this.rollDice(diceToRoll);
         
         const parsed = parseORE(results);
         if (parsed.sets.length > 0) {
@@ -169,16 +169,6 @@ export class WealthRoller {
              return ui.notifications.warn("Penalties reduced your dice pool below 1. Haggle fails.");
         }
 
-        let results = [];
-        if (poolMath.normalDiceCount > 0) {
-          const roll = new Roll(`${poolMath.normalDiceCount}d10`);
-          await roll.evaluate();
-          results = roll.dice[0]?.results.map(r => r.result) || [];
-        }
-
-        if (poolMath.actualEd > 0) results.push(poolMath.finalEdFace);
-        if (poolMath.actualCs > 0) results.push(poolMath.finalCalledShot);
-        
         const finalizeHaggle = async (finalResults, mdCount, edCount, edVal) => {
             const parsed = parseORE(finalResults);
             
@@ -204,35 +194,8 @@ export class WealthRoller {
             }
         };
 
-        if (poolMath.actualMd > 0) {
-          results.sort((a, b) => b - a); 
-          let mdHtml = `<form class="reign-dialog-form">
-            <p class="reign-dialog-intro"><strong>Your Roll so far:</strong> ${results.length > 0 ? results.join(", ") : "None"}</p>
-            <p class="reign-dialog-subtitle">Assign a face value to your Master Die to complete your Haggle set.</p>
-            <div class="dialog-grid dialog-grid-2">`;
-          
-          for(let i=0; i<poolMath.actualMd; i++) {
-              mdHtml += `<div class="form-group"><label>MD ${i+1} Face:</label><input type="number" id="mdFace${i}" value="10" min="1" max="10"/></div>`;
-          }
-          mdHtml += `</div></form>`;
-
-          const mdResult = await reignDialog(
-            "Assign Master Die (Haggle)",
-            mdHtml,
-            (e, b, d) => {
-                const faces = [];
-                for(let i=0; i<poolMath.actualMd; i++) faces.push(parseInt(d.element.querySelector(`#mdFace${i}`).value) || 10);
-                return faces;
-            },
-            { defaultLabel: "Finalize Haggle" }
-          );
-
-          if (!mdResult) return;
-          results.push(...mdResult);
-          await finalizeHaggle(results, poolMath.actualMd, poolMath.actualEd, poolMath.finalEdFace);
-        } else {
-          await finalizeHaggle(results, 0, poolMath.actualEd, poolMath.finalEdFace);
-        }
+        // ITEM-19: Delegate dice rolling, ED/CS injection, and MD prompting to BaseORERoller.
+        await this.finalizeWithMasterDice(poolMath, finalizeHaggle, "Assign Master Die (Haggle)");
       }
     }
   }

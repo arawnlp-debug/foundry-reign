@@ -1,16 +1,13 @@
 // scripts/helpers/character-roller.js
 
-// Set to true locally to enable verbose roll diagnostics in the browser console.
-// Never commit with this set to true.
-const DEBUG_ROLLS = false;
-
 const { renderTemplate } = foundry.applications.handlebars;
 import { parseORE } from "./ore-engine.js";
 import { postOREChat } from "./chat.js";
-import { skillAttrMap } from "./config.js";
+import { skillAttrMap, DEBUG_ROLLS } from "./config.js";
 import { MANEUVERS, getManeuverOptions, resolveWidthTier } from "./maneuvers.js";
 
 import { reignDialog } from "./dialog-util.js";
+import { BaseORERoller } from "./base-roller.js";
 
 /**
  * Calculates final dice counts, special dice states, and cap limits for ORE rolls.
@@ -91,7 +88,7 @@ export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShot
     };
 }
 
-export class CharacterRoller {
+export class CharacterRoller extends BaseORERoller {
   static async rollCharacter(actor, dataset, options = {}) {
     try {
         if (DEBUG_ROLLS) console.log("Reign Roller | Execution Started.", dataset);
@@ -212,19 +209,66 @@ export class CharacterRoller {
                 }
                 defaultAttr = itemRef.system.castingStat || "knowledge"; 
             } else {
-                const matchedStatic = Object.keys(system.skills || {}).find(k => k.toLowerCase() === poolRaw.toLowerCase());
-                const matchedCustom = Object.entries(system.customSkills || {}).find(([id, cSk]) => (cSk?.customLabel || "").toLowerCase() === poolRaw.toLowerCase());
-                
-                if (matchedStatic) {
-                    defaultSkill = `static_${matchedStatic}`; baseValue = 0; 
-                    hasExpert = system.skills[matchedStatic].expert; hasMaster = system.skills[matchedStatic].master;
-                    defaultAttr = skillAttrMap[matchedStatic] || "coordination"; 
-                } else if (matchedCustom) {
-                    defaultSkill = `custom_${matchedCustom[0]}`; baseValue = 0;
-                    hasExpert = matchedCustom[1].expert; hasMaster = matchedCustom[1].master;
-                    defaultAttr = matchedCustom[1].attribute || "coordination";
+                // ITEM-9: Structured skill binding — prefer skillKey on weapon items over
+                // freetext pool-string parsing. Empty skillKey = original behaviour (full
+                // backward compatibility for all existing weapons).
+                //
+                // skillKey format:
+                //   ""           → use pool-string parsing (existing path, no change)
+                //   "fight"      → direct static skill lookup (any key in system.skills)
+                //   "custom:id"  → direct custom skill lookup by ID in system.customSkills
+                //
+                // If the bound skill is not found on this actor (weapon moved between
+                // characters) the code falls through to pool-string parsing as a safe fallback.
+                const structuredKey = (itemRef?.type === "weapon") ? (itemRef.system.skillKey || "") : "";
+
+                if (structuredKey) {
+                    let resolvedViaBinding = false;
+
+                    if (structuredKey.startsWith("custom:")) {
+                        const customId = structuredKey.slice(7);
+                        const cSk = system.customSkills?.[customId];
+                        if (cSk) {
+                            defaultSkill = `custom_${customId}`; baseValue = 0;
+                            hasExpert = cSk.expert; hasMaster = cSk.master;
+                            defaultAttr = cSk.attribute || "coordination";
+                            resolvedViaBinding = true;
+                        }
+                    } else {
+                        const sk = system.skills?.[structuredKey];
+                        if (sk) {
+                            defaultSkill = `static_${structuredKey}`; baseValue = 0;
+                            hasExpert = sk.expert; hasMaster = sk.master;
+                            defaultAttr = skillAttrMap[structuredKey] || "coordination";
+                            resolvedViaBinding = true;
+                        }
+                    }
+
+                    if (!resolvedViaBinding) {
+                        // Bound skill not found on this actor — fall through to pool-string parsing.
+                        console.warn(`Reign | Weapon "${itemRef?.name}" has skillKey "${structuredKey}" but it was not found on actor "${actor.name}". Falling back to pool string.`);
+                        const matchedStatic = Object.keys(system.skills || {}).find(k => k.toLowerCase() === poolRaw.toLowerCase());
+                        const matchedCustom = Object.entries(system.customSkills || {}).find(([id, cSk]) => (cSk?.customLabel || "").toLowerCase() === poolRaw.toLowerCase());
+                        if (matchedStatic) { defaultSkill = `static_${matchedStatic}`; baseValue = 0; hasExpert = system.skills[matchedStatic].expert; hasMaster = system.skills[matchedStatic].master; defaultAttr = skillAttrMap[matchedStatic] || "coordination"; }
+                        else if (matchedCustom) { defaultSkill = `custom_${matchedCustom[0]}`; baseValue = 0; hasExpert = matchedCustom[1].expert; hasMaster = matchedCustom[1].master; defaultAttr = matchedCustom[1].attribute || "coordination"; }
+                        else { baseValue = parseInt(poolRaw) || 0; defaultAttr = "coordination"; }
+                    }
                 } else {
-                    baseValue = parseInt(poolRaw) || 0; defaultAttr = "coordination";
+                    // Original pool-string fallback path — unchanged for all existing weapons.
+                    const matchedStatic = Object.keys(system.skills || {}).find(k => k.toLowerCase() === poolRaw.toLowerCase());
+                    const matchedCustom = Object.entries(system.customSkills || {}).find(([id, cSk]) => (cSk?.customLabel || "").toLowerCase() === poolRaw.toLowerCase());
+                    
+                    if (matchedStatic) {
+                        defaultSkill = `static_${matchedStatic}`; baseValue = 0; 
+                        hasExpert = system.skills[matchedStatic].expert; hasMaster = system.skills[matchedStatic].master;
+                        defaultAttr = skillAttrMap[matchedStatic] || "coordination"; 
+                    } else if (matchedCustom) {
+                        defaultSkill = `custom_${matchedCustom[0]}`; baseValue = 0;
+                        hasExpert = matchedCustom[1].expert; hasMaster = matchedCustom[1].master;
+                        defaultAttr = matchedCustom[1].attribute || "coordination";
+                    } else {
+                        baseValue = parseInt(poolRaw) || 0; defaultAttr = "coordination";
+                    }
                 }
             }
         }
@@ -913,19 +957,8 @@ export class CharacterRoller {
             }
         }
 
-        let results = [];
-        let actualRoll = null;
-        
         if (DEBUG_ROLLS) console.log("Reign Roller | Evaluating Final Dice...");
-        if (poolMath.normalDiceCount > 0) {
-          actualRoll = new Roll(`${poolMath.normalDiceCount}d10`);
-          await actualRoll.evaluate();
-          results = actualRoll.dice[0]?.results.map(r => r.result) || [];
-        }
-        
-        if (poolMath.actualEd > 0) results.push(poolMath.finalEdFace);
-        if (poolMath.actualCs > 0) results.push(poolMath.finalCalledShot);
-        
+
         const finalizeCombatRoll = async (finalResults, mdCount, edCount, edVal, rollInstance) => {
             // PACKAGE C Item 6: Consume aim bonus on attack (it's been used)
             if (isAttackRoll && aimBonus > 0) {
@@ -971,30 +1004,8 @@ export class CharacterRoller {
             if (DEBUG_ROLLS) console.log("Reign Roller | Execution Complete.");
         };
 
-        if (poolMath.actualMd > 0) {
-          results.sort((a, b) => b - a); 
-          let mdHtml = `<form class="reign-dialog-form">
-            <p class="reign-text-large reign-mb-small reign-mt-0"><strong>Your Roll so far:</strong> ${results.length > 0 ? results.join(", ") : "None"}</p>
-            <p class="reign-text-small reign-text-muted reign-mb-medium">Assign a face value to your Master Dice.</p>
-            <div class="dialog-grid dialog-grid-2">`;
-          for(let i=0; i<poolMath.actualMd; i++) mdHtml += `<div class="form-group"><label>MD ${i+1} Face:</label><input type="number" id="mdFace${i}" value="10" min="1" max="10"/></div>`;
-          mdHtml += `</div></form>`;
-
-          const mdResult = await reignDialog(
-            "Assign Master Dice",
-            mdHtml,
-            (e, b, d) => {
-                const faces = [];
-                for(let i=0; i<poolMath.actualMd; i++) faces.push(parseInt(d.element.querySelector(`#mdFace${i}`).value) || 10);
-                return faces;
-            },
-            { defaultLabel: "Finalize Sets" }
-          );
-
-          if (mdResult) { results.push(...mdResult); await finalizeCombatRoll(results, poolMath.actualMd, poolMath.actualEd, poolMath.finalEdFace, actualRoll); }
-        } else {
-            await finalizeCombatRoll(results, 0, poolMath.actualEd, poolMath.finalEdFace, actualRoll);
-        }
+        // ITEM-19: Delegate dice rolling, ED/CS injection, and MD prompting to BaseORERoller.
+        await this.finalizeWithMasterDice(poolMath, finalizeCombatRoll);
     } catch (err) {
         console.error("Reign Roller | CRITICAL EXCEPTION CAUGHT:", err);
         ui.notifications.error("The roll crashed silently. Check the F12 console to see exactly why.");
@@ -1014,46 +1025,21 @@ export class CharacterRoller {
    */
   static async reroll(actor, context) {
     try {
-      let results = [];
-      let rollInstance = null;
-
       // normalDice may be absent on older stored contexts — derive it safely
       const normalDice = context.normalDice
         ?? Math.max(0, context.totalPool - context.mdCount - (context.edFace > 0 ? 1 : 0));
 
-      if (normalDice > 0) {
-        rollInstance = new Roll(`${normalDice}d10`);
-        await rollInstance.evaluate();
-        results = rollInstance.dice[0]?.results.map(r => r.result) || [];
-      }
+      // ITEM-19: Use BaseORERoller.rollDice for consistent dice evaluation.
+      const { roll: rollInstance, results } = await this.rollDice(normalDice);
       if (context.edFace > 0) results.push(context.edFace);
 
       const itemRef = context.itemId ? actor.items.get(context.itemId) : null;
 
+      // ITEM-19: Use BaseORERoller.promptMasterDice for consistent MD dialog.
       if (context.mdCount > 0) {
-        results.sort((a, b) => b - a);
-        let mdHtml = `<form class="reign-dialog-form">
-          <p class="reign-text-large reign-mb-small reign-mt-0"><strong>Roll so far:</strong> ${results.join(", ")}</p>
-          <p class="reign-text-small reign-text-muted reign-mb-medium">Assign Master Dice faces.</p>
-          <div class="dialog-grid dialog-grid-2">`;
-        for (let i = 0; i < context.mdCount; i++) {
-          mdHtml += `<div class="form-group"><label>MD ${i + 1} Face:</label><input type="number" id="mdFace${i}" value="10" min="1" max="10"/></div>`;
-        }
-        mdHtml += `</div></form>`;
-
-        const mdResult = await reignDialog(
-          "Assign Master Dice",
-          mdHtml,
-          (e, b, d) => {
-            const faces = [];
-            for (let i = 0; i < context.mdCount; i++) faces.push(parseInt(d.element.querySelector(`#mdFace${i}`)?.value) || 10);
-            return faces;
-          },
-          { defaultLabel: "Finalize Sets" }
-        );
-
-        if (!mdResult) return;
-        results.push(...mdResult);
+        const mdFaces = await this.promptMasterDice(results, context.mdCount);
+        if (!mdFaces) return;
+        results.push(...mdFaces);
       }
 
       await postOREChat(actor, context.label, context.totalPool, results, context.edFace, context.mdCount, itemRef, context.rollFlags || {}, rollInstance);

@@ -305,6 +305,10 @@ export class ReignWeaponData extends foundry.abstract.TypeDataModel {
             }),
             notes: new StringField({ initial: "" }),
             wealthCost: new NumberField({ initial: 0, min: 0, integer: true }),
+            // ITEM-9: Structured skill binding. Empty = use pool string as before (full backward compat).
+            // Static skill: e.g. "fight". Custom skill: e.g. "custom:abc123" (ID from system.customSkills).
+            // pool field is retained as display text and fallback for complex combos.
+            skillKey: new StringField({ initial: "" }),
             // G2: Weapon Poison Integration
             isPoisoned: new BooleanField({ initial: false }),
             poisonRef: new StringField({ initial: "" })

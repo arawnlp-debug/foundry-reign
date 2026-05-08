@@ -2,14 +2,15 @@
 const { renderTemplate } = foundry.applications.handlebars;
 import { postOREChat } from "./chat.js";
 import { parseORE } from "./ore-engine.js";
-import { REIGN } from "./config.js";
+import { REIGN, DEBUG_ROLLS } from "./config.js";
 import { reignDialog } from "./dialog-util.js";
+import { BaseORERoller } from "./base-roller.js";
 import { applyCompanyDamageToTarget } from "../combat/company-damage.js";
 
-export class CompanyRoller {
+export class CompanyRoller extends BaseORERoller {
   static async rollCompany(actor, dataset) {
     try {
-        console.log("Reign Company Roller | Execution Started.", dataset);
+        if (DEBUG_ROLLS) console.log("Reign Company Roller | Execution Started.", dataset);
 
         const key1 = dataset.key || "might";
         const system = actor.system;
@@ -190,9 +191,8 @@ export class CompanyRoller {
         
         if (diceToRoll < 1 && totalSpecial === 0) return ui.notifications.warn("Company dice pool reduced below 1. Action fails.");
 
-        const roll = new Roll(`${diceToRoll}d10`); 
-        await roll.evaluate();
-        let results = roll.dice[0]?.results.map(r => r.result) || [];
+        // ITEM-19: Use BaseORERoller.rollDice for consistent dice evaluation.
+        const { results } = await this.rollDice(diceToRoll);
 
         const parsed = parseORE(results, pledges.ed, pledges.md);
         const difficulty = rollData.difficulty || 0;

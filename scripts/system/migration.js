@@ -8,8 +8,12 @@ export async function migrateWorld() {
   ui.notifications.info(`Reign System Migration started! Please do not close your game...`, { permanent: true });
   console.log("Reign | Beginning world migration...");
 
-  let migrationCount = 0; 
-  let failureCount = 0; 
+  // ITEM-21: Structured run record for the integrity report.
+  const report = {
+    successes: [], // { name, type }
+    failures: [],  // { name, type, error }
+    warnings: []   // { name, type, message } — anomaly detection, populated after migration
+  };
 
   // 1. Migrate World Actors
   for (let actor of game.actors) {
@@ -18,11 +22,11 @@ export async function migrateWorld() {
       if (!foundry.utils.isEmpty(updateData)) {
         console.log(`Reign | Migrating Actor ${actor.name}`);
         await actor.update(updateData);
-        migrationCount++;
+        report.successes.push({ name: actor.name, type: actor.type });
       }
     } catch (err) {
       console.error(`Reign | Failed to migrate Actor ${actor.name}:`, err);
-      failureCount++;
+      report.failures.push({ name: actor.name, type: actor.type, error: err.message || String(err) });
     }
   }
 
@@ -33,11 +37,11 @@ export async function migrateWorld() {
       if (!foundry.utils.isEmpty(updateData)) {
         console.log(`Reign | Migrating Item ${item.name}`);
         await item.update(updateData);
-        migrationCount++;
+        report.successes.push({ name: item.name, type: item.type });
       }
     } catch (err) {
       console.error(`Reign | Failed to migrate Item ${item.name}:`, err);
-      failureCount++;
+      report.failures.push({ name: item.name, type: item.type, error: err.message || String(err) });
     }
   }
 
@@ -50,11 +54,11 @@ export async function migrateWorld() {
           if (!foundry.utils.isEmpty(updateData)) {
             console.log(`Reign | Migrating Token Actor ${token.name} on scene ${scene.name}`);
             await token.actor.update(updateData);
-            migrationCount++;
+            report.successes.push({ name: `${token.name} [token]`, type: token.actor.type });
           }
         } catch (err) {
           console.error(`Reign | Failed to migrate Token Actor ${token.name}:`, err);
-          failureCount++;
+          report.failures.push({ name: `${token.name} [token]`, type: token.actor?.type || "unknown", error: err.message || String(err) });
         }
       }
     }
@@ -76,15 +80,25 @@ export async function migrateWorld() {
         if (!foundry.utils.isEmpty(updateData)) {
           console.log(`Reign | Migrating Compendium Document ${doc.name}`);
           await doc.update(updateData);
-          migrationCount++;
+          report.successes.push({ name: doc.name, type: doc.type });
         }
       } catch (err) {
         console.error(`Reign | Failed to migrate Compendium Document ${doc.name}:`, err);
-        failureCount++;
+        report.failures.push({ name: doc.name, type: doc.type, error: err.message || String(err) });
       }
     }
     await pack.configure({ locked: wasLocked });
   }
+
+  // 5. ITEM-21: Anomaly detection — lightweight sweep for known data problems.
+  // Runs after migration so any fixable issues are already resolved before flagging.
+  _detectAnomalies(report);
+
+  // Post the GM-only summary chat card (and journal entry on failures).
+  await _postMigrationReport(report);
+
+  const migrationCount = report.successes.length;
+  const failureCount = report.failures.length;
 
   if (failureCount > 0) {
     ui.notifications.error(`Reign System Migration encountered ${failureCount} failure(s)! Check the console for details.`, { permanent: true });
@@ -306,6 +320,9 @@ function migrateWeapon(source) {
   if (typeof system.isPoisoned !== "boolean") updateData["system.isPoisoned"] = false;
   if (system.poisonRef === null || system.poisonRef === undefined) updateData["system.poisonRef"] = "";
 
+  // ITEM-9 (Batch H): Weapon skill binding — default to empty (preserves pool-string behaviour)
+  if (system.skillKey === null || system.skillKey === undefined) updateData["system.skillKey"] = "";
+
   return updateData;
 }
 
@@ -417,4 +434,156 @@ function migrateProblem(source) {
   if (system.hook === null || system.hook === undefined) updateData["system.hook"] = "";
 
   return updateData;
+}
+
+// ==========================================
+// ITEM-21: MIGRATION INTEGRITY REPORT
+// ==========================================
+
+/**
+ * Lightweight anomaly detection sweep. Runs after all migration passes so that
+ * any fixable data problems are already resolved before we flag them.
+ * Only checks for known, cheap-to-detect conditions — this is not a deep audit.
+ *
+ * @param {object} report - The shared report object { successes, failures, warnings }
+ */
+function _detectAnomalies(report) {
+  const _warn = (name, type, message) => report.warnings.push({ name, type, message });
+
+  // --- World Items ---
+  for (const item of game.items) {
+    const sys = item.toObject().system || {};
+    if (item.type === "weapon") {
+      if ((sys.pool ?? "") === "" && (sys.skillKey ?? "") === "") {
+        _warn(item.name, "weapon", "No attack pool or skill binding — weapon will produce 0 dice on roll");
+      }
+      if ((sys.damage ?? "") === "") {
+        _warn(item.name, "weapon", "Empty damage formula");
+      }
+    }
+  }
+
+  // --- World Actors and their embedded items ---
+  for (const actor of game.actors) {
+    const source = actor.toObject();
+    const sys = source.system || {};
+
+    if (actor.type === "character") {
+      for (const [key, val] of Object.entries(sys.attributes || {})) {
+        if (val?.value == null || isNaN(parseInt(val.value))) {
+          _warn(actor.name, "character", `Attribute "${key}" has an invalid value`);
+        }
+      }
+      for (const [key, val] of Object.entries(sys.skills || {})) {
+        if (val?.value == null || isNaN(parseInt(val.value))) {
+          _warn(actor.name, "character", `Skill "${key}" has an invalid value`);
+        }
+      }
+    }
+
+    for (const item of actor.items) {
+      const iSys = item.toObject().system || {};
+      if (item.type === "weapon") {
+        if ((iSys.pool ?? "") === "" && (iSys.skillKey ?? "") === "") {
+          _warn(`${item.name} (on ${actor.name})`, "weapon", "No attack pool or skill binding — weapon will produce 0 dice on roll");
+        }
+        if ((iSys.damage ?? "") === "") {
+          _warn(`${item.name} (on ${actor.name})`, "weapon", "Empty damage formula");
+        }
+      }
+    }
+  }
+
+  // --- Unlinked token actors ---
+  for (const scene of game.scenes) {
+    for (const token of scene.tokens) {
+      if (!token.actor || token.actorLink) continue;
+      for (const item of token.actor.items) {
+        const iSys = item.toObject().system || {};
+        if (item.type === "weapon") {
+          if ((iSys.pool ?? "") === "" && (iSys.skillKey ?? "") === "") {
+            _warn(`${item.name} (token: ${token.name}, scene: ${scene.name})`, "weapon", "No attack pool or skill binding — weapon will produce 0 dice on roll");
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Posts a GM-only chat card summarising the migration run.
+ * If any failures occurred, additionally writes a persistent Journal Entry
+ * with full error detail so the GM can review after a reload or share for
+ * bug reports.
+ *
+ * @param {object} report - { successes: [], failures: [], warnings: [] }
+ */
+async function _postMigrationReport(report) {
+  const { successes, failures, warnings } = report;
+
+  // --- Success summary grouped by entity type ---
+  const typeGroups = {};
+  for (const s of successes) {
+    typeGroups[s.type] = (typeGroups[s.type] || 0) + 1;
+  }
+  const successSummary = Object.entries(typeGroups)
+    .map(([t, n]) => `${n} ${t}${n !== 1 ? "s" : ""}`)
+    .join(", ") || "none";
+
+  // --- Build chat card HTML ---
+  let html = `<div class="reign-chat-card"><h3 style="margin-top:0">⚙️ Reign — Migration Report</h3>`;
+
+  if (successes.length === 0 && failures.length === 0 && warnings.length === 0) {
+    html += `<p>✅ Migration complete — no changes required.</p>`;
+  } else {
+    if (successes.length > 0) {
+      html += `<p>✅ <strong>Updated:</strong> ${successSummary}</p>`;
+    }
+    if (warnings.length > 0) {
+      html += `<p>⚠️ <strong>Warnings (${warnings.length}):</strong></p><ul style="margin:0 0 8px 16px;padding:0">`;
+      for (const w of warnings) {
+        html += `<li><em>${foundry.utils.escapeHTML(w.name)}</em> [${w.type}] — ${foundry.utils.escapeHTML(w.message)}</li>`;
+      }
+      html += `</ul>`;
+    }
+    if (failures.length > 0) {
+      html += `<p>❌ <strong>Failures (${failures.length}):</strong></p><ul style="margin:0 0 8px 16px;padding:0">`;
+      for (const f of failures) {
+        html += `<li><em>${foundry.utils.escapeHTML(f.name)}</em> [${f.type}] — ${foundry.utils.escapeHTML(f.error)}</li>`;
+      }
+      html += `</ul>`;
+      const dateStr = new Date().toLocaleDateString();
+      html += `<p class="reign-text-small reign-text-muted">Full detail → Journal Entry: <em>"Reign Migration Report – ${dateStr}"</em></p>`;
+    }
+  }
+  html += `</div>`;
+
+  // Post GM-only chat message
+  await ChatMessage.create({
+    content: html,
+    whisper: ChatMessage.getWhisperRecipients("GM"),
+    speaker: { alias: "Reign System" }
+  });
+
+  // Create a Journal Entry for failure detail (persistent across reloads)
+  if (failures.length > 0) {
+    const dateStr = new Date().toLocaleDateString();
+    const journalContent = failures.map(f =>
+      `<h3>${foundry.utils.escapeHTML(f.name)} [${f.type}]</h3><p>${foundry.utils.escapeHTML(f.error)}</p>`
+    ).join("\n");
+
+    try {
+      await JournalEntry.create({
+        name: `Reign Migration Report – ${dateStr}`,
+        pages: [{
+          name: "Failure Detail",
+          type: "text",
+          text: { content: journalContent, format: 1 }
+        }]
+      });
+    } catch (err) {
+      // Journal creation failing is non-fatal — the chat card already has the failure list.
+      console.error("Reign | Could not create migration failure journal:", err);
+    }
+  }
 }

@@ -1,17 +1,14 @@
 // scripts/helpers/threat-roller.js
 
-// Set to true locally to enable verbose roll diagnostics in the browser console.
-// Never commit with this set to true.
-const DEBUG_ROLLS = false;
-
 import { postOREChat } from "./chat.js";
 import { parseORE, checkThreatElimination, calculateMoraleAttackRemoval } from "./ore-engine.js";
 import { reignDialog } from "./dialog-util.js";
-import { REIGN } from "./config.js";
+import { BaseORERoller } from "./base-roller.js";
+import { REIGN, DEBUG_ROLLS } from "./config.js";
 
 const { renderTemplate } = foundry.applications.handlebars;
 
-export class ThreatRoller {
+export class ThreatRoller extends BaseORERoller {
 
   /**
    * RAW Ch6 "Ganging Up": Rolls the threat group's collective attack pool.
@@ -108,9 +105,8 @@ export class ThreatRoller {
         
         if (diceToRoll < 1) return ui.notifications.warn("Penalties reduced the horde's pool below 1. They hesitate!");
         
-        const roll = new Roll(`${diceToRoll}d10`);
-        await roll.evaluate();
-        const results = roll.dice[0]?.results.map(r => r.result) || [];
+        // ITEM-19: Use BaseORERoller.rollDice for consistent dice evaluation.
+        const { roll, results } = await this.rollDice(diceToRoll);
         
         // Construct a pseudo-weapon item for the chat card engine
         const pseudoWeapon = { 
@@ -163,9 +159,8 @@ export class ThreatRoller {
         let diceToRoll = Math.min(moraleVal, maxDice);
         let wasCapped = moraleVal > maxDice;
 
-        const roll = new Roll(`${diceToRoll}d10`);
-        await roll.evaluate();
-        const results = roll.dice[0]?.results.map(r => r.result) || [];
+        // ITEM-19: Use BaseORERoller.rollDice for consistent dice evaluation.
+        const { roll, results } = await this.rollDice(diceToRoll);
 
         const parsed = parseORE(results);
         let routed = parsed.sets.length === 0;

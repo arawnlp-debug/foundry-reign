@@ -4,6 +4,20 @@ import { reignDialog } from "../helpers/dialog-util.js";
 import { skillAttrMap, getEffectDictionary, getItemEffectExtras } from "../helpers/config.js";
 import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
 
+// ITEM-9: Human-readable labels for static skill keys, used to populate the
+// weapon skill binding selector. Kept here and in character-sheet.js pending
+// consolidation into config.js in a future batch.
+const STATIC_SKILL_LABELS = {
+  athletics: "Athletics", endurance: "Endurance", fight: "Fight", parry: "Parry",
+  run: "Run", vigor: "Vigor", climb: "Climb", dodge: "Dodge", ride: "Ride",
+  stealth: "Stealth", counterspell: "Counterspell", healing: "Healing",
+  languageNative: "Language (Native)", lore: "Lore", strategy: "Strategy",
+  tactics: "Tactics", eerie: "Eerie", empathy: "Empathy", hearing: "Hearing",
+  scrutinize: "Scrutinize", sight: "Sight", inspire: "Inspire",
+  intimidate: "Intimidate", jest: "Jest", fascinate: "Fascinate",
+  graces: "Graces", lie: "Lie", plead: "Plead"
+};
+
 export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMixin(foundry.applications.sheets.ItemSheetV2)) {
   
   static get DEFAULT_OPTIONS() {
@@ -259,6 +273,26 @@ export class ReignItemSheet extends ScrollPreserveMixin(HandlebarsApplicationMix
     if (context.isArmor) {
         context.derivedWeight = this.document.system.derivedWeight;
         context.armorWeightMismatch = context.derivedWeight !== this.document.system.armorWeight;
+    }
+
+    // ITEM-9: Weapon skill binding selector options.
+    // First option (empty string) means "use Attack Pool text as before".
+    // Remaining options are static skills + any custom skills from the owning actor.
+    // When the item is viewed from the world items sidebar (no parent actor) only
+    // static skills are offered — the GM can assign an actor-specific custom skill
+    // after embedding the weapon.
+    if (context.isWeapon) {
+        const skillOptions = { "": "— (use Attack Pool text) —" };
+        for (const key of Object.keys(skillAttrMap)) {
+            skillOptions[key] = STATIC_SKILL_LABELS[key] || key;
+        }
+        const ownerActor = this.document.parent;
+        if (ownerActor?.system?.customSkills) {
+            for (const [id, cSk] of Object.entries(ownerActor.system.customSkills)) {
+                skillOptions[`custom:${id}`] = cSk.customLabel || "Custom Skill";
+            }
+        }
+        context.weaponSkillOptions = skillOptions;
     }
 
     // Spell: compute detection radius from intensity for display

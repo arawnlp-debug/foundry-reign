@@ -3,6 +3,14 @@
 export const REIGN = {};
 
 /**
+ * Single, centralised debug flag for all ORE roller diagnostics.
+ * Set to true locally to enable verbose roll logging in the browser console.
+ * Never commit with this set to true.
+ * @constant {boolean}
+ */
+export const DEBUG_ROLLS = false;
+
+/**
  * Canonical list of character hit locations, used across damage, health,
  * sheet rendering, and status-effect logic.
  * @constant {string[]}
@@ -32,12 +40,27 @@ export const HIT_LOCATION_SHORT_LABELS = Object.freeze({
 });
 
 /**
+ * Module-level cache for the effect dictionary. Populated on first call to
+ * getEffectDictionary() and reused thereafter. The dictionary is pure and
+ * static — it depends only on the fixed skillAttrMap constant — so there
+ * is no reason to rebuild it on every sheet render.
+ * @type {Object[]|null}
+ */
+let _effectDictionaryCache = null;
+
+/**
  * Master Active Effect dictionary shared by character and item sheets.
  * Each entry defines a change key, its label, group, and mode.
  * Sheets can filter or extend as needed.
- * @returns {Object[]} The array of effect dictionary entries.
+ *
+ * The result is built once and frozen; subsequent calls return the cached
+ * reference at negligible cost.
+ *
+ * @returns {Readonly<Object[]>} The array of effect dictionary entries.
  */
 export function getEffectDictionary() {
+  if (_effectDictionaryCache) return _effectDictionaryCache;
+
   const dict = [];
 
   // Global
@@ -91,7 +114,8 @@ export function getEffectDictionary() {
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.ignoreHeavyArmorSwim", label: "Can Swim in Heavy Armor (mandatory −4d penalty)", mode: 5, isBool: true });
   dict.push({ group: "Immunities & Restrictions", value: "system.modifiers.systemFlags.cannotUseTwoHanded", label: "Cannot Use Two-Handed Weapons", mode: 5, isBool: true });
 
-  return dict;
+  _effectDictionaryCache = Object.freeze(dict);
+  return _effectDictionaryCache;
 }
 
 /**
