@@ -1,0 +1,42 @@
+{
+  "name": "Chain Shirt",
+  "type": "armor",
+  "system": {
+    "armorWeight": "medium",
+    "ar": 2,
+    "equipped": false,
+    "protectedLocations": {
+      "head": false,
+      "torso": true,
+      "armL": true,
+      "armR": true,
+      "legL": false,
+      "legR": false
+    },
+    "notes": "Protects locations 3-9 (Torso and arms).",
+    "wealthCost": 2,
+    "equippedTimestamp": 0
+  },
+  "_id": "uRSi3MZhviASwhtw",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608075,
+    "modifiedTime": 1777294608076,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!uRSi3MZhviASwhtw"
+}

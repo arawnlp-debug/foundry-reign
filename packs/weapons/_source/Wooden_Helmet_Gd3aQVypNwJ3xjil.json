@@ -1,0 +1,42 @@
+{
+  "name": "Wooden Helmet",
+  "type": "armor",
+  "system": {
+    "armorWeight": "light",
+    "ar": 1,
+    "equipped": false,
+    "protectedLocations": {
+      "head": true,
+      "torso": false,
+      "armL": false,
+      "armR": false,
+      "legL": false,
+      "legR": false
+    },
+    "notes": "Protects location 10.",
+    "wealthCost": 0,
+    "equippedTimestamp": 0
+  },
+  "_id": "Gd3aQVypNwJ3xjil",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608074,
+    "modifiedTime": 1777294608076,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Gd3aQVypNwJ3xjil"
+}

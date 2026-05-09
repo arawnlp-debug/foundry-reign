@@ -1,0 +1,42 @@
+{
+  "name": "Breastplate",
+  "type": "armor",
+  "system": {
+    "armorWeight": "medium",
+    "ar": 3,
+    "equipped": false,
+    "protectedLocations": {
+      "head": false,
+      "torso": true,
+      "armL": false,
+      "armR": false,
+      "legL": false,
+      "legR": false
+    },
+    "notes": "Protects locations 7-9 (Torso only).",
+    "wealthCost": 2,
+    "equippedTimestamp": 0
+  },
+  "_id": "FYUxocsUp4D5fGua",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608075,
+    "modifiedTime": 1777294608076,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FYUxocsUp4D5fGua"
+}

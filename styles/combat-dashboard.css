@@ -1,0 +1,1263 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   REIGN COMBAT DASHBOARD — Phase 1 Styling
+   Uses design tokens from variables.css exclusively.
+   No hardcoded colours. Supports light, dark, and colourblind modes.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Window Shell ──────────────────────────────────────────────────────── */
+
+.combat-dashboard .window-header {
+  background: var(--reign-bg-iron);
+  border-bottom: 2px solid var(--reign-color-blood);
+}
+
+.combat-dashboard .window-content {
+  background: var(--reign-bg-parchment);
+  background-image: var(--reign-parchment-surface);
+  box-shadow: var(--reign-shadow-parchment);
+  padding: 0;
+}
+
+/* ─── Collapsed Bar ─────────────────────────────────────────────────────── */
+
+.cd-collapsed-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-sm);
+  padding: 6px var(--reign-space-md);
+  background: var(--reign-bg-iron);
+  flex-wrap: wrap;
+}
+
+.cd-cbar-title {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  letter-spacing: 2px;
+  color: var(--reign-text-light);
+  text-transform: uppercase;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.cd-cbar-phase {
+  font-family: var(--reign-font-mono);
+  font-size: 0.65em;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: var(--reign-radius-sm);
+  flex-shrink: 0;
+}
+.cd-phase-decl {
+  background: rgba(217, 119, 6, 0.25);
+  color: var(--reign-color-brass);
+  border: 1px solid rgba(217, 119, 6, 0.4);
+}
+.cd-phase-res {
+  background: var(--reign-bg-blood-subtle);
+  color: var(--reign-red);
+  border: 1px solid var(--reign-color-blood);
+}
+
+.cd-cbar-info {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  flex-shrink: 0;
+}
+
+.cd-cbar-set {
+  font-family: var(--reign-font-mono);
+  font-size: 0.65em;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--reign-radius-sm);
+  border: 1px solid;
+}
+.cd-cbs-spotlight {
+  background: rgba(217, 119, 6, 0.2);
+  border-color: var(--reign-color-brass);
+  color: var(--reign-color-brass);
+}
+.cd-cbs-attack {
+  background: var(--reign-bg-blood-muted);
+  border-color: var(--reign-color-blood);
+  color: var(--reign-red);
+}
+.cd-cbs-spell {
+  background: var(--reign-bg-sorcery-muted);
+  border-color: var(--reign-color-sorcery);
+  color: var(--reign-purple);
+}
+.cd-cbs-defense {
+  background: var(--reign-bg-emerald-muted);
+  border-color: var(--reign-color-emerald);
+  color: var(--reign-green);
+}
+
+.cd-cbar-expand {
+  margin-left: auto;
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid var(--reign-text-muted);
+  border-radius: var(--reign-radius-sm);
+  background: transparent;
+  color: var(--reign-text-muted);
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+  flex-shrink: 0;
+}
+.cd-cbar-expand:hover {
+  color: var(--reign-text-light);
+  border-color: var(--reign-text-light);
+}
+
+/* ─── Action Bar (Resolution) ───────────────────────────────────────────── */
+
+.cd-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--reign-space-md);
+  background: var(--reign-bg-brass-muted);
+  border-bottom: 1px solid rgba(217, 119, 6, 0.15);
+}
+.cd-action-left {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-sm);
+}
+.cd-resolving-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--reign-bg-brass-subtle);
+  border: 1px solid var(--reign-color-brass);
+  border-radius: 12px;
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  font-weight: 600;
+  color: var(--reign-color-brass);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.cd-resolving-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--reign-color-brass);
+  animation: cd-dot-pulse 1.2s ease-in-out infinite;
+}
+@keyframes cd-dot-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.cd-action-desc {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  color: var(--reign-color-brass);
+  letter-spacing: 0.5px;
+}
+.cd-action-right {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+}
+
+/* ─── Declaration Phase ─────────────────────────────────────────────────── */
+
+.cd-decl-body {
+  padding: var(--reign-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-sm);
+}
+
+.cd-decl-intro {
+  text-align: center;
+  padding: var(--reign-space-sm);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--reign-color-brass);
+  border-bottom: 1px solid var(--reign-bg-vellum);
+  margin-bottom: var(--reign-space-xs);
+}
+
+.cd-decl-row {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-sm);
+  padding: var(--reign-space-sm);
+  background: var(--reign-bg-paper);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-md);
+  transition: border-color var(--reign-transition-base);
+}
+.cd-decl-row.cd-confirmed {
+  border-color: var(--reign-color-emerald);
+  background: var(--reign-bg-emerald-muted);
+}
+.cd-decl-row.cd-waiting {
+  border-color: var(--reign-color-brass);
+  border-style: dashed;
+}
+
+.cd-decl-status {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--reign-text-sm);
+  flex-shrink: 0;
+}
+.cd-dsi-confirmed {
+  background: var(--reign-bg-emerald-subtle);
+  border: 1px solid var(--reign-color-emerald);
+  color: var(--reign-color-emerald);
+}
+.cd-dsi-waiting {
+  background: var(--reign-bg-brass-muted);
+  border: 1px dashed var(--reign-color-brass);
+  color: var(--reign-color-brass);
+  animation: cd-dot-pulse 1.5s ease-in-out infinite;
+}
+
+.cd-portrait-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--reign-bg-vellum);
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.cd-portrait-sm:hover {
+  border-color: var(--reign-color-blood);
+}
+
+.cd-decl-name {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  color: var(--reign-text-dark);
+  flex: 0 0 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-decl-intent {
+  flex: 1;
+  font-size: var(--reign-text-sm);
+  font-style: italic;
+  color: var(--reign-text-muted);
+}
+.cd-decl-intent.cd-filled {
+  color: var(--reign-text-dark);
+  font-style: normal;
+}
+
+.cd-decl-sense {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  flex-shrink: 0;
+}
+
+/* Badges (shared) */
+.cd-badge {
+  font-family: var(--reign-font-mono);
+  font-size: 0.65em;
+  padding: 1px 5px;
+  border-radius: var(--reign-radius-sm);
+  flex-shrink: 0;
+}
+.cd-badge-aim {
+  background: var(--reign-bg-blue-subtle);
+  color: var(--reign-blue);
+  border: 1px solid var(--reign-blue);
+}
+.cd-badge-condition {
+  background: var(--reign-bg-blood-muted);
+  color: var(--reign-red);
+  border: 1px solid var(--reign-color-blood);
+}
+.cd-badge-shield {
+  background: var(--reign-bg-brass-muted);
+  border: 1px solid var(--reign-color-brass);
+}
+
+/* Clickable declaration status (simple mode) */
+.cd-decl-status.cd-clickable {
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+}
+.cd-decl-status.cd-clickable:hover {
+  transform: scale(1.15);
+}
+.cd-dsi-confirmed.cd-clickable:hover {
+  background: var(--reign-bg-blood-subtle);
+  border-color: var(--reign-color-blood);
+  color: var(--reign-red);
+}
+.cd-dsi-waiting.cd-clickable:hover {
+  background: var(--reign-bg-emerald-subtle);
+  border-color: var(--reign-color-emerald);
+  color: var(--reign-color-emerald);
+}
+
+/* Declare button (advanced mode) */
+.cd-declare-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--reign-radius-md);
+  border: 1px solid var(--reign-color-brass);
+  background: var(--reign-bg-brass-muted);
+  color: var(--reign-color-brass);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--reign-text-sm);
+  flex-shrink: 0;
+  transition: all var(--reign-transition-fast);
+}
+.cd-declare-btn:hover {
+  background: var(--reign-color-brass);
+  color: var(--reign-text-light);
+}
+
+/* Progress bar */
+.cd-progress-wrap {
+  padding: var(--reign-space-xs) 0 0;
+}
+.cd-progress-lbl {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  letter-spacing: 1px;
+  margin-bottom: var(--reign-space-xs);
+  display: flex;
+  justify-content: space-between;
+}
+.cd-progress-bar {
+  height: 3px;
+  background: var(--reign-bg-vellum);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cd-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--reign-color-blood), var(--reign-color-brass));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ─── Speed Ladder ──────────────────────────────────────────────────────── */
+
+.cd-speed-ladder {
+  padding: var(--reign-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-sm);
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* Tier Group */
+.cd-tier-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cd-tier-header {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-sm);
+  padding: 4px var(--reign-space-sm);
+  border-radius: var(--reign-radius-sm);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  letter-spacing: 2px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.cd-tier-header.cd-w5,
+.cd-tier-header.cd-w4,
+.cd-tier-header.cd-w3 {
+  background: var(--reign-bg-blood-wash);
+  border-left: 3px solid var(--reign-color-blood);
+  color: var(--reign-red);
+}
+.cd-tier-header.cd-w2 {
+  background: var(--reign-bg-blue-muted);
+  border-left: 3px solid var(--reign-blue);
+  color: var(--reign-blue);
+}
+.cd-tier-header.cd-w1 {
+  background: var(--reign-bg-brass-muted);
+  border-left: 3px solid var(--reign-color-brass);
+  color: var(--reign-color-brass);
+}
+
+.cd-tier-pips {
+  display: flex;
+  gap: 3px;
+}
+.cd-tier-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+.cd-tier-lbl { flex: 1; }
+.cd-tier-count {
+  font-family: var(--reign-font-mono);
+  font-size: 0.9em;
+  opacity: 0.5;
+}
+
+/* Cards row */
+.cd-tier-cards {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Divider */
+.cd-reign-divider {
+  height: 8px;
+  margin: var(--reign-space-xs) var(--reign-space-sm);
+  opacity: 0.4;
+  background-image: var(--reign-divider);
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* ─── Combatant Card ────────────────────────────────────────────────────── */
+
+.cd-card {
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+  background: var(--reign-bg-paper);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-md);
+  overflow: hidden;
+  position: relative;
+  transition: border-color var(--reign-transition-base), box-shadow var(--reign-transition-base);
+}
+
+/* Spotlight */
+.cd-card.cd-spotlight {
+  border-color: var(--reign-color-brass);
+  box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.2), var(--reign-shadow-drop);
+}
+.cd-card.cd-spotlight::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--reign-color-brass), transparent);
+  animation: cd-shimmer 2.5s ease-in-out infinite;
+}
+@keyframes cd-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Defense */
+.cd-card.cd-defense {
+  border-color: var(--reign-color-emerald);
+  background: var(--reign-bg-emerald-muted);
+}
+
+/* Spell */
+.cd-card.cd-spell {
+  border-color: var(--reign-color-sorcery);
+}
+
+/* Simultaneous */
+.cd-card.cd-simultaneous {
+  border-style: double;
+  border-width: 3px;
+}
+
+/* Card Header */
+.cd-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--reign-bg-vellum);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.cd-portrait {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--reign-bg-vellum);
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color var(--reign-transition-fast);
+}
+.cd-portrait:hover {
+  border-color: var(--reign-color-blood);
+}
+.cd-spotlight .cd-portrait {
+  border-color: var(--reign-color-brass);
+}
+.cd-defense .cd-portrait {
+  border-color: var(--reign-color-emerald);
+}
+
+.cd-card-identity {
+  flex: 1;
+  min-width: 0;
+}
+.cd-card-name {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  font-weight: 600;
+  color: var(--reign-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-card-action {
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.cd-init-badge {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--reign-radius-sm);
+  border: 1px solid;
+}
+.cd-ib-attack {
+  background: var(--reign-bg-blood-subtle);
+  color: var(--reign-red);
+  border-color: var(--reign-color-blood);
+}
+.cd-ib-spell {
+  background: var(--reign-bg-sorcery-subtle);
+  color: var(--reign-purple);
+  border-color: var(--reign-color-sorcery);
+}
+.cd-ib-defense {
+  background: var(--reign-bg-emerald-subtle);
+  color: var(--reign-green);
+  border-color: var(--reign-color-emerald);
+}
+
+.cd-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.cd-sd-spotlight {
+  background: var(--reign-color-brass);
+  box-shadow: 0 0 4px var(--reign-color-brass);
+  animation: cd-dot-pulse 1s ease-in-out infinite;
+}
+.cd-sd-pending { background: var(--reign-bg-vellum); }
+.cd-sd-defense {
+  background: var(--reign-color-emerald);
+  box-shadow: 0 0 4px var(--reign-color-emerald);
+}
+.cd-sd-spell {
+  background: var(--reign-color-sorcery);
+  box-shadow: 0 0 4px var(--reign-color-sorcery);
+}
+
+/* Card Body */
+.cd-card-body {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Dice Section */
+.cd-dice-section { display: flex; flex-direction: column; gap: 3px; }
+.cd-dice-lbl {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--reign-text-muted);
+}
+.cd-dice-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.cd-die {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--reign-font-mono);
+  font-size: 0.65em;
+  font-weight: 600;
+}
+.cd-die-matched {
+  background: var(--reign-bg-parchment);
+  color: var(--reign-bg-iron);
+  border: 2px solid var(--reign-color-blood);
+  box-shadow: 0 0 3px var(--reign-bg-blood-subtle);
+}
+.cd-die-defense {
+  border-color: var(--reign-color-emerald) !important;
+  box-shadow: 0 0 3px var(--reign-bg-emerald-subtle) !important;
+}
+.cd-die-spell {
+  border-color: var(--reign-color-sorcery) !important;
+  box-shadow: 0 0 3px var(--reign-bg-sorcery-subtle) !important;
+}
+.cd-die-waste {
+  background: var(--reign-bg-vellum);
+  color: var(--reign-text-muted);
+  border: 1px solid var(--reign-bg-vellum);
+  opacity: 0.6;
+}
+.cd-die-gobble {
+  background: var(--reign-bg-emerald-subtle);
+  color: var(--reign-color-emerald);
+  border: 2px solid var(--reign-color-emerald);
+  box-shadow: 0 0 4px var(--reign-bg-emerald-subtle);
+}
+
+/* Hit Location */
+.cd-hit-row { display: flex; align-items: center; gap: 6px; }
+.cd-hit-location {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--reign-radius-sm);
+  font-size: var(--reign-text-sm);
+  border: 1px solid;
+}
+.cd-hit-attack {
+  background: var(--reign-bg-blood-muted);
+  border-color: var(--reign-color-blood);
+}
+.cd-hit-spell {
+  background: var(--reign-bg-sorcery-muted);
+  border-color: var(--reign-color-sorcery);
+}
+.cd-hit-icon { font-size: 0.9em; }
+.cd-hit-txt { color: var(--reign-text-muted); }
+.cd-hit-zone {
+  font-family: var(--reign-font-mono);
+  font-weight: 600;
+}
+.hz-head { color: var(--reign-critical); }
+.hz-torso { color: var(--reign-red); }
+.hz-arm { color: var(--reign-color-brass); }
+.hz-leg { color: var(--reign-blue); }
+
+/* Damage Preview */
+.cd-dmg-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: var(--reign-bg-blood-muted);
+  border: 1px solid var(--reign-color-blood);
+  border-radius: var(--reign-radius-sm);
+}
+.cd-dmg-icon { font-size: 0.9em; }
+.cd-dmg-formula {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  font-weight: 600;
+  color: var(--reign-red);
+}
+
+/* Quality Tags */
+.cd-quality-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.cd-quality-tag {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  padding: 1px 4px;
+  background: var(--reign-bg-brass-muted);
+  border: 1px solid var(--reign-color-brass);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-color-brass);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Gobble Block */
+.cd-gobble-block {
+  background: var(--reign-bg-emerald-muted);
+  border: 1px solid var(--reign-color-emerald);
+  border-radius: var(--reign-radius-sm);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cd-gobble-title {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--reign-color-emerald);
+}
+
+/* Condition Bar */
+.cd-condition-bar {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.cd-condition-badge {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  padding: 1px 4px;
+  background: var(--reign-bg-blood-muted);
+  border: 1px solid var(--reign-color-blood);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-red);
+}
+
+/* Chips */
+.cd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+.cd-chip-simultaneous {
+  background: var(--reign-bg-sorcery-muted);
+  border-color: var(--reign-color-sorcery);
+  color: var(--reign-purple);
+}
+
+/* Empty State */
+.cd-empty-state {
+  text-align: center;
+  padding: var(--reign-space-xl);
+  color: var(--reign-text-muted);
+}
+.cd-empty-state p { margin: var(--reign-space-xs) 0; }
+.cd-empty-hint {
+  font-size: var(--reign-text-sm);
+  font-style: italic;
+}
+
+/* No Combat */
+.cd-no-combat {
+  text-align: center;
+  padding: var(--reign-space-xl);
+  color: var(--reign-text-muted);
+  font-style: italic;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────────── */
+
+.cd-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--reign-space-md);
+  background: var(--reign-bg-vellum);
+  border-top: 1px solid var(--reign-bg-vellum);
+}
+.cd-footer-info {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+}
+.cd-footer-btns { display: flex; gap: 4px; }
+.cd-foot-btn {
+  padding: 3px 8px;
+  border-radius: var(--reign-radius-sm);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid var(--reign-bg-vellum);
+  background: transparent;
+  color: var(--reign-text-muted);
+  transition: all var(--reign-transition-fast);
+}
+.cd-foot-btn:hover {
+  color: var(--reign-text-dark);
+  border-color: var(--reign-text-muted);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+
+.cd-speed-ladder::-webkit-scrollbar { width: var(--reign-scrollbar-width); }
+.cd-speed-ladder::-webkit-scrollbar-track { background: var(--reign-scrollbar-track); }
+.cd-speed-ladder::-webkit-scrollbar-thumb { background: var(--reign-scrollbar-thumb); border-radius: 3px; }
+.cd-speed-ladder::-webkit-scrollbar-thumb:hover { background: var(--reign-scrollbar-hover); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 3: Resolved, Broken, Gobble Validation, Spotlight Controls
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Resolved card — dimmed and greyed */
+.cd-card.cd-resolved {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+
+/* Broken card — struck-through appearance */
+.cd-card.cd-broken {
+  opacity: 0.25;
+  filter: grayscale(0.8);
+  pointer-events: none;
+}
+.cd-card.cd-broken .cd-card-name {
+  text-decoration: line-through;
+}
+
+/* ─── Gobble Validation ─────────────────────────────────────────────── */
+
+.cd-gobble-block.cd-gobble-valid {
+  border-color: var(--reign-color-emerald);
+  background: var(--reign-bg-emerald-muted);
+}
+.cd-gobble-block.cd-gobble-invalid {
+  border-color: var(--reign-color-blood);
+  background: var(--reign-bg-blood-muted);
+  opacity: 0.7;
+}
+
+.cd-gobble-status {
+  font-size: 0.9em;
+  margin-left: 4px;
+}
+.cd-gobble-ok {
+  color: var(--reign-color-emerald);
+  font-weight: 600;
+}
+.cd-gobble-fail {
+  color: var(--reign-red);
+  font-style: italic;
+}
+
+/* Invalid gobble die — dimmed, red border */
+.cd-die-gobble-invalid {
+  opacity: 0.4;
+  border-color: var(--reign-color-blood) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+/* Apply Gobble button */
+.cd-gobble-apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  margin-top: var(--reign-space-xs);
+  padding: 5px 8px;
+  background: var(--reign-bg-emerald-subtle);
+  border: 1px solid var(--reign-color-emerald);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-color-emerald);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+}
+.cd-gobble-apply-btn:hover {
+  background: var(--reign-color-emerald);
+  color: var(--reign-text-light);
+}
+
+/* ─── Advance Spotlight Button ──────────────────────────────────────── */
+
+.cd-foot-advance {
+  background: var(--reign-bg-brass-subtle);
+  border-color: var(--reign-color-brass) !important;
+  color: var(--reign-color-brass) !important;
+  font-weight: 600;
+}
+.cd-foot-advance:hover {
+  background: var(--reign-color-brass);
+  color: var(--reign-text-light) !important;
+}
+.cd-foot-advance:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--reign-text-muted) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 4: Resolve Panel, Damage Preview, Spoil Button
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Resolve Panel */
+.cd-resolve-panel {
+  background: var(--reign-bg-brass-muted);
+  border: 1px solid var(--reign-color-brass);
+  border-radius: var(--reign-radius-md);
+  padding: var(--reign-space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-xs);
+  margin-top: var(--reign-space-xs);
+}
+
+.cd-resolve-target {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-xs);
+  font-size: var(--reign-text-sm);
+  color: var(--reign-text-dark);
+}
+.cd-resolve-target-label {
+  color: var(--reign-text-muted);
+}
+
+.cd-resolve-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+}
+
+.cd-resolve-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 4px;
+  border-radius: var(--reign-radius-sm);
+}
+.cd-resolve-net {
+  background: var(--reign-bg-blood-muted);
+  font-weight: 600;
+}
+.cd-resolve-net-value {
+  color: var(--reign-red);
+}
+.cd-resolve-state {
+  color: var(--reign-text-muted);
+}
+.cd-resolve-overflow {
+  background: var(--reign-bg-blood-subtle);
+  color: var(--reign-red);
+  font-weight: 600;
+}
+.cd-resolve-lethal {
+  text-align: center;
+  padding: 3px;
+  background: var(--reign-color-blood);
+  color: var(--reign-text-light);
+  border-radius: var(--reign-radius-sm);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Resolve Button */
+.cd-resolve-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--reign-space-xs);
+  width: 100%;
+  padding: 7px var(--reign-space-sm);
+  margin-top: var(--reign-space-xs);
+  background: linear-gradient(180deg, var(--reign-color-blood), var(--reign-color-blood-dark));
+  border: 1px solid var(--reign-color-blood-dark);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-text-light);
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+  box-shadow: var(--reign-shadow-drop);
+}
+.cd-resolve-btn:hover {
+  box-shadow: var(--reign-shadow-elevated);
+  transform: translateY(-1px);
+}
+
+/* No target hint */
+.cd-resolve-no-target {
+  text-align: center;
+  padding: var(--reign-space-xs);
+  border: 1px dashed var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-sm);
+  margin-top: var(--reign-space-xs);
+}
+.cd-resolve-hint {
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  font-style: italic;
+}
+
+/* Spoil Button */
+.cd-spoil-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  margin-top: var(--reign-space-xs);
+  padding: 4px var(--reign-space-sm);
+  background: transparent;
+  border: 1px dashed var(--reign-color-blood);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-red);
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+}
+.cd-spoil-btn:hover {
+  background: var(--reign-bg-blood-muted);
+  border-style: solid;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 5: Polish — Collision Connectors, Animations, Round Complete
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Collision Connector ───────────────────────────────────────────── */
+
+.cd-collision-conn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  gap: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.cd-collision-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--reign-bg-sorcery-muted);
+  border: 1px solid var(--reign-color-sorcery);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  color: var(--reign-purple);
+}
+.cd-collision-lbl {
+  font-family: var(--reign-font-display);
+  font-size: 0.45em;
+  letter-spacing: 0.5px;
+  color: var(--reign-purple);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ─── Round Complete Banner ─────────────────────────────────────────── */
+
+.cd-round-complete {
+  text-align: center;
+  padding: var(--reign-space-md);
+  margin-bottom: var(--reign-space-sm);
+  background: var(--reign-bg-emerald-muted);
+  border: 1px solid var(--reign-color-emerald);
+  border-radius: var(--reign-radius-md);
+}
+.cd-round-complete-icon {
+  font-size: 1.5em;
+  margin-bottom: var(--reign-space-xs);
+}
+.cd-round-complete-text {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  font-weight: 600;
+  color: var(--reign-color-emerald);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.cd-round-complete-hint {
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+  font-style: italic;
+  margin-top: var(--reign-space-xs);
+}
+
+/* ─── Refined Animations ────────────────────────────────────────────── */
+
+/* Card state transitions */
+.cd-card {
+  transition:
+    border-color var(--reign-transition-base),
+    box-shadow var(--reign-transition-base),
+    opacity var(--reign-transition-slow),
+    filter var(--reign-transition-slow),
+    transform var(--reign-transition-fast);
+}
+
+/* Spotlight pulse refinement */
+@keyframes cd-spotlight-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(217,119,6,0.2), 0 4px 12px rgba(217,119,6,0.1); }
+  50% { box-shadow: 0 0 0 2px rgba(217,119,6,0.35), 0 4px 20px rgba(217,119,6,0.2); }
+}
+.cd-card.cd-spotlight {
+  animation: cd-spotlight-glow 2.5s ease-in-out infinite;
+}
+
+/* Resolved card smooth fade */
+.cd-card.cd-resolved {
+  opacity: 0.3;
+  filter: grayscale(0.7) brightness(0.9);
+  transform: scale(0.98);
+  pointer-events: none;
+}
+
+/* Broken card with strike-through animation */
+@keyframes cd-break-flash {
+  0% { border-color: var(--reign-color-blood); opacity: 0.6; }
+  50% { border-color: var(--reign-red); opacity: 0.3; }
+  100% { border-color: var(--reign-bg-vellum); opacity: 0.2; }
+}
+.cd-card.cd-broken {
+  animation: cd-break-flash 0.5s ease-out forwards;
+  filter: grayscale(0.9);
+  transform: scale(0.96);
+  pointer-events: none;
+}
+.cd-card.cd-broken .cd-card-name {
+  text-decoration: line-through;
+  text-decoration-color: var(--reign-red);
+}
+.cd-card.cd-broken .cd-init-badge {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Reacting card subtle highlight */
+.cd-card .cd-card-header {
+  transition: background var(--reign-transition-base);
+}
+.cd-card.cd-spotlight .cd-card-header {
+  background: var(--reign-bg-brass-muted);
+}
+
+/* Declaration row enter animation */
+.cd-decl-row {
+  transition:
+    border-color var(--reign-transition-base),
+    background var(--reign-transition-base);
+}
+
+/* Progress bar smooth fill */
+.cd-progress-fill {
+  transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Gobble apply button pulse when valid */
+@keyframes cd-gobble-ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,90,39,0); }
+  50% { box-shadow: 0 0 0 3px rgba(45,90,39,0.15); }
+}
+.cd-gobble-block.cd-gobble-valid .cd-gobble-apply-btn {
+  animation: cd-gobble-ready 2s ease-in-out infinite;
+}
+
+/* Resolve button pulse when panel is showing */
+@keyframes cd-resolve-ready {
+  0%, 100% { box-shadow: 0 2px 6px rgba(139,31,31,0.3); }
+  50% { box-shadow: 0 2px 12px rgba(139,31,31,0.5); }
+}
+.cd-resolve-btn {
+  animation: cd-resolve-ready 2s ease-in-out infinite;
+}
+
+/* ─── Visual Hierarchy Refinements ──────────────────────────────────── */
+
+/* Tier header icons */
+.cd-tier-header {
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Speed ladder subtle inner shadow for depth */
+.cd-speed-ladder {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Action bar styling refinement */
+.cd-action-bar {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Collapsed bar refinement */
+.cd-collapsed-bar {
+  min-height: 32px;
+  border-top: 2px solid var(--reign-color-blood);
+}
+
+/* Footer refinement */
+.cd-footer {
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.05);
+}
+
+/* Next Round button */
+.cd-foot-next-round {
+  background: var(--reign-bg-blood-muted);
+  border-color: var(--reign-color-blood) !important;
+  color: var(--reign-red) !important;
+}
+.cd-foot-next-round:hover {
+  background: var(--reign-color-blood);
+  color: var(--reign-text-light) !important;
+}

@@ -1,0 +1,1150 @@
+/* ====================================================
+   REIGN GM TOOLBAR — Frameless HUD Styles
+   Glassmorphism · Docked Top-Centre · Two-Layer Architecture
+==================================================== */
+
+/* ─── Container ───────────────────────────────────────────────────────── */
+#reign-gm-toolbar {
+    position: fixed;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    font-family: var(--reign-font-data, sans-serif);
+    font-size: 12px;
+    color: var(--reign-text-light);
+    /* Prevent toolbar from blocking canvas interactions when collapsed */
+    width: auto;
+}
+
+/* ─── Layer 1: Persistent Bar ─────────────────────────────────────────── */
+.gt-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(217, 119, 6, 0.25);
+    /* Glassmorphism */
+    background: rgba(30, 30, 30, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    user-select: none;
+    white-space: nowrap;
+}
+
+/* ─── Bar Sections ────────────────────────────────────────────────────── */
+.gt-bar-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+}
+
+.gt-bar-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
+/* ─── World Month Badge ───────────────────────────────────────────────── */
+.gt-month-badge {
+    color: var(--reign-text-light);
+    opacity: 0.85;
+}
+.gt-month-badge i {
+    color: var(--reign-color-brass);
+    font-size: 10px;
+}
+.gt-month-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: 0.8px;
+    opacity: 0.6;
+}
+.gt-month-value {
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--reign-color-brass);
+    min-width: 16px;
+    text-align: center;
+}
+.gt-month-advance {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 9px;
+    border-radius: 3px;
+    transition: all 0.15s;
+    line-height: 1;
+}
+.gt-month-advance:hover {
+    color: var(--reign-color-brass);
+    background: rgba(217, 119, 6, 0.15);
+}
+
+/* ─── Combat Phase Indicator ──────────────────────────────────────────── */
+.gt-combat-indicator {
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--reign-text-light);
+    cursor: pointer;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: rgba(139, 31, 31, 0.35);
+    border: 1px solid rgba(139, 31, 31, 0.4);
+    transition: background 0.2s;
+}
+.gt-combat-indicator:hover {
+    background: rgba(139, 31, 31, 0.55);
+}
+.gt-combat-indicator i {
+    margin-right: 3px;
+    font-size: 10px;
+}
+
+/* ─── Bar Buttons ─────────────────────────────────────────────────────── */
+.gt-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+    padding: 0;
+    line-height: 1;
+}
+.gt-bar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.gt-bar-btn.gt-active {
+    background: rgba(139, 31, 31, 0.5);
+    border-color: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    box-shadow: 0 0 6px rgba(139, 31, 31, 0.4);
+}
+.gt-bar-btn svg {
+    width: 12px;
+    height: 14px;
+}
+
+/* Theater button special styling */
+.gt-theater-btn.gt-active {
+    background: rgba(171, 71, 188, 0.4);
+    border-color: var(--reign-purple);
+    box-shadow: 0 0 6px rgba(171, 71, 188, 0.3);
+}
+
+/* ─── Hidden Utility ──────────────────────────────────────────────────── */
+.gt-hidden { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Layer 2: Context Panel
+═══════════════════════════════════════════════════════════════════════════ */
+.gt-panel {
+    margin-top: 4px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    background: rgba(30, 30, 30, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    min-width: 380px;
+    max-width: 440px;
+    animation: gt-panel-in 0.12s ease-out;
+}
+
+@keyframes gt-panel-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Quick Roll Panel ────────────────────────────────────────────────── */
+.gt-qr-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Pool preview */
+.gt-qr-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.gt-qr-preview-label {
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.4);
+}
+.gt-qr-preview-value {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--reign-color-emerald);
+}
+
+/* Input rows */
+.gt-qr-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.gt-qr-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+.gt-qr-field > span {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255, 255, 255, 0.4);
+}
+.gt-qr-field.gt-qr-narrow {
+    flex: 0 0 52px;
+}
+.gt-qr-field.gt-qr-check {
+    flex: 0 0 36px;
+    align-items: center;
+}
+
+/* Inputs */
+.gt-input {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--reign-text-light);
+    font-family: var(--reign-font-data, sans-serif);
+    font-size: 12px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.gt-input:focus {
+    border-color: var(--reign-color-brass);
+}
+.gt-input.gt-input-label {
+    text-align: left;
+}
+.gt-input[type="number"] {
+    -moz-appearance: textfield;
+}
+.gt-input[type="number"]::-webkit-inner-spin-button,
+.gt-input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.gt-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--reign-color-brass);
+    cursor: pointer;
+}
+
+/* Action buttons */
+.gt-qr-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    margin-top: 2px;
+}
+
+.gt-qr-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-family: var(--reign-font-data, sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.gt-qr-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--reign-text-light);
+}
+
+.gt-qr-btn-roll {
+    background: var(--reign-color-blood);
+    border-color: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    font-weight: 700;
+}
+.gt-qr-btn-roll:hover {
+    background: var(--reign-color-blood-dark);
+    border-color: var(--reign-color-blood-dark);
+    box-shadow: 0 2px 8px rgba(139, 31, 31, 0.4);
+}
+
+.gt-qr-btn-reroll {
+    border-color: rgba(217, 119, 6, 0.3);
+    color: var(--reign-color-brass);
+}
+.gt-qr-btn-reroll:hover {
+    background: rgba(217, 119, 6, 0.15);
+    border-color: var(--reign-color-brass);
+}
+
+.gt-qr-btn-token {
+    border-color: rgba(45, 90, 39, 0.3);
+    color: var(--reign-color-emerald);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gt-qr-btn-token:hover {
+    background: rgba(45, 90, 39, 0.15);
+    border-color: var(--reign-color-emerald);
+}
+
+/* Danger text */
+.gt-text-danger { color: var(--reign-color-blood) !important; }
+.gt-text-muted { opacity: 0.5; font-size: 10px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARTY VITALS ROW — Separate row below the bar
+═══════════════════════════════════════════════════════════════════════════ */
+.gt-vitals-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 10px;
+    margin-top: 3px;
+    border-radius: 6px;
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gt-vitals-portrait {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.15s;
+    /* Health ring — default healthy */
+    box-shadow: 0 0 0 2px var(--reign-color-emerald), 0 0 4px rgba(45, 90, 39, 0.3);
+}
+.gt-vitals-portrait:hover {
+    transform: scale(1.15);
+    z-index: 2;
+}
+.gt-vitals-portrait img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Threat portraits: square with cut corners to distinguish from round PCs */
+.gt-vitals-portrait.gt-vitals-threat {
+    border-radius: 4px;
+}
+.gt-vitals-portrait.gt-vitals-threat img {
+    border-radius: 4px;
+}
+
+/* ── Health State Rings ── */
+.gt-health-healthy {
+    box-shadow: 0 0 0 2px var(--reign-color-emerald), 0 0 4px rgba(45, 90, 39, 0.3);
+}
+.gt-health-shocked {
+    box-shadow: 0 0 0 2px var(--reign-color-brass), 0 0 5px rgba(217, 119, 6, 0.4);
+}
+.gt-health-wounded {
+    box-shadow: 0 0 0 2px #e65100, 0 0 6px rgba(230, 81, 0, 0.5);
+}
+.gt-health-critical {
+    box-shadow: 0 0 0 2px var(--reign-color-blood), 0 0 8px rgba(139, 31, 31, 0.6);
+    animation: gt-pulse-critical 1.5s ease-in-out infinite;
+}
+.gt-health-dead {
+    box-shadow: 0 0 0 2px #555;
+    filter: grayscale(0.8) brightness(0.6);
+}
+
+@keyframes gt-pulse-critical {
+    0%, 100% { box-shadow: 0 0 0 2px var(--reign-color-blood), 0 0 6px rgba(139, 31, 31, 0.4); }
+    50%      { box-shadow: 0 0 0 3px var(--reign-color-blood), 0 0 12px rgba(139, 31, 31, 0.7); }
+}
+
+/* ── Combat & Condition Badges ── */
+.gt-vitals-badge {
+    position: absolute;
+    font-size: 8px;
+    font-weight: 800;
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
+    text-align: center;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.gt-badge-declared {
+    bottom: -2px;
+    right: -2px;
+    background: var(--reign-color-emerald);
+    color: #fff;
+    font-size: 7px;
+}
+.gt-badge-undeclared {
+    bottom: -2px;
+    right: -2px;
+    background: var(--reign-color-brass);
+    color: #fff;
+    animation: gt-pulse-badge 1.2s ease-in-out infinite;
+}
+.gt-badge-condition {
+    top: -2px;
+    right: -2px;
+    background: var(--reign-color-blood);
+    color: #fff;
+    font-size: 7px;
+}
+
+@keyframes gt-pulse-badge {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOKEN PEEK PANEL — Actor-type-aware stat inspector
+═══════════════════════════════════════════════════════════════════════════ */
+.gt-peek-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 340px;
+}
+
+/* ── Header ── */
+.gt-peek-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gt-peek-portrait {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.gt-peek-name {
+    font-family: var(--reign-font-display, serif);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--reign-text-light);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gt-peek-type {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255,255,255,0.35);
+    font-weight: 600;
+}
+.gt-peek-sheet-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+.gt-peek-sheet-btn:hover {
+    color: var(--reign-text-light);
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.06);
+}
+
+/* ── Body (shared) ── */
+.gt-peek-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* ── Character: Attributes Row ── */
+.gt-peek-attrs {
+    display: flex;
+    gap: 2px;
+    justify-content: space-between;
+}
+.gt-peek-attr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    padding: 3px 0;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+}
+.gt-peek-attr-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4);
+}
+.gt-peek-attr-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--reign-text-light);
+    line-height: 1.1;
+}
+.gt-peek-attr {
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.gt-peek-attr:hover {
+    background: rgba(255,255,255,0.08);
+}
+.gt-peek-attr.gt-attr-expanded {
+    background: rgba(139,31,31,0.25);
+    border: 1px solid rgba(139,31,31,0.3);
+}
+
+/* ── Skills Dropdown ── */
+.gt-peek-skills-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 4px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.06);
+    animation: gt-panel-in 0.1s ease-out;
+}
+.gt-peek-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: background 0.1s;
+}
+.gt-peek-skill-row:hover {
+    background: rgba(255,255,255,0.08);
+}
+.gt-peek-skill-name {
+    flex: 1;
+    color: rgba(255,255,255,0.75);
+}
+.gt-peek-skill-val {
+    font-weight: 700;
+    color: var(--reign-text-light);
+    width: 16px;
+    text-align: center;
+}
+.gt-peek-skill-pool {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--reign-color-emerald);
+    width: 24px;
+    text-align: right;
+}
+.gt-peek-skill-badge {
+    font-size: 8px;
+    font-weight: 800;
+    padding: 1px 3px;
+    border-radius: 2px;
+    line-height: 1;
+}
+.gt-badge-ed {
+    background: rgba(217,119,6,0.3);
+    color: var(--reign-color-brass);
+}
+.gt-badge-md {
+    background: rgba(171,71,188,0.3);
+    color: var(--reign-purple);
+}
+
+/* ── Esoterica (Techniques & Disciplines) ── */
+.gt-peek-esoterica {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.gt-peek-eso-row {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    padding: 2px 4px;
+    cursor: default;
+}
+.gt-peek-eso-row i {
+    width: 14px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--reign-color-brass);
+    margin-right: 3px;
+}
+
+/* ── Sorcery & Spells ── */
+.gt-peek-sorcery {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.gt-peek-sorcery-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--reign-purple);
+    padding: 3px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.gt-peek-sorcery-header:hover {
+    background: rgba(171,71,188,0.1);
+}
+.gt-peek-sorcery-header i:first-child {
+    font-size: 12px;
+}
+.gt-peek-caret {
+    margin-left: auto;
+    font-size: 10px;
+    opacity: 0.5;
+}
+.gt-peek-spell-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(171,71,188,0.12);
+    animation: gt-panel-in 0.1s ease-out;
+}
+.gt-peek-spell-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    border-radius: 2px;
+}
+.gt-peek-spell-row:hover {
+    background: rgba(255,255,255,0.04);
+}
+.gt-peek-spell-int {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 9px;
+    border-radius: 2px;
+    background: rgba(171,71,188,0.2);
+    color: var(--reign-purple);
+    flex-shrink: 0;
+}
+.gt-peek-spell-name {
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    flex: 1;
+}
+.gt-peek-spell-school {
+    font-size: 9px;
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+}
+.gt-peek-spell-lock {
+    font-size: 8px;
+    color: var(--reign-color-brass);
+}
+
+/* ── Hover Hints ── */
+.gt-peek-hover-hint {
+    font-size: 9px;
+    opacity: 0.35;
+    font-style: italic;
+}
+
+/* ── Character: Equipment Summary ── */
+.gt-peek-equip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.gt-peek-equip-row {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.gt-peek-equip-row i {
+    width: 14px;
+    text-align: center;
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+}
+.gt-peek-equip-row strong {
+    color: var(--reign-text-light);
+}
+.gt-peek-sep {
+    opacity: 0.3;
+    margin: 0 2px;
+}
+
+/* ── Character: Conditions ── */
+.gt-peek-conditions {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+}
+.gt-peek-cond {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+    color: rgba(255,255,255,0.25);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.12s;
+    padding: 0;
+}
+.gt-peek-cond:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6);
+    border-color: rgba(255,255,255,0.15);
+}
+.gt-peek-cond.gt-cond-active {
+    background: rgba(139, 31, 31, 0.4);
+    border-color: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    box-shadow: 0 0 4px rgba(139, 31, 31, 0.3);
+}
+
+/* ── Character: Utility Actions ── */
+.gt-peek-utility {
+    display: flex;
+    gap: 4px;
+}
+.gt-peek-util-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: rgba(255,255,255,0.5);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--reign-font-data, sans-serif);
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+}
+.gt-peek-util-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    border-color: rgba(255,255,255,0.15);
+}
+.gt-peek-util-btn i {
+    font-size: 10px;
+}
+
+/* ── Combat Pool Buttons (shared by Character + Threat) ── */
+.gt-peek-combat-pools {
+    display: flex;
+    gap: 4px;
+}
+.gt-peek-pool-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.7);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--reign-font-data, sans-serif);
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+}
+.gt-peek-pool-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--reign-text-light);
+}
+.gt-pool-attack { border-color: rgba(139,31,31,0.3); }
+.gt-pool-attack:hover { background: rgba(139,31,31,0.25); border-color: var(--reign-color-blood); }
+.gt-pool-dodge { border-color: rgba(2,119,189,0.3); }
+.gt-pool-dodge:hover { background: rgba(2,119,189,0.2); border-color: var(--reign-blue); }
+.gt-pool-parry { border-color: rgba(217,119,6,0.3); }
+.gt-pool-parry:hover { background: rgba(217,119,6,0.15); border-color: var(--reign-color-brass); }
+.gt-pool-morale { border-color: rgba(45,90,39,0.3); }
+.gt-pool-morale:hover { background: rgba(45,90,39,0.2); border-color: var(--reign-color-emerald); }
+
+/* ── Threat: Bars ── */
+.gt-peek-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.gt-peek-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.gt-peek-bar-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    width: 80px;
+    flex-shrink: 0;
+}
+.gt-peek-bar-label i { margin-right: 3px; font-size: 9px; }
+.gt-peek-bar {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.gt-peek-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+.gt-bar-mag { background: var(--reign-color-blood); }
+.gt-bar-mor { background: var(--reign-color-emerald); }
+.gt-peek-bar-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ── Threat: Creature Locations ── */
+.gt-peek-creature-locs {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.gt-peek-cloc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    border-left: 3px solid transparent;
+}
+.gt-peek-cloc.gt-health-healthy  { border-left-color: var(--reign-color-emerald); }
+.gt-peek-cloc.gt-health-shocked  { border-left-color: var(--reign-color-brass); background: rgba(217,119,6,0.06); }
+.gt-peek-cloc.gt-health-wounded  { border-left-color: #e65100; background: rgba(230,81,0,0.08); }
+.gt-peek-cloc.gt-health-critical { border-left-color: var(--reign-color-blood); background: rgba(139,31,31,0.1); }
+.gt-peek-cloc-name {
+    font-weight: 600;
+    color: var(--reign-text-light);
+    flex: 1;
+}
+.gt-peek-cloc-hp {
+    color: rgba(255,255,255,0.5);
+    font-family: var(--reign-font-data, sans-serif);
+}
+.gt-peek-cloc-ar {
+    font-size: 9px;
+    font-weight: 700;
+    background: rgba(217,119,6,0.2);
+    color: var(--reign-color-brass);
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+
+/* ── Company: Qualities ── */
+.gt-peek-qualities {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.gt-peek-quality-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+.gt-peek-quality-row:nth-child(odd) {
+    background: rgba(255,255,255,0.02);
+}
+.gt-peek-qicon {
+    width: 14px;
+    text-align: center;
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+}
+.gt-peek-qlabel {
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    width: 72px;
+    flex-shrink: 0;
+}
+.gt-peek-qval {
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--reign-text-light);
+    width: 20px;
+    text-align: center;
+}
+.gt-peek-qmod {
+    font-size: 10px;
+    font-weight: 600;
+}
+.gt-text-warn { color: var(--reign-color-brass) !important; }
+.gt-peek-qeff {
+    font-weight: 700;
+    color: var(--reign-color-emerald);
+    margin-left: auto;
+    margin-right: 4px;
+}
+.gt-peek-qroll {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    padding: 2px 5px;
+    font-size: 10px;
+    transition: all 0.12s;
+}
+.gt-peek-qroll:hover {
+    background: rgba(139,31,31,0.25);
+    border-color: var(--reign-color-blood);
+    color: var(--reign-text-light);
+}
+
+/* ── Company: Pledges ── */
+.gt-peek-pledges {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    padding: 3px 6px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 3px;
+}
+.gt-peek-pledges i { margin-right: 3px; color: var(--reign-color-brass); }
+
+/* ── Empty State ── */
+.gt-peek-empty {
+    text-align: center;
+    padding: 16px 10px;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    font-style: italic;
+}
+.gt-peek-empty i { margin-right: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROLL REQUEST CHAT CARDS
+═══════════════════════════════════════════════════════════════════════════ */
+.reign-roll-request {
+    border-left: 3px solid var(--reign-color-brass) !important;
+}
+.reign-roll-request-title {
+    color: var(--reign-color-brass) !important;
+}
+.reign-roll-request-title i {
+    margin-right: 4px;
+}
+.fulfil-request-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 2px solid var(--reign-color-blood);
+    background: var(--reign-color-blood);
+    color: var(--reign-text-light);
+    font-family: var(--reign-font-display, serif);
+    transition: all 0.15s;
+}
+.fulfil-request-btn:hover {
+    background: var(--reign-color-blood-dark);
+    border-color: var(--reign-color-blood-dark);
+    box-shadow: 0 2px 8px rgba(139, 31, 31, 0.4);
+    transform: translateY(-1px);
+}
+.reign-roll-fulfilled {
+    text-align: center;
+    padding: 6px 10px;
+    margin-top: 8px;
+    border-radius: 4px;
+    background: rgba(45, 90, 39, 0.1);
+    border: 1px solid var(--reign-color-emerald);
+    color: var(--reign-color-emerald);
+    font-weight: 700;
+    font-size: 12px;
+}
+.reign-roll-fulfilled i { margin-right: 4px; }
+
+/* Contest Resolution Cards */
+.reign-contest-resolution {
+    border-left: 3px solid var(--reign-color-emerald) !important;
+}
+.gt-contest-results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 8px 0;
+}
+.gt-contest-row {
+    padding: 4px 8px;
+    border-radius: 3px;
+    background: var(--reign-bg-vellum);
+    font-size: 12px;
+}
+
+/* Request Roll Dialog */
+.gt-rr-participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 4px 0;
+}
+.gt-rr-part {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEATER MODE — Immersive overlay
+═══════════════════════════════════════════════════════════════════════════ */
+body.reign-theater-mode #sidebar {
+    display: none !important;
+}
+body.reign-theater-mode #hotbar {
+    display: none !important;
+}
+body.reign-theater-mode #navigation {
+    display: none !important;
+}
+body.reign-theater-mode #players {
+    display: none !important;
+}
+body.reign-theater-mode #logo {
+    display: none !important;
+}
+
+/* Subtle vignette overlay */
+body.reign-theater-mode::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 99;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* Keep the toolbar visible above the vignette */
+body.reign-theater-mode #reign-gm-toolbar {
+    z-index: 101;
+}
+
+/* Fade the toolbar slightly in theater mode so it doesn't dominate */
+body.reign-theater-mode .gt-bar {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+body.reign-theater-mode .gt-bar:hover {
+    opacity: 1;
+}
+/* Panel always fully visible when open */
+body.reign-theater-mode .gt-panel {
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   The toolbar is always dark-themed (glassmorphism on dark base), but
+   we adjust border/accent colours for Foundry's light theme.
+═══════════════════════════════════════════════════════════════════════════ */
+/* No overrides needed — the toolbar's dark glass aesthetic works in both themes.
+   Accent colours (blood, brass, emerald) are already defined in both modes via variables.css.
+   If a future light-mode specific adjustment is needed, scope it under:
+   :not(.theme-dark) #reign-gm-toolbar { ... }
+*/

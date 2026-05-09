@@ -1,0 +1,245 @@
+{{!-- ════════════════════════════════════════════════════════════════════════
+  SOVEREIGN FACTION DASHBOARD — Geopolitical Command Centre
+  Reign: Realities of Lords and Leaders (Foundry VTT V14)
+════════════════════════════════════════════════════════════════════════ --}}
+
+<div class="faction-dashboard-wrapper">
+
+    {{!-- ══ Header ══ --}}
+    <header class="fd-header">
+        <div class="fd-header-left">
+            <h2 class="fd-title"><i class="fas fa-globe fd-title-icon"></i> Geopolitical Landscape</h2>
+            <span class="fd-month-badge" title="Current world month"><i class="fas fa-calendar-alt"></i> Month {{worldMonth}}</span>
+        </div>
+        <div class="fd-header-right">
+            {{#if isGM}}
+            <button type="button" data-action="advanceMonth" class="fd-advance-btn">
+                <i class="fas fa-forward"></i> Advance Month
+            </button>
+            {{/if}}
+        </div>
+    </header>
+
+    {{!-- ══ Toolbar: Filter + Count ══ --}}
+    <div class="fd-toolbar">
+        <div class="fd-filter-group">
+            <i class="fas fa-search fd-filter-icon"></i>
+            <input type="text" class="fd-filter-input" placeholder="Filter factions…" />
+        </div>
+        <span class="fd-count">{{companies.length}} of {{totalCount}} factions</span>
+    </div>
+
+    {{!-- ══ Table ══ --}}
+    <div class="fd-table-container">
+        <table class="fd-table" role="grid">
+            <thead class="fd-thead">
+                <tr>
+                    <th class="fd-th fd-th-name" scope="col">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'name')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="name">
+                            Company
+                            {{#if (eq sortKey 'name')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-quality" scope="col" title="Might">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'might')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="might">
+                            <i class="fas fa-fist-raised"></i> <span class="fd-th-label">Might</span>
+                            {{#if (eq sortKey 'might')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-quality" scope="col" title="Treasure">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'treasure')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="treasure">
+                            <i class="fas fa-coins"></i> <span class="fd-th-label">Treasure</span>
+                            {{#if (eq sortKey 'treasure')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-quality" scope="col" title="Influence">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'influence')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="influence">
+                            <i class="fas fa-eye"></i> <span class="fd-th-label">Influence</span>
+                            {{#if (eq sortKey 'influence')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-quality" scope="col" title="Territory">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'territory')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="territory">
+                            <i class="fas fa-chess-rook"></i> <span class="fd-th-label">Territory</span>
+                            {{#if (eq sortKey 'territory')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-quality fd-th-sov" scope="col" title="Sovereignty">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'sovereignty')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="sovereignty">
+                            <i class="fas fa-crown"></i> <span class="fd-th-label">Sov.</span>
+                            {{#if (eq sortKey 'sovereignty')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-size" scope="col" title="Total Size (sum of all permanent Qualities)">
+                        <button type="button" class="fd-sort-btn {{#if (eq sortKey 'totalSize')}}fd-sort-active{{/if}}" data-action="sortColumn" data-sort-key="totalSize">
+                            <i class="fas fa-chart-bar"></i>
+                            {{#if (eq sortKey 'totalSize')}}<i class="fas fa-caret-{{#if (eq sortDir 'asc')}}up{{else}}down{{/if}} fd-sort-caret"></i>{{/if}}
+                        </button>
+                    </th>
+                    <th class="fd-th fd-th-actions" scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each companies}}
+
+                {{!-- ══ Main company row ══ --}}
+                <tr class="fd-tr {{#if this.isCollapsed}}fd-tr-collapsed{{/if}} {{#if this.isWarning}}fd-tr-warning{{/if}}"
+                    data-company-id="{{this.id}}">
+
+                    {{!-- Company Name Cell --}}
+                    <td class="fd-td-name">
+                        <div class="fd-name-group">
+                            {{#if this.hasItems}}
+                            <button type="button" class="fd-drawer-toggle" data-action="toggleDrawer"
+                                    title="{{#if this.isExpanded}}Collapse{{else}}Expand{{/if}} assets &amp; problems">
+                                <i class="fas fa-chevron-{{#if this.isExpanded}}down{{else}}right{{/if}}"></i>
+                            </button>
+                            {{else}}
+                            <span class="fd-drawer-spacer"></span>
+                            {{/if}}
+                            <a data-action="openSheet" data-id="{{this.id}}" class="fd-company-link"
+                               title="Open {{this.name}} sheet">
+                                <span class="fd-company-name">{{this.name}}</span>
+                            </a>
+                            {{#if this.isCollapsed}}
+                                <span class="fd-collapsed-badge"><i class="fas fa-skull"></i> COLLAPSED</span>
+                            {{else if this.isWarning}}
+                                <span class="fd-warning-badge" title="Sovereignty at 1 — collapse imminent">!</span>
+                            {{/if}}
+                            {{#if this.totalUses}}
+                                <span class="fd-uses-pip" title="{{this.totalUses}} quality uses this month (action economy fatigue)">
+                                    <i class="fas fa-hourglass-half"></i>{{this.totalUses}}
+                                </span>
+                            {{/if}}
+                        </div>
+                    </td>
+
+                    {{!-- Quality Cells: Might, Treasure, Influence, Territory (DRY loop) --}}
+                    {{#each this.qualityCells as |qual|}}
+                    <td class="fd-td" data-company-id="{{../id}}">
+                        <div class="fd-quality-cell">
+                            {{#if ../canAct}}
+                            <button type="button"
+                                    class="fd-quality-roll {{#if qual.isDamaged}}fd-damaged{{/if}} {{#if qual.isFatigued}}fd-fatigued{{/if}}"
+                                    data-action="rollQuality" data-quality="{{qual.key}}"
+                                    title="Roll {{qual.label}} ({{qual.current}}d)">
+                                {{qual.current}}
+                            </button>
+                            {{else}}
+                            <span class="fd-quality-value {{#if qual.isDamaged}}fd-damaged{{/if}} {{#if qual.isFatigued}}fd-fatigued{{/if}}">
+                                {{qual.current}}
+                            </span>
+                            {{/if}}
+                            <span class="fd-quality-max">/ {{qual.value}}</span>
+                            {{#if @root.isGM}}
+                            <button type="button" class="fd-dmg-btn" data-action="applyDamage" data-quality="{{qual.key}}"
+                                    title="Apply/heal damage to {{qual.label}}"><i class="fas fa-crosshairs"></i></button>
+                            {{/if}}
+                        </div>
+                    </td>
+                    {{/each}}
+
+                    {{!-- Sovereignty (special emphasis) --}}
+                    <td class="fd-td fd-td-sov" data-company-id="{{this.id}}">
+                        <div class="fd-quality-cell">
+                            {{#if this.canAct}}
+                            <button type="button"
+                                    class="fd-quality-roll fd-quality-sov {{#if this.sovereignty.isDamaged}}fd-damaged{{/if}} {{#if this.sovereignty.isFatigued}}fd-fatigued{{/if}}"
+                                    data-action="rollQuality" data-quality="sovereignty"
+                                    title="Roll Sovereignty ({{this.sovereignty.current}}d)">
+                                {{this.sovereignty.current}}
+                            </button>
+                            {{else}}
+                            <span class="fd-quality-value fd-quality-sov {{#if this.sovereignty.isDamaged}}fd-damaged{{/if}} {{#if this.sovereignty.isFatigued}}fd-fatigued{{/if}}">
+                                {{this.sovereignty.current}}
+                            </span>
+                            {{/if}}
+                            <span class="fd-quality-max">/ {{this.sovereignty.value}}</span>
+                            {{#if @root.isGM}}
+                            <button type="button" class="fd-dmg-btn" data-action="applyDamage" data-quality="sovereignty"
+                                    title="Apply/heal damage to Sovereignty"><i class="fas fa-crosshairs"></i></button>
+                            {{/if}}
+                        </div>
+                    </td>
+
+                    {{!-- Total Size --}}
+                    <td class="fd-td fd-td-size">
+                        <span class="fd-size-value">{{this.totalSize}}</span>
+                    </td>
+
+                    {{!-- Actions Column --}}
+                    <td class="fd-td fd-td-action" data-company-id="{{this.id}}">
+                        <div class="fd-action-group">
+                            {{#if this.canAct}}
+                            <button type="button" class="fd-action-btn fd-action-btn-primary" data-action="companyAction"
+                                    title="Company Action — execute a strategic action"><i class="fas fa-dice-d10"></i></button>
+                            {{/if}}
+                            <button type="button" class="fd-action-btn fd-action-btn-chron" data-action="viewChronicle"
+                                    title="View Chronicle ({{this.chronicleCount}} entries)"><i class="fas fa-book-open"></i>
+                                {{#if this.chronicleCount}}<span class="fd-chron-count">{{this.chronicleCount}}</span>{{/if}}
+                            </button>
+                            {{#if @root.isGM}}
+                            <button type="button" class="fd-action-btn fd-action-btn-add" data-action="addChronicleEntry"
+                                    title="Add chronicle entry"><i class="fas fa-feather-alt"></i></button>
+                            <button type="button" class="fd-action-btn fd-action-btn-export" data-action="exportChronicle"
+                                    title="Export chronicle to Journal"><i class="fas fa-file-export"></i></button>
+                            {{/if}}
+                        </div>
+                    </td>
+                </tr>
+
+                {{!-- ══ Asset Drawer (expanded) ══ --}}
+                {{#if this.isExpanded}}
+                <tr class="fd-drawer-row" data-company-id="{{this.id}}">
+                    <td colspan="8" class="fd-drawer-td">
+                        <div class="fd-drawer-content">
+                            {{#if this.assets.length}}
+                            <div class="fd-drawer-section">
+                                <span class="fd-drawer-section-label"><i class="fas fa-shield-alt"></i> Assets</span>
+                                <div class="fd-drawer-items">
+                                    {{#each this.assets as |item|}}
+                                    <div class="fd-drawer-item" title="{{item.system.description}}">
+                                        <span class="fd-drawer-item-name">{{item.name}}</span>
+                                        {{#if item.system.cost}}<span class="fd-drawer-item-cost">Cost {{item.system.cost}}</span>{{/if}}
+                                    </div>
+                                    {{/each}}
+                                </div>
+                            </div>
+                            {{/if}}
+
+                            {{#if this.problems.length}}
+                            <div class="fd-drawer-section fd-drawer-section-problems">
+                                <span class="fd-drawer-section-label"><i class="fas fa-exclamation-triangle"></i> Problems</span>
+                                <div class="fd-drawer-items">
+                                    {{#each this.problems as |item|}}
+                                    <div class="fd-drawer-item fd-drawer-item-problem" title="{{item.system.description}}">
+                                        <span class="fd-drawer-item-name">{{item.name}}</span>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                            </div>
+                            {{/if}}
+                        </div>
+                    </td>
+                </tr>
+                {{/if}}
+
+                {{else}}
+                {{!-- Empty State --}}
+                <tr>
+                    <td colspan="8" class="fd-empty-state">
+                        <div class="fd-empty-content">
+                            <i class="fas fa-map-marked-alt fd-empty-icon"></i>
+                            <p class="fd-empty-title">No Factions Yet</p>
+                            <p class="fd-empty-subtitle">
+                                The geopolitical landscape lies empty. Create a Company from the
+                                Actor Directory or use the Companymancer to forge the first faction.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

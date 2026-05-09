@@ -1,0 +1,48 @@
+<div class="reign-silhouette-container">
+  <svg class="damage-silhouette" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      {{#each health as |loc key|}}
+      <linearGradient id="fill-{{key}}-{{@root.appId}}" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="#8b1f1f" />
+        <stop offset="{{loc.killPct}}%" stop-color="#8b1f1f" />
+        
+        <stop offset="{{loc.killPct}}%" stop-color="#fef3c7" />
+        <stop offset="{{loc.shockPct}}%" stop-color="#fef3c7" />
+        
+        <stop offset="{{loc.shockPct}}%" stop-color="#e0e0e0" />
+        <stop offset="100%" stop-color="#e0e0e0" />
+      </linearGradient>
+      {{/each}}
+    </defs>
+
+    {{!-- HEAD: Oval shape --}}
+    <g class="hit-zone {{health.head.status}}" data-loc="head">
+      <path d="M 100,6 C 118,6 126,18 126,30 C 126,42 118,54 100,54 C 82,54 74,42 74,30 C 74,18 82,6 100,6 Z" fill="url(#fill-head-{{appId}})" />
+    </g>
+
+    {{!-- TORSO: Curved shoulders through tapered waist to hips --}}
+    <g class="hit-zone {{health.torso.status}}" data-loc="torso">
+      <path d="M 74,60 C 80,57 120,57 126,60 C 132,64 136,78 136,100 C 136,125 132,148 128,160 C 122,172 112,178 100,178 C 88,178 78,172 72,160 C 68,148 64,125 64,100 C 64,78 68,64 74,60 Z" fill="url(#fill-torso-{{appId}})" />
+    </g>
+
+    {{!-- RIGHT ARM: Curves from shoulder down and outward, tapering to wrist --}}
+    <g class="hit-zone {{health.armR.status}}" data-loc="armR">
+      <path d="M 70,62 C 64,68 56,86 48,108 C 42,126 36,142 32,154 C 34,158 40,158 42,154 C 46,142 52,126 58,108 C 64,90 70,72 74,64 Z" fill="url(#fill-armR-{{appId}})" />
+    </g>
+
+    {{!-- LEFT ARM: Mirror of right arm --}}
+    <g class="hit-zone {{health.armL.status}}" data-loc="armL">
+      <path d="M 130,62 C 136,68 144,86 152,108 C 158,126 164,142 168,154 C 166,158 160,158 158,154 C 154,142 148,126 142,108 C 136,90 130,72 126,64 Z" fill="url(#fill-armL-{{appId}})" />
+    </g>
+
+    {{!-- RIGHT LEG: Curves from hip tapering to ankle --}}
+    <g class="hit-zone {{health.legR.status}}" data-loc="legR">
+      <path d="M 72,174 C 78,170 92,170 98,174 C 96,200 94,240 90,275 C 88,295 84,312 82,325 C 78,330 66,330 64,325 C 66,312 68,295 70,275 C 72,240 72,200 72,174 Z" fill="url(#fill-legR-{{appId}})" />
+    </g>
+
+    {{!-- LEFT LEG: Mirror of right leg --}}
+    <g class="hit-zone {{health.legL.status}}" data-loc="legL">
+      <path d="M 128,174 C 122,170 108,170 102,174 C 104,200 106,240 110,275 C 112,295 116,312 118,325 C 122,330 134,330 136,325 C 134,312 132,295 130,275 C 128,240 128,200 128,174 Z" fill="url(#fill-legL-{{appId}})" />
+    </g>
+  </svg>
+</div>

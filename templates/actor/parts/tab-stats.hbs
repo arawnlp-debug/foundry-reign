@@ -1,0 +1,82 @@
+<div class="tab stats {{tabs.stats}}" data-tab="stats">
+  <div class="xp-tracker stat-block reign-mb20">
+    <div class="stat-header reign-flex-between reign-p10">
+      <div class="reign-xp-group">
+        <div class="reign-xp-item">
+          <span class="reign-xp-label">Unspent XP</span>
+          <input type="number" name="system.xp.value" value="{{system.xp.value}}" class="reign-xp-input" title="Available to spend"/>
+        </div>
+        <div class="reign-xp-item">
+          <span class="reign-xp-label">Total XP Spent</span>
+          <input type="number" name="system.xp.spent" value="{{system.xp.spent}}" class="reign-xp-input" title="Lifetime spent"/>
+        </div>
+      </div>
+      <div class="reign-xp-controls">
+        <a data-action="toggleProgression" class="reign-toggle-link {{#if progressionMode}}active-mode{{/if}}" title="{{localize 'REIGN.ProgressionModeDesc'}}">
+          <i class="fas {{#if progressionMode}}fa-toggle-on{{else}}fa-toggle-off{{/if}}"></i> {{localize 'REIGN.ProgressionMode'}}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    {{#each reignStatBlocks as |block|}}
+    <div class="stat-block">
+      <div class="stat-header">
+        {{#if @root.progressionMode}}
+          <h2 class="upgrade-btn" data-action="upgradeStat" data-type="attribute" data-key="{{block.key}}" data-label="{{block.label}}">{{block.label}} <i class="fas fa-arrow-up"></i></h2>
+        {{else}}
+          <h2 class="rollable" data-action="rollStat" data-type="attribute" data-key="{{block.key}}" data-label="{{block.label}}">{{block.label}} <i class="fas fa-dice-d10"></i></h2>
+        {{/if}}
+        <input type="number" name="system.attributes.{{block.key}}.value" value="{{block.value}}"/>
+      </div>
+      <div class="stat-skills">
+        {{#each block.skills as |skill|}}
+        <div class="skill-row">
+          {{#if skill.isCustom}}
+            <div class="custom-skill-label">
+              <a class="delete-custom-skill" data-action="deleteCustomSkill" data-skill-id="{{skill.key}}" title="Delete Skill"><i class="fas fa-trash"></i></a>
+              {{#if @root.progressionMode}}
+                <label class="upgrade-btn" data-action="upgradeStat" data-type="customSkill" data-key="{{skill.key}}" data-label="{{skill.customLabel}}"><i class="fas fa-arrow-up"></i></label>
+              {{else}}
+                <label class="rollable" data-action="rollStat" data-type="customSkill" data-key="{{skill.key}}" data-label="{{skill.customLabel}}"><i class="fas fa-dice-d10"></i></label>
+              {{/if}}
+              <input type="text" name="system.customSkills.{{skill.key}}.customLabel" value="{{skill.customLabel}}" placeholder="Skill Name..."/>
+            </div>
+          {{else}}
+            {{#if @root.progressionMode}}
+              <label class="upgrade-btn" data-action="upgradeStat" data-type="skill" data-key="{{skill.key}}" data-label="{{skill.label}}">{{skill.label}} <i class="fas fa-arrow-up"></i></label>
+            {{else}}
+              <label class="rollable" data-action="rollStat" data-type="skill" data-key="{{skill.key}}" data-label="{{skill.label}}">{{skill.label}} <i class="fas fa-dice-d10"></i></label>
+            {{/if}}
+          {{/if}}
+          <div class="em-toggles">
+            {{#if skill.isCustom}}
+              <label class="em-label" title="{{localize 'REIGN.IsCombatSkill'}}">C <input type="checkbox" name="system.customSkills.{{skill.key}}.isCombat" {{checked skill.isCombat}} {{#if @root.progressionMode}}disabled{{/if}}/></label>
+            {{/if}}
+
+            {{#if @root.progressionMode}}
+              <a class="em-label {{#unless skill.expert}}upgrade-btn{{/unless}}" title="Upgrade to Expert Die"
+                 {{#unless skill.expert}}data-action="upgradeStat" data-type="ed" data-key="{{skill.key}}" data-iscustom="{{skill.isCustom}}" data-label="{{#if skill.isCustom}}{{skill.customLabel}}{{else}}{{skill.label}}{{/if}}"{{/unless}}>
+                E {{#if skill.expert}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+              <a class="em-label {{#unless skill.master}}upgrade-btn{{/unless}}" title="Upgrade to Master Die"
+                 {{#unless skill.master}}data-action="upgradeStat" data-type="md" data-key="{{skill.key}}" data-iscustom="{{skill.isCustom}}" data-label="{{#if skill.isCustom}}{{skill.customLabel}}{{else}}{{skill.label}}{{/if}}" data-hased="{{skill.expert}}"{{/unless}}>
+                M {{#if skill.master}}<i class="fas fa-check reign-color-success"></i>{{else}}<i class="fas fa-arrow-up"></i>{{/if}}
+              </a>
+            {{else}}
+              <label class="em-label" title="{{localize 'REIGN.ExpertDie'}}">E <input type="checkbox" name="{{#if skill.isCustom}}system.customSkills.{{skill.key}}.expert{{else}}system.skills.{{skill.key}}.expert{{/if}}" {{checked skill.expert}}/></label>
+              <label class="em-label" title="{{localize 'REIGN.MasterDie'}}">M <input type="checkbox" name="{{#if skill.isCustom}}system.customSkills.{{skill.key}}.master{{else}}system.skills.{{skill.key}}.master{{/if}}" {{checked skill.master}}/></label>
+            {{/if}}
+          </div>
+          <input type="number" name="{{#if skill.isCustom}}system.customSkills.{{skill.key}}.value{{else}}system.skills.{{skill.key}}.value{{/if}}" value="{{skill.value}}"/>
+        </div>
+        {{/each}}
+        <div class="custom-add-container">
+          <a class="add-custom-skill control-btn" data-action="addCustomSkill" data-attr="{{block.key}}"><i class="fas fa-plus"></i> {{localize 'REIGN.AddSkill'}}</a>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</div>

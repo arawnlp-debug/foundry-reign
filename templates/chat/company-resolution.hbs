@@ -1,0 +1,110 @@
+{{!-- =====================================================================
+     REIGN: Company Action Resolution Card
+     BATCH G / ITEM-14: Replaces the inline-HTML secondary card in
+     company-roller.js with a structured, maintainable template.
+
+     Template data contract (see company-roller.js → buildResolutionData):
+       actionLabel        string   — Localised action name
+       isSuccess          boolean  — Any set met the difficulty requirement
+       difficulty         number   — Minimum height required (0 = any set)
+       successSet         {width, height} | null
+
+       hasTarget          boolean  — A target company + quality was selected
+       targetName         string   — Escaped target company name
+       targetQualityLabel string   — e.g. "Might"
+       attackResult       {isOverflow, newValue, stealTriggered, stealIsTrivial} | null
+         (null when attack missed; all properties are false/0 on a clean hit)
+
+       hasErosion         boolean  — At least one quality was eroded
+       degradedQualities  [{label, newEffective}]
+
+       hadWarChest        boolean  — War Chest pledges were consumed
+====================================================================== --}}
+
+<div class="reign-chat-card reign-company-resolution">
+
+  {{!-- ── Header ─────────────────────────────────────────────────────── --}}
+  <header class="reign-roll-title">
+    <i class="fas fa-chess-rook"></i> {{actionLabel}}
+  </header>
+
+  {{!-- ── Attack Outcome ─────────────────────────────────────────────── --}}
+  {{!-- Only rendered when a target company + quality was configured.      --}}
+  {{#if hasTarget}}
+
+    <div class="reign-section-title">Attack Outcome</div>
+
+    {{#if isSuccess}}
+      {{!-- Hit banner --}}
+      <div class="reign-banner reign-banner-info reign-mb-small">
+        <i class="fas fa-check-circle"></i> Attack Connected — {{targetName}} ({{targetQualityLabel}})
+        {{#if (gt difficulty 0)}}
+          <small>&nbsp;(Height {{successSet.height}} ≥ Difficulty {{difficulty}})</small>
+        {{/if}}
+      </div>
+
+      {{!-- Damage detail --}}
+      {{#if attackResult}}
+        {{#if attackResult.isOverflow}}
+          <div class="reign-callout reign-callout-danger reign-mb-small">
+            <p class="reign-text-danger reign-text-sm">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>Defenses broke!</strong> Permanent {{targetQualityLabel}} reduced to <strong>{{attackResult.newValue}}</strong>.
+            </p>
+            {{#if attackResult.stealTriggered}}
+              {{#if attackResult.stealIsTrivial}}
+                <p class="reign-text-muted reign-text-sm reign-mb-0">
+                  <i class="fas fa-minus-circle"></i>
+                  Spoils of War: enemy {{targetQualityLabel}} permanently destroyed, but your Company was too large to assimilate the gains.
+                </p>
+              {{else}}
+                <p class="reign-text-success reign-text-sm reign-mb-0">
+                  <i class="fas fa-trophy"></i>
+                  <strong>Spoils of War:</strong> your {{targetQualityLabel}} permanently increased by 1.
+                </p>
+              {{/if}}
+            {{/if}}
+          </div>
+        {{else}}
+          <div class="reign-callout reign-callout-success reign-mb-small">
+            <p class="reign-text-success reign-text-sm reign-mb-0">
+              <i class="fas fa-shield-alt"></i>
+              1 temporary damage dealt to {{targetName}}'s <strong>{{targetQualityLabel}}</strong>.
+            </p>
+          </div>
+        {{/if}}
+      {{/if}}
+
+    {{else}}
+      {{!-- Miss banner --}}
+      <div class="reign-banner reign-banner-warning reign-mb-small">
+        <i class="fas fa-times-circle"></i> Attack Failed — no set met
+        {{#if (gt difficulty 0)}}Difficulty {{difficulty}}{{else}}the required threshold{{/if}}.
+        No damage applied.
+      </div>
+    {{/if}}
+
+  {{/if}}
+  {{!-- /hasTarget --}}
+
+  {{!-- ── Action Economy Fatigue ──────────────────────────────────────── --}}
+  {{#if hasErosion}}
+    <div class="reign-section-title">Action Economy Fatigue</div>
+    <div class="reign-callout reign-mb-small">
+      {{#each degradedQualities as |q|}}
+        <p class="reign-text-sm reign-mb-0">
+          <i class="fas fa-hourglass-half reign-text-warning"></i>
+          <strong>{{q.label}}</strong> eroded — effective now <strong>{{q.newEffective}}</strong>
+        </p>
+      {{/each}}
+    </div>
+  {{/if}}
+
+  {{!-- ── War Chest ───────────────────────────────────────────────────── --}}
+  {{#if hadWarChest}}
+    <p class="reign-text-sm reign-text-muted reign-mb-0">
+      <i class="fas fa-handshake"></i> War Chest pledges consumed.
+    </p>
+  {{/if}}
+
+</div>

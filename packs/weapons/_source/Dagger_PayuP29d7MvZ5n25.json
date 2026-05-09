@@ -1,0 +1,43 @@
+{
+  "name": "Dagger",
+  "type": "weapon",
+  "system": {
+    "damage": "Width Killing",
+    "pool": "fight",
+    "range": "Close",
+    "equipped": false,
+    "qualities": {
+      "armorPiercing": 0,
+      "slow": 0,
+      "twoHanded": false,
+      "massive": false,
+      "unarmed": false,
+      "area": 0
+    },
+    "notes": "Small weapon.",
+    "wealthCost": 1,
+    "equippedTimestamp": 0
+  },
+  "_id": "PayuP29d7MvZ5n25",
+  "img": "icons/svg/item-bag.svg",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "qTr0IeOiPTlarzrZ": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.360",
+    "systemId": "reign",
+    "systemVersion": "2.6.0",
+    "createdTime": 1777294608058,
+    "modifiedTime": 1777294608059,
+    "lastModifiedBy": "qTr0IeOiPTlarzrZ",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!PayuP29d7MvZ5n25"
+}
