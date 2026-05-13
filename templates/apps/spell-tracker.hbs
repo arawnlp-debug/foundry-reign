@@ -1,0 +1,123 @@
+{{!-- ════════════════════════════════════════════════════════════════════════
+  ACTIVE SPELL TRACKER
+  GM-only. Tracks active spell effects across the scene.
+  Auto-populated from fired spell rolls; manual add also available.
+════════════════════════════════════════════════════════════════════════ --}}
+
+<div class="st-wrapper">
+
+  {{!-- ══ Header ══ --}}
+  <div class="st-header">
+    <div class="st-header-left">
+      <span class="st-title-text">Active Spells</span>
+      {{#if activeCount}}
+      <span class="st-count-badge st-badge-active" title="{{activeCount}} active spell(s)">{{activeCount}}</span>
+      {{/if}}
+      {{#if expiredCount}}
+      <span class="st-count-badge st-badge-expired" title="{{expiredCount}} expired">{{expiredCount}} expired</span>
+      {{/if}}
+    </div>
+    <div class="st-header-actions">
+      <button type="button" class="st-header-btn" data-action="addSpell" title="Add a spell manually">
+        <i class="fas fa-plus"></i> Add
+      </button>
+      <button type="button" class="st-header-btn st-header-btn-muted" data-action="clearExpired" title="Remove all expired entries">
+        <i class="fas fa-broom"></i> Clear Expired
+      </button>
+    </div>
+  </div>
+
+  {{!-- ══ Empty State ══ --}}
+  {{#if isEmpty}}
+  <div class="st-empty">
+    <i class="fas fa-hat-wizard st-empty-icon"></i>
+    <p class="st-empty-title">No tracked spells</p>
+    <p class="st-empty-sub">
+      Spells are added automatically when a spell roll fires
+      (set Width ≥ Intensity). Use <strong>Add</strong> to log one manually.
+    </p>
+  </div>
+  {{/if}}
+
+  {{!-- ══ Spell List ══ --}}
+  {{#unless isEmpty}}
+  <div class="st-list reign-scroll-y">
+    {{#each spells}}
+    <div class="st-entry {{#if this.isExpired}}st-entry-expired{{/if}}" data-spell-id="{{this.id}}">
+
+      {{!-- Entry header row: intensity · spell name · caster · badges · remove --}}
+      <div class="st-entry-head">
+        <span class="st-int-badge {{this.intensityClass}}"
+              title="Intensity {{this.intensity}} — detectable within {{this.detectionRadius}}">
+          {{this.intensity}}
+        </span>
+        <span class="st-spell-name">{{this.spellName}}</span>
+        <span class="st-caster-name">{{this.casterName}}</span>
+        {{#if this.detected}}
+        <span class="st-detected-badge" title="Sense + Eerie roll succeeded — presence of this spell is known nearby">
+          <i class="fas fa-eye"></i> Detected
+        </span>
+        {{/if}}
+        <button type="button" class="st-remove-btn" data-action="removeSpell" title="Remove this entry">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{!-- Metadata row: school · duration · detection radius · world month --}}
+      <div class="st-entry-meta">
+        {{#if this.school}}
+        <span class="st-meta-tag">
+          <i class="fas fa-hat-wizard"></i> {{this.school}}
+        </span>
+        {{/if}}
+        {{#if this.duration}}
+        <span class="st-meta-tag">
+          <i class="fas fa-clock"></i> {{this.duration}}
+        </span>
+        {{/if}}
+        <span class="st-meta-tag st-meta-detection" title="Detection radius at this Intensity — any nearby character may roll Sense + Eerie (any match succeeds)">
+          <i class="fas fa-eye"></i> {{this.detectionRadius}}
+        </span>
+        <span class="st-meta-tag st-meta-month" title="World month when this spell was cast">
+          <i class="fas fa-calendar-alt"></i> Month {{this.worldMonth}}
+        </span>
+      </div>
+
+      {{!-- Controls row: status toggle · detected toggle · roll detection --}}
+      <div class="st-entry-controls">
+        <button type="button"
+                class="st-status-btn {{#if this.isActive}}st-status-active{{else}}st-status-expired{{/if}}"
+                data-action="toggleStatus"
+                title="{{#if this.isActive}}Click to mark as expired{{else}}Click to restore to active{{/if}}">
+          {{#if this.isActive}}
+            <i class="fas fa-circle st-status-dot"></i> Active
+          {{else}}
+            <i class="fas fa-times-circle"></i> Expired
+          {{/if}}
+        </button>
+        <button type="button"
+                class="st-ctrl-btn {{#if this.detected}}st-ctrl-on{{/if}}"
+                data-action="toggleDetected"
+                title="{{#if this.detected}}Mark as undetected{{else}}Mark as detected — someone rolled Sense + Eerie successfully{{/if}}">
+          <i class="fas fa-eye"></i> Detected
+        </button>
+        <button type="button"
+                class="st-ctrl-btn"
+                data-action="rollDetection"
+                title="Roll Sense + Eerie for a character — uses the selected canvas token or prompts for a character">
+          <i class="fas fa-dice-d10"></i> Roll Detection
+        </button>
+      </div>
+
+      {{!-- Notes row --}}
+      <div class="st-entry-notes">
+        <textarea class="st-notes-input" rows="1"
+                  placeholder="GM notes — duration remaining, targets affected, narrative…">{{this.notes}}</textarea>
+      </div>
+
+    </div>
+    {{/each}}
+  </div>
+  {{/unless}}
+
+</div>

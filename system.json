@@ -2,50 +2,77 @@
   "id": "reign",
   "title": "Reign: Realities of Lords and Leaders",
   "description": "An unofficial fan-made system for playing Reign (2nd Edition) on Foundry VTT, fully automating the One-Roll Engine (ORE).",
-  "version": "3.2.4",
+  "version": "3.2.6",
   "authors": [
     {
       "name": "Llew ap Hywel",
       "discord": "Llew ap Hywel",
-      "url": "https://github.com/arawnlp-debug"
+      "url": "https://github.com/arawnlp-debug",
+      "flags": {}
     }
   ],
   "url": "https://github.com/arawnlp-debug/foundry-reign",
   "manifest": "https://raw.githubusercontent.com/arawnlp-debug/foundry-reign/main/system.json",
-  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v3.2.3/reign.zip",
+  "download": "https://github.com/arawnlp-debug/foundry-reign/releases/download/v3.2.6/reign.zip",
   "license": "MIT",
   "compatibility": {
     "minimum": "14",
-    "verified": "14"
+    "verified": "14",
+    "maximum": "14"
   },
   "esmodules": [
     "scripts/reign.mjs"
   ],
   "styles": [
-    "styles/variables.css",
-    "styles/base.css",
-    "styles/actor-sheet.css",
-    "styles/item-sheet.css",
-    "styles/chat.css",
-    "styles/dialogs.css",
-    "styles/charactermancer.css",
-    "styles/companymancer.css",
-    "styles/hazards.css",
-    "styles/gm-toolbar.css",
-    "styles/combat-dashboard.css"
+    {
+      "src": "styles/variables.css"
+    },
+    {
+      "src": "styles/base.css"
+    },
+    {
+      "src": "styles/actor-sheet.css"
+    },
+    {
+      "src": "styles/item-sheet.css"
+    },
+    {
+      "src": "styles/chat.css"
+    },
+    {
+      "src": "styles/dialogs.css"
+    },
+    {
+      "src": "styles/charactermancer.css"
+    },
+    {
+      "src": "styles/companymancer.css"
+    },
+    {
+      "src": "styles/hazards.css"
+    },
+    {
+      "src": "styles/gm-toolbar.css"
+    },
+    {
+      "src": "styles/combat-dashboard.css"
+    }
   ],
   "languages": [
     {
       "lang": "en",
       "name": "English",
-      "path": "lang/en.json"
+      "path": "lang/en.json",
+      "flags": {}
     }
   ],
   "background": "systems/reign/assets/reign-splash.webp",
   "media": [
     {
       "type": "setup",
-      "url": "systems/reign/assets/reign-splash.webp"
+      "url": "systems/reign/assets/reign-splash.webp",
+      "loop": false,
+      "flags": {}
     }
   ],
   "documentTypes": {
@@ -130,51 +157,87 @@
     {
       "name": "weapons",
       "label": "Weapons & Armor",
-      "path": "packs/weapons.db",
+      "path": "packs/weapons",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "gear",
       "label": "Gear & Equipment",
-      "path": "packs/gear.db",
+      "path": "packs/gear",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "martial-paths",
       "label": "Martial Techniques",
-      "path": "packs/martial-paths.db",
+      "path": "packs/martial-paths",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "esoterica",
       "label": "Spells & Esoteric Disciplines",
-      "path": "packs/esoterica.db",
+      "path": "packs/esoterica",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "company-assets",
       "label": "Company Assets",
-      "path": "packs/company-assets.db",
+      "path": "packs/company-assets",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "creatures",
       "label": "Bestiary — Creatures",
-      "path": "packs/creatures.db",
+      "path": "packs/creatures",
       "type": "Actor",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     },
     {
       "name": "poisons",
       "label": "Poisons",
-      "path": "packs/poisons.db",
+      "path": "packs/poisons",
       "type": "Item",
-      "system": "reign"
+      "system": "reign",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     }
-  ]
+  ],
+  "flags": {}
 }

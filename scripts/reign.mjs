@@ -251,18 +251,23 @@ Hooks.once("ready", async () => {
   game.reign.toolbar = toolbar;
 });
 
-// Combat Dashboard — Available to all users (GM and players).
+// Combat Dashboard — Only available in Advanced declaration mode.
 // Auto-shows when combat starts, closes when combat ends.
 Hooks.once("ready", () => {
-  const dashboard = new CombatDashboard();
-  game.reign.dashboard = dashboard;
-
   // Phase 2: Initialise the combat flag socket relay (GM listens for player rolls).
+  // This runs regardless of declaration mode — combat flags are always needed.
   initCombatSocket();
 
   // Phase 2: When any ORE roll creates a ChatMessage during combat,
   // extract the roll data and store it to the combat flags.
   Hooks.on("createChatMessage", onRollChatMessage);
+
+  // Only create the dashboard in advanced mode
+  const mode = game.settings.get("reign", "declarationMode") || "simple";
+  if (mode !== "advanced") return;
+
+  const dashboard = new CombatDashboard();
+  game.reign.dashboard = dashboard;
 
   // Auto-show when combat is already running on page load
   if (game.combat?.started) {
@@ -579,8 +584,11 @@ Hooks.on("getSceneControlButtons", (controls) => {
   }
 });
 
-// Combat Dashboard — Token Controls toggle button (available to all users)
+// Combat Dashboard — Token Controls toggle button (advanced mode only)
 Hooks.on("getSceneControlButtons", (controls) => {
+  const mode = game.settings.get("reign", "declarationMode") || "simple";
+  if (mode !== "advanced") return;
+
   let tokenGroup;
   if (Array.isArray(controls)) {
     tokenGroup = controls.find(c => c.name === "tokens" || c.name === "token");

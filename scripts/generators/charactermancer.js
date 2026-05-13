@@ -694,8 +694,12 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
   async _onRollTheBones(event, target) {
       event.preventDefault(); 
       
+      // The table-select dropdown only exists before the first roll.
+      // On rerolls the dropdown is absent, so fall back to the stored selection.
       const selectElement = this.element.querySelector("#oneroll-table-select");
-      const selectedPath = selectElement ? selectElement.value : `systems/${game.system.id}/data/oneroll-default.json`;
+      const selectedPath = selectElement
+          ? selectElement.value
+          : (this.oneRollState.selectedTable || `systems/${game.system.id}/data/oneroll-default.json`);
       this.oneRollState.selectedTable = selectedPath;
 
       const table = await this._loadOneRollTable(selectedPath);
@@ -738,8 +742,12 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
 
       this.oneRollState.wasteChoices[die] = chart;
       
+      // The table-select dropdown only exists before the first roll.
+      // During waste selection the dropdown is absent, so use stored selection.
       const selectElement = this.element.querySelector("#oneroll-table-select");
-      const selectedPath = selectElement ? selectElement.value : `systems/${game.system.id}/data/oneroll-default.json`;
+      const selectedPath = selectElement
+          ? selectElement.value
+          : (this.oneRollState.selectedTable || `systems/${game.system.id}/data/oneroll-default.json`);
       this.oneRollState.selectedTable = selectedPath;
 
       const table = await this._loadOneRollTable(selectedPath);
@@ -1044,7 +1052,6 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
   async _onFinishCharacter(event, target) {
       event.preventDefault(); 
       const updates = {
-          "system.creationMode": false, 
           "system.wealth.value": this.draftCharacter.wealth,
           "system.attributes.body.value": this.draftCharacter.attributes.body,
           "system.attributes.coordination.value": this.draftCharacter.attributes.coordination,
@@ -1106,6 +1113,10 @@ export class ReignCharactermancer extends ScrollPreserveMixin(HandlebarsApplicat
       if (itemsToCreate.length > 0) {
           await this.actor.createEmbeddedDocuments("Item", itemsToCreate, { keepId: false });
       }
+
+      // Finalise: clear creation mode only AFTER all items are embedded,
+      // so the preCreateItem XP-cost hook correctly skips validation.
+      await this.actor.update({ "system.creationMode": false });
 
       ui.notifications.success(`${this.actor.name} ${game.i18n.localize("REIGN.CM.Errors.ForgedSuccess") || "has been successfully forged!"}`);
       this.actor.sheet.render(true);

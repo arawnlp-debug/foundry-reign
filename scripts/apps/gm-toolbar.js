@@ -12,6 +12,8 @@ import { calculateOREPool, CharacterRoller } from "../helpers/character-roller.j
 import { parseORE } from "../helpers/ore-engine.js";
 import { ThreatRoller } from "../helpers/threat-roller.js";
 import { FactionDashboard } from "./faction-dashboard.js";
+import { SpellTracker }     from "./spell-tracker.js";
+import { XPAwardPanel }     from "./xp-award.js";
 import { openHazardRoller } from "../combat/hazards.js";
 import { WealthRoller } from "../helpers/wealth-roller.js";
 import { reignDialog } from "../helpers/dialog-util.js";
@@ -92,18 +94,28 @@ function _getTokenPoolHint() {
 
 const HEALTH_LOCS = ["head", "torso", "armR", "armL", "legR", "legL"];
 
-/** Build vitals data for PCs + threats on the active scene.
- *  PCs always shown. Threats shown only when they have a token on canvas.
+/** Build vitals data for PCs, GMCs, and threats.
+ *  PCs (system.isGMC === false): always shown, assigned or not.
+ *  GMC characters (system.isGMC === true): shown only with a token on canvas.
+ *  Threats: shown only with a token on canvas.
  *  Sorted by combat turn order during encounters, alphabetically otherwise. */
 function _getPartyVitals() {
   const combat = game.combat?.started ? game.combat : null;
   const sceneTokens = canvas?.tokens?.placeables || [];
 
-  // ── Gather PCs ──
-  let pcs = game.actors.filter(a => a.type === "character" && (
-    a.hasPlayerOwner || game.users.some(u => u.character?.id === a.id)
-  ));
-  if (pcs.length === 0) pcs = game.actors.filter(a => a.type === "character");
+  // ── Gather PCs (isGMC false) — always visible ──
+  const pcs = game.actors.filter(a => a.type === "character" && !a.system.isGMC);
+
+  // ── Gather GMC characters with tokens on canvas ──
+  const gmcActorIds = new Set();
+  const gmcs = [];
+  for (const token of sceneTokens) {
+    const actor = token.actor;
+    if (!actor || actor.type !== "character" || !actor.system.isGMC) continue;
+    if (gmcActorIds.has(actor.id)) continue;
+    gmcActorIds.add(actor.id);
+    gmcs.push(actor);
+  }
 
   // ── Gather threats with tokens on canvas ──
   const threatActorIds = new Set();
@@ -120,7 +132,11 @@ function _getPartyVitals() {
   const entries = [];
 
   for (const actor of pcs) {
-    entries.push(_buildCharacterVital(actor, combat));
+    entries.push(_buildCharacterVital(actor, combat, false));
+  }
+
+  for (const actor of gmcs) {
+    entries.push(_buildCharacterVital(actor, combat, true));
   }
 
   for (const actor of threats) {
@@ -152,9 +168,9 @@ function _getPartyVitals() {
           const senseA = combA.actor?.system?.attributes?.sense?.value ?? 0;
           const senseB = combB.actor?.system?.attributes?.sense?.value ?? 0;
           if (senseA !== senseB) return senseA - senseB;
-          // 2. GMC before PC (tied Sense: non-player-owned declares first)
-          const isPcA = combA.actor?.hasPlayerOwner ? 1 : 0;
-          const isPcB = combB.actor?.hasPlayerOwner ? 1 : 0;
+          // 2. GMC before PC (tied Sense: GMC declares first per RAW)
+          const isPcA = combA.actor?.system?.isGMC ? 0 : 1;
+          const isPcB = combB.actor?.system?.isGMC ? 0 : 1;
           if (isPcA !== isPcB) return isPcA - isPcB;
           // 3. Sight ascending (tiebreaker within same type)
           const sightA = combA.actor?.system?.skills?.sight?.value ?? 0;
@@ -191,8 +207,9 @@ function _getPartyVitals() {
   return entries;
 }
 
-/** Build a vitals entry for a character actor. */
-function _buildCharacterVital(actor, combat) {
+/** Build a vitals entry for a character actor.
+ *  @param {boolean} isGMC — true if this character is marked as GMC on the sheet. */
+function _buildCharacterVital(actor, combat, isGMC = false) {
   const health = actor.system.health || {};
   const effMax  = actor.system.effectiveMax || {};
 
@@ -232,7 +249,7 @@ function _buildCharacterVital(actor, combat) {
     declared, inCombat: declared !== null,
     initiative, hasInitiative: initiative !== null && initiative !== undefined,
     isResolvePhase: phase !== "declaration" && phase !== null,
-    isPC: true, isThreat: false
+    isPC: !isGMC, isGMC, isThreat: false
   };
 }
 
@@ -749,6 +766,14 @@ export class GMToolbar {
 
       case "open-hazards":
         openHazardRoller();
+        break;
+
+      case "open-spell-tracker":
+        new SpellTracker().render(true);
+        break;
+
+      case "open-xp-awards":
+        new XPAwardPanel().render(true);
         break;
 
       case "advance-month":
