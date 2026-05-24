@@ -6,7 +6,7 @@ import { postOREChat } from "../helpers/chat.js";
 import { CharacterRoller } from "../helpers/character-roller.js";
 import { WealthRoller } from "../helpers/wealth-roller.js";
 import { syncCharacterStatusEffects, performPostCombatRecovery } from "../combat/damage.js";
-import { skillAttrMap, HIT_LOCATIONS, HIT_LOCATION_LABELS, getEffectDictionary } from "../helpers/config.js";
+import { skillAttrMap, HIT_LOCATIONS, HIT_LOCATION_LABELS, HIT_LOCATION_SHORT_LABELS, getEffectDictionary } from "../helpers/config.js";
 
 // Import the extracted dialog utilities
 import { reignDialog, reignConfirm } from "../helpers/dialog-util.js";
@@ -897,9 +897,38 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
     if (system.customSkills) { for (const [id, cSkill] of Object.entries(system.customSkills)) { context.skillOptions[id] = cSkill.customLabel || "Custom"; } }
 
     context.reignStatBlocks = Object.entries(skillMapping).map(([attrKey, skills]) => {
-      let compiledSkills = skills.map(s => ({ key: s.key, label: s.label, isCustom: false, value: system.skills[s.key]?.value || 0, expert: system.skills[s.key]?.expert || false, master: system.skills[s.key]?.master || false }));
-      if (system.customSkills) Object.entries(system.customSkills).forEach(([id, cSk]) => { if (cSk.attribute === attrKey) compiledSkills.push({ key: id, isCustom: true, customLabel: cSk.customLabel, value: cSk.value, expert: cSk.expert, master: cSk.master, isCombat: cSk.isCombat }); });
-      return { key: attrKey, label: attrKey.toUpperCase(), value: system.attributes[attrKey].value, skills: compiledSkills };
+      const attrVal = system.attributes[attrKey].value || 0;
+      const formatPoolPreview = (skillVal, hasExpert, hasMaster) => {
+        const dice = (attrVal || 0) + (skillVal || 0);
+        const parts = [`${dice}d`];
+        if (hasExpert) parts.push("1ED");
+        if (hasMaster) parts.push("1MD");
+        return `Pool: ${parts.join(" + ")}`;
+      };
+      let compiledSkills = skills.map(s => {
+        const sk = system.skills[s.key] || {};
+        const skillVal = sk.value || 0;
+        const expert = !!sk.expert;
+        const master = !!sk.master;
+        return {
+          key: s.key, label: s.label, isCustom: false,
+          value: skillVal, expert, master,
+          poolPreview: formatPoolPreview(skillVal, expert, master)
+        };
+      });
+      if (system.customSkills) Object.entries(system.customSkills).forEach(([id, cSk]) => {
+        if (cSk.attribute === attrKey) {
+          const skillVal = cSk.value || 0;
+          const expert = !!cSk.expert;
+          const master = !!cSk.master;
+          compiledSkills.push({
+            key: id, isCustom: true, customLabel: cSk.customLabel,
+            value: skillVal, expert, master, isCombat: cSk.isCombat,
+            poolPreview: formatPoolPreview(skillVal, expert, master)
+          });
+        }
+      });
+      return { key: attrKey, label: attrKey.toUpperCase(), value: attrVal, skills: compiledSkills };
     });
 
     const bodyVal = system.attributes?.body?.value || 0;
@@ -1082,7 +1111,9 @@ export class ReignActorSheet extends ScrollPreserveMixin(HandlebarsApplicationMi
         loc.shock = parseInt(loc.shock) || 0;
         loc.killPct = Math.min(100, Math.round((loc.killing / loc.max) * 100));
         loc.shockPct = Math.min(100, Math.round(((loc.killing + loc.shock) / loc.max) * 100));
-        
+        loc.ar = parseInt(effArmor?.[k]) || 0;
+        loc.label = HIT_LOCATION_SHORT_LABELS[k] || k;
+
         let status = "status-healthy";
         if (loc.killing >= loc.max) status = "status-destroyed";
         else if (loc.killing > 0) status = "status-killing";

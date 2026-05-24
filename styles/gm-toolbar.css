@@ -457,6 +457,29 @@
     font-size: 7px;
 }
 
+/* ── Slow-item readiness badge (top-left corner) ─────────────────────────
+   "ready"    — a slow weapon/spell frees up next round (amber, attention-drawing)
+   "cooldown" — a slow weapon/spell is still recovering on a later round (muted)
+   Pulse on the ready state reuses gt-pulse-badge, which the global
+   prefers-reduced-motion rule already neutralises to a static badge. */
+.gt-badge-slow {
+    top: -2px;
+    left: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    color: #fff;
+}
+.gt-badge-slow-ready {
+    background: var(--reign-color-brass);
+    animation: gt-pulse-badge 1.2s ease-in-out infinite;
+}
+.gt-badge-slow-cooldown {
+    background: var(--reign-text-muted);
+    opacity: 0.85;
+}
+
 @keyframes gt-pulse-badge {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.4; }
@@ -1953,3 +1976,21 @@ body.reign-theater-mode .gt-panel {
 .theme-dark .xa-bonus-input:focus { background: rgba(255, 255, 255, 0.08); }
 .theme-dark .xa-include-btn { color: rgba(255, 255, 255, 0.2); }
 .theme-dark .xa-list-header { color: rgba(255, 255, 255, 0.35); border-bottom-color: rgba(255, 255, 255, 0.06); }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   MULTI-LINE TOOLTIPS
+   ─────────────────────────────────────────────────────────────────────
+   Opt-in tooltip class for elements whose tooltip text contains newline
+   characters that should render as line breaks. Apply by adding
+     data-tooltip-class="reign-tooltip-multiline"
+   alongside data-tooltip="..." on the source element.
+   Without this class, Foundry's tooltip element collapses newlines to
+   spaces (default `white-space: normal`). With it, `\n` becomes a line
+   break.
+═════════════════════════════════════════════════════════════════════════ */
+#tooltip.reign-tooltip-multiline {
+  white-space: pre-line;
+  text-align: left;
+  max-width: 320px;
+  line-height: 1.4;
+}

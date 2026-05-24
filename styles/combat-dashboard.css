@@ -292,6 +292,18 @@
   background: var(--reign-bg-brass-muted);
   border: 1px solid var(--reign-color-brass);
 }
+.cd-badge-slow {
+  background: var(--reign-bg-amber-subtle);
+  color: var(--reign-orange);
+  border: 1px solid var(--reign-color-brass);
+  font-style: italic;
+}
+.cd-badge-ready {
+  background: var(--reign-bg-emerald-muted);
+  color: var(--reign-color-emerald);
+  border: 1px solid var(--reign-color-emerald);
+  font-weight: 600;
+}
 
 /* Clickable declaration status (simple mode) */
 .cd-decl-status.cd-clickable {
@@ -1044,6 +1056,58 @@
   font-style: italic;
 }
 
+/* Resolve button row (damage + effects) */
+.cd-resolve-btns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-xs);
+  margin-top: var(--reign-space-xs);
+}
+
+/* Spell effects button */
+.cd-resolve-spell-btn {
+  background: linear-gradient(180deg, var(--reign-color-sorcery), var(--reign-color-sorcery-dark)) !important;
+  border-color: var(--reign-color-sorcery-dark) !important;
+}
+.cd-resolve-spell-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Spell-only resolve panel (no damage formula) */
+.cd-resolve-spell-only {
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-xs);
+}
+.cd-resolve-advance {
+  background: var(--reign-bg-brass-subtle) !important;
+  border-color: var(--reign-color-brass) !important;
+  color: var(--reign-color-brass) !important;
+}
+.cd-resolve-advance:hover {
+  background: var(--reign-color-brass) !important;
+  color: var(--reign-text-light) !important;
+}
+
+/* Spell interaction flags */
+.cd-spell-flags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: var(--reign-space-xs);
+}
+.cd-spell-flag {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  padding: 1px 4px;
+  background: var(--reign-bg-sorcery-muted);
+  border: 1px solid var(--reign-color-sorcery);
+  border-radius: var(--reign-radius-sm);
+  color: var(--reign-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Spoil Button */
 .cd-spoil-btn {
   display: flex;
@@ -1260,4 +1324,211 @@
 .cd-foot-next-round:hover {
   background: var(--reign-color-blood);
   color: var(--reign-text-light) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 6: Pre-Start View, In-Dashboard Target Picker, Condition Toolbar
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Pre-Start View ────────────────────────────────────────────────────── */
+
+.cd-prestart {
+  padding: var(--reign-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--reign-space-sm);
+}
+.cd-prestart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--reign-space-xs);
+  border-bottom: 1px solid var(--reign-bg-vellum);
+}
+.cd-prestart-title {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--reign-color-brass);
+}
+.cd-prestart-sub {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-muted);
+}
+.cd-prestart-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.cd-prestart-row {
+  display: flex;
+  align-items: center;
+  gap: var(--reign-space-sm);
+  padding: 4px var(--reign-space-sm);
+  background: var(--reign-bg-paper);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-md);
+}
+.cd-prestart-name {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-sm);
+  color: var(--reign-text-dark);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-prestart-wait {
+  text-align: center;
+  font-style: italic;
+  font-size: var(--reign-text-sm);
+  color: var(--reign-text-muted);
+  padding: var(--reign-space-sm);
+}
+/* Start Combat button reuses .cd-resolve-btn base styling */
+.cd-start-combat-btn {
+  margin-top: var(--reign-space-xs);
+}
+
+/* ─── In-Dashboard Target Picker ────────────────────────────────────────── */
+
+.cd-target-roster {
+  margin-top: var(--reign-space-xs);
+  padding: var(--reign-space-xs) var(--reign-space-sm);
+  background: var(--reign-bg-paper);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-md);
+}
+.cd-target-roster-lbl {
+  font-family: var(--reign-font-mono);
+  font-size: var(--reign-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--reign-text-muted);
+  margin-bottom: 4px;
+}
+.cd-target-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cd-target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 3px;
+  background: var(--reign-bg-parchment);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+  max-width: 160px;
+}
+.cd-target-chip img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.cd-target-chip-name {
+  font-family: var(--reign-font-display);
+  font-size: var(--reign-text-xs);
+  color: var(--reign-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-target-chip:hover:not(.cd-target-disabled) {
+  border-color: var(--reign-color-blood);
+  box-shadow: var(--reign-shadow-drop);
+}
+.cd-target-chip.cd-target-active {
+  border-color: var(--reign-color-brass);
+  background: var(--reign-bg-brass-subtle);
+  box-shadow: 0 0 0 1px var(--reign-color-brass);
+}
+.cd-target-chip.cd-target-active .cd-target-chip-name {
+  color: var(--reign-color-brass);
+  font-weight: 600;
+}
+.cd-target-chip.cd-target-threat img {
+  border: 1px solid var(--reign-color-blood);
+}
+.cd-target-chip.cd-target-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cd-target-hint {
+  margin-top: 4px;
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  color: var(--reign-text-muted);
+  font-style: italic;
+}
+
+/* ─── Heal-aware Resolve Panel ──────────────────────────────────────────── */
+
+.cd-resolve-heal {
+  background: var(--reign-bg-emerald-muted);
+}
+.cd-resolve-heal-value {
+  color: var(--reign-color-emerald);
+  font-weight: 600;
+}
+.cd-resolve-heal-btn {
+  background: linear-gradient(180deg, var(--reign-color-emerald), var(--reign-color-emerald-dark, var(--reign-color-emerald))) !important;
+  border-color: var(--reign-color-emerald) !important;
+}
+.cd-resolve-heal-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* ─── Condition Toolbar ─────────────────────────────────────────────────── */
+
+.cd-condition-tools {
+  margin-top: var(--reign-space-xs);
+  padding-top: var(--reign-space-xs);
+  border-top: 1px solid var(--reign-bg-vellum);
+}
+.cd-condition-tools-lbl {
+  font-family: var(--reign-font-mono);
+  font-size: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--reign-text-muted);
+  margin-bottom: 4px;
+}
+.cd-condition-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cd-cond-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--reign-bg-parchment);
+  border: 1px solid var(--reign-bg-vellum);
+  border-radius: var(--reign-radius-sm);
+  cursor: pointer;
+  transition: all var(--reign-transition-fast);
+}
+.cd-cond-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: var(--reign-icon-filter, none);
+}
+.cd-cond-btn:hover {
+  border-color: var(--reign-color-blood);
+  background: var(--reign-bg-blood-muted);
+  transform: translateY(-1px);
 }

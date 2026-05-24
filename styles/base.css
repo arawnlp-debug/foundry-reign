@@ -3,6 +3,33 @@
    Base Styles & Utility Classes
 ==================================================== */
 
+/* ====================================================
+   FONT FACE — Cinzel (display)
+   ────────────────────────────────────────────────────
+   Cinzel is the system's display typeface, referenced
+   via --reign-font-display. Bundled at two weights
+   (Regular 400, Bold 700) to keep payload small while
+   covering all display needs. font-display: swap means
+   text renders immediately in the fallback (Book
+   Antiqua / Palatino / serif) and re-renders to Cinzel
+   once the font loads — no FOIT, brief FOUT.
+   SIL Open Font License 1.1 — see fonts/OFL.txt
+==================================================== */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../fonts/cinzel-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../fonts/cinzel-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* -----------------------------------------
     CORE SHEET STYLING
 ----------------------------------------- */
@@ -849,4 +876,43 @@
 /* ─── Tooltip Consistency ────────────────────────────────────────────── */
 .system-reign [data-tooltip] {
   position: relative;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION — Respect prefers-reduced-motion
+   ─────────────────────────────────────────────────────────────────────
+   Neutralises infinite-loop pulse/glow/shimmer animations for users with
+   vestibular sensitivity or motion preference. State-conveying animations
+   (spotlight, resolve-ready) have their peak visual state preserved as a
+   static style so the affordance still reads. Entrance fades, tab
+   transitions, and one-shot break/flash animations are kept — they are
+   short, finite, and convey state change rather than ambient motion.
+═════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+
+  /* ── Neutralise infinite loops ────────────────────────────────────── */
+  .fd-warning-glow,
+  .fd-pulse,
+  .cd-resolving-dot,
+  .cd-dsi-waiting,
+  .cd-shimmer,
+  .cd-card.cd-spotlight,
+  .cd-gobble-block.cd-gobble-valid .cd-gobble-apply-btn,
+  .cd-resolve-btn,
+  .gt-pulse-critical,
+  .gt-pulse-badge {
+    animation: none !important;
+  }
+
+  /* ── Preserve state affordance for spotlight (peak glow as static) ── */
+  .cd-card.cd-spotlight {
+    box-shadow:
+      0 0 0 2px rgba(217, 119, 6, 0.35),
+      0 4px 20px rgba(217, 119, 6, 0.20);
+  }
+
+  /* ── Preserve state affordance for resolve-ready button ──────────── */
+  .cd-resolve-btn {
+    box-shadow: 0 2px 12px rgba(139, 31, 31, 0.5);
+  }
 }

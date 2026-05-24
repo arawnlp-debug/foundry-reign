@@ -32,10 +32,10 @@ const { DialogV2 } = foundry.applications.api;
 
 Hooks.once("init", async () => {
 
-  // â”€â”€ Global UI Skin: mark <body> so CSS can target Foundry chrome â”€â”€
+  // ── Global UI Skin: mark <body> so CSS can target Foundry chrome ──
   document.body.classList.add("system-reign");
 
-  // â”€â”€ Colourblind Mode (Client Setting) â”€â”€
+  // ── Colourblind Mode (Client Setting) ──
   game.settings.register("reign", "colorblindMode", {
     name: "Colourblind Mode",
     hint: "Shifts the colour palette to an Okabe-Ito inspired high-contrast scheme that is distinguishable under protanopia, deuteranopia, and tritanopia.",
@@ -218,7 +218,7 @@ Hooks.once("init", async () => {
   };
 });
 
-// â”€â”€ Colourblind Mode: apply saved preference on load (all users) â”€â”€
+// ── Colourblind Mode: apply saved preference on load (all users) ──
 Hooks.once("ready", () => {
   if (game.settings.get("reign", "colorblindMode")) {
     document.body.classList.add("colorblind-mode");
@@ -251,23 +251,18 @@ Hooks.once("ready", async () => {
   game.reign.toolbar = toolbar;
 });
 
-// Combat Dashboard — Only available in Advanced declaration mode.
+// Combat Dashboard — Available to all users (GM and players).
 // Auto-shows when combat starts, closes when combat ends.
 Hooks.once("ready", () => {
+  const dashboard = new CombatDashboard();
+  game.reign.dashboard = dashboard;
+
   // Phase 2: Initialise the combat flag socket relay (GM listens for player rolls).
-  // This runs regardless of declaration mode — combat flags are always needed.
   initCombatSocket();
 
   // Phase 2: When any ORE roll creates a ChatMessage during combat,
   // extract the roll data and store it to the combat flags.
   Hooks.on("createChatMessage", onRollChatMessage);
-
-  // Only create the dashboard in advanced mode
-  const mode = game.settings.get("reign", "declarationMode") || "simple";
-  if (mode !== "advanced") return;
-
-  const dashboard = new CombatDashboard();
-  game.reign.dashboard = dashboard;
 
   // Auto-show when combat is already running on page load
   if (game.combat?.started) {
@@ -277,6 +272,18 @@ Hooks.once("ready", () => {
   // Auto-show when combat starts
   Hooks.on("combatStart", () => {
     dashboard.resetDismissal();
+    CombatDashboard.show(dashboard);
+  });
+
+  // GM-only: auto-show as the encounter is assembled (pre-start). Opening on the
+  // first combatant added lets the GM start combat from the dashboard itself.
+  // Respects manual dismissal (so closing it won't fight repeated token adds);
+  // combatStart above re-opens for everyone. Players still open on combatStart.
+  Hooks.on("createCombatant", (combatant) => {
+    if (!game.user.isGM) return;
+    const combat = combatant.combat;
+    if (!combat) return;
+    if (game.combat && combat.id !== game.combat.id) return;
     CombatDashboard.show(dashboard);
   });
 
@@ -374,7 +381,7 @@ Hooks.on("preUpdateItem", (item, changes, options, userId) => {
     return true;
 });
 
-// â”€â”€ ATTUNEMENT AE OFFER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ATTUNEMENT AE OFFER ────────────────────────────────────────────────────
 // When a character's attunementStatus transitions to "perfect", offer to create
 // a labelled Active Effect so the GM/player can record mechanical attunement
 // benefits (immunities, resistances, etc.) through the standard AE system.
@@ -584,11 +591,8 @@ Hooks.on("getSceneControlButtons", (controls) => {
   }
 });
 
-// Combat Dashboard — Token Controls toggle button (advanced mode only)
+// Combat Dashboard — Token Controls toggle button (available to all users)
 Hooks.on("getSceneControlButtons", (controls) => {
-  const mode = game.settings.get("reign", "declarationMode") || "simple";
-  if (mode !== "advanced") return;
-
   let tokenGroup;
   if (Array.isArray(controls)) {
     tokenGroup = controls.find(c => c.name === "tokens" || c.name === "token");
@@ -748,7 +752,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       const type = btn.dataset.type;
       const ap = parseInt(btn.dataset.ap) || 0;
       
-      // âœ… Retrieve serialized advanced mods directly from the chat card flags
+      // ✅ Retrieve serialized advanced mods directly from the chat card flags
       const advancedMods = msg.flags?.reign?.rollFlags?.advancedMods || {};
 
       await applyScatteredDamageToTarget(faces, type, ap, null, advancedMods);
@@ -1024,7 +1028,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     });
   });
 
-  // â”€â”€ BATCH C ITEM-11: Re-roll last â†º â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── BATCH C ITEM-11: Re-roll last ↺ ──────────────────────────────────────
   // Reads lastRollContext from the rolling actor's flags and re-runs the
   // identical dice pool without opening the dialog.
   element.querySelectorAll(".reign-reroll-btn").forEach(btn => {
@@ -1040,7 +1044,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     });
   });
 
-  // â”€â”€ BATCH C ITEM-2: Pin escape roll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── BATCH C ITEM-2: Pin escape roll ──────────────────────────────────────
   // Opens a Body+Fight dialog for the pinned character with difficulty pre-set
   // to max(attackerBody, attackerFight) per RAW Ch7.
   element.querySelectorAll(".attempt-escape-btn").forEach(btn => {
@@ -1148,11 +1152,25 @@ Hooks.on("combatStart", async (combat, context) => {
   if (!game.user.isGM) return;
   if (!game.combats.has(combat.id)) return;
   await combat.setFlag("reign", "phase", "declaration");
-  const updates = combat.combatants.map(c => ({
-    _id: c.id,
-    "flags.reign.declared": false,
-    initiative: null 
-  }));
+  const updates = combat.combatants.map(c => {
+    const u = {
+      _id: c.id,
+      "flags.reign.declared": false,
+      initiative: null,
+    };
+    // Clear legacy fire-then-cooldown flags and any stale preparation/cast state
+    // from a prior model or aborted encounter. Slow timing is now the
+    // flags.reign.preparing model written by the roller. (No world migration:
+    // these are transient combat flags.)
+    const rf = c.flags?.reign ?? {};
+    if ("slowCooldown" in rf) u["flags.reign.-=slowCooldown"] = null;
+    if ("activeCast" in rf)   u["flags.reign.-=activeCast"] = null;
+    if ("preparing" in rf)    u["flags.reign.-=preparing"] = null;
+    for (const key of Object.keys(rf)) {
+      if (key.startsWith("spellSlowCooldown_")) u[`flags.reign.-=${key}`] = null;
+    }
+    return u;
+  });
   if (updates.length > 0) {
     await combat.updateEmbeddedDocuments("Combatant", updates);
   }
@@ -1256,7 +1274,7 @@ async function _openPoolSelectorDialog(actor, actions, allSkillOpts, slotCount) 
     <form class="reign-dialog-form">
       <p class="reign-text-small reign-text-muted reign-mb-small">
         <i class="fas fa-info-circle"></i>
-        ${slotCount} declared actions — pool penalty âˆ’${slotCount - 1}d.
+        ${slotCount} declared actions — pool penalty −${slotCount - 1}d.
         Each set from this roll can be assigned to one action during resolution.
         The roll dialog will open with Multi-Actions pre-set to ${slotCount}.
       </p>
@@ -1329,27 +1347,27 @@ async function _openDeclarationDialog(combatant, combat) {
     return ui.notifications.warn("You do not have permission to declare for this combatant.");
   }
 
-  // â”€â”€ Actor type flags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Actor type flags ──────────────────────────────────────────────────────
   const isCharacter = actor.type === "character";
   const isCreature  = actor.type === "threat" && !!actor.system.creatureMode;
   const isMob       = actor.type === "threat" && !actor.system.creatureMode;
 
-  // â”€â”€ Context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Context ───────────────────────────────────────────────────────────────
   const system = actor.system;
 
   // Characters use item-based weapons; creatures use creatureAttacks; mobs don't use items.
   const equippedWeapons  = isCharacter ? actor.items.filter(i => i.type === "weapon" && i.system.equipped) : [];
   const creatureAttacks  = isCreature  ? (system.creatureAttacks || []) : [];
 
-  const weaponCooldown       = combatant.getFlag("reign", "slowCooldown") ?? -1;
-  const slowWeaponsInCooldown = equippedWeapons.filter(
-    w => (w.system.qualities?.slow ?? 0) > 0 && game.combat.round <= weaponCooldown
-  );
+  // Slow / casting preparation (RAW: prepare N rounds, then roll on the ready round).
+  const preparing = combatant.getFlag("reign", "preparing");
+  const prepItem  = preparing ? actor.items.get(preparing.itemId) : null;
+  const prepReady = !!(preparing && (game.combat?.round ?? 0) >= preparing.readyRound);
 
-  const activeCast     = combatant.getFlag("reign", "activeCast");
-  const canCompleteCast = !!(activeCast && game.combat?.round >= activeCast.round);
+  // Character spells — all spell items owned by this character
+  const knownSpells = isCharacter ? actor.items.filter(i => i.type === "spell") : [];
 
-  // â”€â”€ Character skill option lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Character skill option lists ──────────────────────────────────────────
   const staticSkillOpts = Object.entries(skillAttrMap)
     .map(([key, attr]) => ({
       value: `static_${key}`,
@@ -1376,7 +1394,7 @@ async function _openDeclarationDialog(combatant, combat) {
   const skillAttrLookup = {};
   for (const opt of allSkillOpts) skillAttrLookup[opt.value] = opt.attr;
 
-  // â”€â”€ HTML option strings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── HTML option strings ───────────────────────────────────────────────────
   const attrLabels = {
     body: "Body", coordination: "Coordination", sense: "Sense",
     knowledge: "Knowledge", command: "Command", charm: "Charm"
@@ -1385,10 +1403,6 @@ async function _openDeclarationDialog(combatant, combat) {
   const weaponOptionsHtml = equippedWeapons.length > 0
     ? equippedWeapons.map(w => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)}</option>`).join("")
     : `<option value="">— No weapons equipped —</option>`;
-
-  const slowWeaponOptionsHtml = slowWeaponsInCooldown.length > 0
-    ? slowWeaponsInCooldown.map(w => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)}</option>`).join("")
-    : `<option value="">— No slow weapons in cooldown —</option>`;
 
   const skillOptionsHtml = allSkillOpts
     .map(s => `<option value="${s.value}">${foundry.utils.escapeHTML(s.label)}</option>`)
@@ -1405,6 +1419,14 @@ async function _openDeclarationDialog(combatant, combat) {
       ).join("")
     : `<option value="">— No attacks defined —</option>`;
 
+  // Spell selector (characters only)
+  const spellOptionsHtml = knownSpells.length > 0
+    ? knownSpells.map(sp => {
+        const pool = sp.system.pool || "Knowledge + Sorcery";
+        return `<option value="${sp.id}">${foundry.utils.escapeHTML(sp.name)} — ${foundry.utils.escapeHTML(pool)}</option>`;
+      }).join("")
+    : `<option value="">— No spells known —</option>`;
+
   // Creature skill selectors
   const creatureSkillOptionsHtml = Object.entries(system.creatureSkills || {})
     .map(([key, sk]) => {
@@ -1416,7 +1438,7 @@ async function _openDeclarationDialog(combatant, combat) {
     .map(([key, val]) => `<option value="${key}">${foundry.utils.escapeHTML(key)} (${val})</option>`)
     .join("") || `<option value="">— No attributes defined —</option>`;
 
-  // â”€â”€ Multi-action slot builder (characters only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Multi-action slot builder (characters only) ───────────────────────────
   function buildSlotHtml(n) {
     const removeBtn = n > 2
       ? `<a class="remove-slot reign-text-danger" data-slot="${n}" title="Remove action" style="cursor:pointer;margin-left:4px"><i class="fas fa-times"></i></a>`
@@ -1452,7 +1474,7 @@ async function _openDeclarationDialog(combatant, combat) {
       </div>`;
   }
 
-  // â”€â”€ Action type dropdown options (actor-type aware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Action type dropdown options (actor-type aware) ───────────────────────
   let actionTypeOptionsHtml = `<option value="noroll">No Roll / Narrative</option>`;
   if (isCharacter || (isCreature && creatureAttacks.length > 0) || isMob) {
     actionTypeOptionsHtml += `<option value="attack">${isMob ? "Group Attack" : "Attack"}</option>`;
@@ -1464,11 +1486,14 @@ async function _openDeclarationDialog(combatant, combat) {
   }
   if (isCharacter) {
     actionTypeOptionsHtml += `<option value="multi">Multi-action</option>`;
-    if (slowWeaponsInCooldown.length > 0) actionTypeOptionsHtml += `<option value="readySlow">Ready Slow Weapon</option>`;
-    if (canCompleteCast) actionTypeOptionsHtml += `<option value="completeCast">Complete Slow Spell (${foundry.utils.escapeHTML(activeCast.name)})</option>`;
+    if (knownSpells.length > 0) actionTypeOptionsHtml += `<option value="castSpell">Cast Spell</option>`;
+    if (prepReady && prepItem) {
+      const verb = prepItem.type === "spell" ? "Cast" : "Fire";
+      actionTypeOptionsHtml += `<option value="releasePrepared">Release Prepared — ${verb} ${foundry.utils.escapeHTML(prepItem.name)}</option>`;
+    }
   }
 
-  // â”€â”€ Attack sub-field HTML (actor-type aware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Attack sub-field HTML (actor-type aware) ──────────────────────────────
   let attackFieldHtml = "";
   if (isCharacter) {
     attackFieldHtml = `
@@ -1490,7 +1515,7 @@ async function _openDeclarationDialog(combatant, combat) {
       </p>`;
   }
 
-  // â”€â”€ Skill sub-field HTML (actor-type aware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Skill sub-field HTML (actor-type aware) ───────────────────────────────
   let skillFieldHtml = "";
   if (isCharacter) {
     skillFieldHtml = `
@@ -1514,7 +1539,7 @@ async function _openDeclarationDialog(combatant, combat) {
       </div>`;
   }
 
-  // â”€â”€ Dialog content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dialog content ────────────────────────────────────────────────────────
   const content = `
     <form class="reign-dialog-form">
 
@@ -1554,6 +1579,18 @@ async function _openDeclarationDialog(combatant, combat) {
         ${skillFieldHtml}
       </div>
 
+      <!-- Cast Spell (characters only) -->
+      ${isCharacter && knownSpells.length > 0 ? `
+      <div class="decl-fields" id="decl-castSpell" style="display:none">
+        <div class="form-group flexrow">
+          <label class="reign-col-2">Spell</label>
+          <select name="castSpellId" class="reign-col-3">${spellOptionsHtml}</select>
+        </div>
+        <p class="reign-text-small reign-text-muted">
+          <i class="fas fa-hat-wizard"></i> The spell's pool and casting stat will be used for the roll.
+        </p>
+      </div>` : ""}
+
       <!-- Multi-action (characters only) -->
       ${isCharacter ? `
       <div class="decl-fields" id="decl-multi" style="display:none">
@@ -1573,31 +1610,19 @@ async function _openDeclarationDialog(combatant, combat) {
         </p>
       </div>` : ""}
 
-      <!-- Ready Slow Weapon (characters only) -->
-      ${isCharacter ? `
-      <div class="decl-fields" id="decl-readySlow" style="display:none">
-        <div class="form-group flexrow">
-          <label class="reign-col-2">Weapon</label>
-          <select name="slowWeapon" class="reign-col-3">${slowWeaponOptionsHtml}</select>
-        </div>
-        <p class="reign-text-small reign-text-muted">
-          <i class="fas fa-clock"></i> This round is spent readying. No roll required.
-        </p>
-      </div>` : ""}
-
-      <!-- Complete Slow Spell (characters only) -->
-      ${isCharacter && canCompleteCast ? `
-      <div class="decl-fields" id="decl-completeCast" style="display:none">
+      <!-- Release Prepared Action (characters only) -->
+      ${isCharacter && prepReady && prepItem ? `
+      <div class="decl-fields" id="decl-releasePrepared" style="display:none">
         <p class="reign-text-small">
-          <i class="fas fa-magic reign-text-magic"></i>
-          <strong>${foundry.utils.escapeHTML(activeCast.name)}</strong> is ready to release this round.
-          Click <em>Confirm + Roll</em> to cast.
+          <i class="fas fa-hourglass-end reign-text-magic"></i>
+          <strong>${foundry.utils.escapeHTML(prepItem.name)}</strong> is prepared and ready to release this round.
+          Click <em>Confirm + Roll</em> to ${prepItem.type === "spell" ? "cast" : "fire"}. A hit before it resolves can still spoil it.
         </p>
       </div>` : ""}
 
     </form>`;
 
-  // â”€â”€ Form data extraction (shared by both button callbacks) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Form data extraction (shared by both button callbacks) ────────────────
   function extractForm(el) {
     const f = el.querySelector("form");
     const actionType      = f.querySelector('[name="actionType"]')?.value || "noroll";
@@ -1683,20 +1708,32 @@ async function _openDeclarationDialog(combatant, combat) {
       }
       // primaryDataset for multi is resolved in the pool selector step after the dialog closes
 
-    } else if (actionType === "readySlow") {
-      const itemId = f.querySelector('[name="slowWeapon"]')?.value || "";
-      const weapon = actor.items.get(itemId);
-      actions.push({ type: "readySlow", itemId, label: `Ready ${weapon?.name || "weapon"}` });
+    } else if (actionType === "castSpell") {
+      const spellId = f.querySelector('[name="castSpellId"]')?.value || "";
+      const spell = actor.items.get(spellId);
+      if (spell) {
+        actions.push({ type: "castSpell", itemId: spellId, label: spell.name });
+        // Build the primary roll dataset from the spell's casting stat and sorcery
+        const castingStat = spell.system.castingStat || "knowledge";
+        primaryDataset = { type: "item", key: spellId, label: spell.name, defaultAttr: castingStat };
+      } else {
+        actions.push({ type: "castSpell", label: "Cast Spell" });
+      }
 
-    } else if (actionType === "completeCast" && canCompleteCast) {
-      actions.push({ type: "completeCast", itemId: activeCast.itemId, label: activeCast.name });
-      primaryDataset = { type: "item", key: activeCast.itemId, label: activeCast.name };
+    } else if (actionType === "releasePrepared" && prepReady && prepItem) {
+      // Release a prepared Slow/casting action this round. Rolling the prepared
+      // item is detected by the roller as completing preparation (it clears the
+      // flag and rolls normally), so we just route it as a standard item roll.
+      const ds = { type: "item", key: prepItem.id, label: prepItem.name };
+      if (prepItem.type === "spell") ds.defaultAttr = prepItem.system.castingStat || "knowledge";
+      actions.push({ type: "releasePrepared", itemId: prepItem.id, label: prepItem.name });
+      primaryDataset = ds;
     }
 
     return { actionType, declarationText, actions, primaryDataset };
   }
 
-  // â”€â”€ Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dialog ────────────────────────────────────────────────────────────────
   const result = await reignDialog(
     `Declare Action — ${foundry.utils.escapeHTML(actor.name)}`,
     content,
@@ -1729,7 +1766,7 @@ async function _openDeclarationDialog(combatant, combat) {
           allFieldGroups.forEach(g => g.style.display = "none");
           const target = f.querySelector(`#decl-${val}`);
           if (target) target.style.display = "";
-          if (rollBtn) rollBtn.disabled = (val === "noroll" || val === "readySlow");
+          if (rollBtn) rollBtn.disabled = (val === "noroll");
         }
         actionTypeSelect?.addEventListener("change", updateFieldVisibility);
         updateFieldVisibility();
@@ -1744,7 +1781,7 @@ async function _openDeclarationDialog(combatant, combat) {
         skillSelect?.addEventListener("change", syncSkillAttr);
         syncSkillAttr();
 
-        // â”€â”€ Multi-action slot wiring (characters only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Multi-action slot wiring (characters only) ──────────────────────
         if (!isCharacter) return;
 
         const slotContainer  = f.querySelector("#multi-slot-container");
@@ -1754,7 +1791,7 @@ async function _openDeclarationDialog(combatant, combat) {
 
         function updatePenaltyPreview() {
           if (penaltyPreview) {
-            penaltyPreview.textContent = `Pool penalty: âˆ’${slotCount - 1}d (${slotCount} actions)`;
+            penaltyPreview.textContent = `Pool penalty: −${slotCount - 1}d (${slotCount} actions)`;
           }
         }
         updatePenaltyPreview();
@@ -1802,7 +1839,7 @@ async function _openDeclarationDialog(combatant, combat) {
 
   if (!result) return;
 
-  // â”€â”€ Write flags and mark declared â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Write flags and mark declared ─────────────────────────────────────────
   const { actionType, declarationText, actions, primaryDataset, roll } = result;
 
   const activeCombat    = game.combats.get(combat.id);
@@ -1818,7 +1855,7 @@ async function _openDeclarationDialog(combatant, combat) {
     penalty: Math.max(0, actions.length - 1)
   });
 
-  // â”€â”€ Open roll dialog if requested â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Open roll dialog if requested ─────────────────────────────────────────
   if (roll) {
     if (isCharacter) {
       if (actionType === "multi" && actions.length > 1) {
@@ -1921,9 +1958,9 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
   if (currentTurn && currentTurn.actor) {
       const statuses = Array.from(currentTurn.actor.statuses);
       const penalties = [];
-      if (statuses.includes("dazed")) penalties.push("DAZED (âˆ’1d)");
-      if (statuses.includes("prone")) penalties.push("PRONE (âˆ’1d)");
-      if (statuses.includes("blind")) penalties.push("BLIND (âˆ’2d Ranged / Diff 4 Melee)");
+      if (statuses.includes("dazed")) penalties.push("DAZED (−1d)");
+      if (statuses.includes("prone")) penalties.push("PRONE (−1d)");
+      if (statuses.includes("blind")) penalties.push("BLIND (−2d Ranged / Diff 4 Melee)");
       
       const phaseControl = element.querySelector(".reign-combat-phase-control");
       if (penalties.length > 0 && !element.querySelector(".reign-wound-banner") && phaseControl) {
@@ -1955,7 +1992,7 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
           if (isDeclaring) {
 
             if (declarationMode === "simple") {
-              // â”€â”€ SIMPLE MODE: current toggle behaviour, unchanged â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── SIMPLE MODE: current toggle behaviour, unchanged ───────────
               initDiv.innerHTML = `
                 <a class="combatant-control reign-declare-btn ${isDeclared ? 'confirmed' : 'pending'}" data-combatant-id="${cid}" title="${isDeclared ? 'Declaration Confirmed' : 'Confirm Declaration'}">
                     <i class="${isDeclared ? 'fas fa-check-circle' : 'far fa-circle'}"></i>
@@ -1976,7 +2013,7 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
               }
 
             } else {
-              // â”€â”€ ADVANCED MODE: declaration dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── ADVANCED MODE: declaration dialog ─────────────────────────
               if (isDeclared) {
                 const declText  = c.getFlag("reign", "declarationText") || "";
                 const shortText = declText.length > 26 ? declText.slice(0, 26) + "…" : declText;
@@ -2019,12 +2056,12 @@ Hooks.on("renderCombatTracker", (app, html, context, options) => {
                   const frac = initNum - rawBase;
                   const isDefence = frac >= 0.9 && frac < 1.0;
                   const isMinion  = initNum < rawBase;
-                  const icon = isDefence ? "ðŸ›¡" : "âš”";
+                  const icon = isDefence ? "🛡" : "⚔";
                   if (!initDiv.querySelector(".reign-init-label")) {
                       const span = document.createElement("span");
                       span.className = "reign-init-label";
                       span.title = `Initiative: ${initNum}`;
-                      span.textContent = `${w}×${h}${isDefence ? " ðŸ›¡" : ""}`;
+                      span.textContent = `${w}×${h}${isDefence ? " 🛡" : ""}`;
                       initDiv.appendChild(span);
                   }
               } else if (!initDiv.querySelector(".reign-waiting")) {

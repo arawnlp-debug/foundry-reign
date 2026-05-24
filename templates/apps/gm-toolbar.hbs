@@ -76,7 +76,7 @@
 {{#if hasVitals}}
 <div class="gt-vitals-row">
     {{#each vitals}}
-    <div class="gt-vitals-portrait gt-health-{{this.worstState}} {{#if this.isThreat}}gt-vitals-threat{{/if}} {{#if this.isGMC}}gt-vitals-gmc{{/if}}" data-actor-id="{{this.id}}" data-gt-action="vitals-select" title="{{this.name}}{{#if this.isThreat}} (Threat){{/if}}{{#if this.isGMC}} (GMC){{/if}}{{#if this.hasConditions}} — {{#each this.conditions}}{{this}} {{/each}}{{/if}}">
+    <div class="gt-vitals-portrait gt-health-{{this.worstState}} {{#if this.isThreat}}gt-vitals-threat{{/if}} {{#if this.isGMC}}gt-vitals-gmc{{/if}}" data-actor-id="{{this.id}}" data-gt-action="vitals-select" data-tooltip="{{this.tooltip}}" data-tooltip-direction="DOWN" data-tooltip-class="reign-tooltip-multiline">
         <img src="{{this.img}}" alt="{{this.name}}" />
         {{#if this.inCombat}}
             {{#unless this.isResolvePhase}}
@@ -89,6 +89,11 @@
         {{/if}}
         {{#if this.hasConditions}}
         <span class="gt-vitals-badge gt-badge-condition" title="{{#each this.conditions}}{{this}} {{/each}}">!</span>
+        {{/if}}
+        {{#if this.slowState}}
+        <span class="gt-vitals-badge gt-badge-slow gt-badge-slow-{{this.slowState}}" title="{{#if (eq this.slowState 'ready')}}Slow item ready next round{{else}}Slow item in cooldown (ready R{{this.slowReadyRound}}){{/if}}">
+            <i class="fas {{#if (eq this.slowState 'ready')}}fa-hourglass-end{{else}}fa-hourglass-half{{/if}}"></i>
+        </span>
         {{/if}}
     </div>
     {{/each}}

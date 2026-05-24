@@ -365,20 +365,12 @@ export async function postOREChat(actor, label, totalPool, results, expertDie, m
     if (bonusTiming !== 0) initValue += bonusTiming;
 
     const combatants = game.combat.combatants.filter(c => c.actorId === actor.id);
-    
-    if (item?.type === "weapon" && item.system.qualities?.slow > 0 && combatants.length > 0) {
-        const slowRounds = parseInt(item.system.qualities.slow) || 0;
-        const currentRound = game.combat.round;
-        const updates = combatants.map(c => ({ _id: c.id, initiative: initValue, "flags.reign.slowCooldown": currentRound + slowRounds }));
-        await game.combat.updateEmbeddedDocuments("Combatant", updates);
-    } else if (item?.type === "spell" && (parseInt(item.system.slow) || 0) > 0 && combatants.length > 0) {
-        // Spell slow: per-item cooldown flag so different slow spells don't clobber each other
-        const slowRounds = parseInt(item.system.slow) || 0;
-        const currentRound = game.combat.round;
-        const updates = combatants.map(c => ({ _id: c.id, initiative: initValue, [`flags.reign.spellSlowCooldown_${item.id}`]: currentRound + slowRounds }));
-        await game.combat.updateEmbeddedDocuments("Combatant", updates);
-        ui.notifications.info(`${item.name} (Slow ${slowRounds}) — next available on Round ${currentRound + slowRounds + 1}.`);
-    } else if (combatants.length > 0) {
+
+    // NOTE: Slow timing is handled as *preparation before the roll* in
+    // character-roller.js (flags.reign.preparing), per RAW. By the time a Slow
+    // weapon/spell reaches this point it is firing on its ready round, so it is
+    // treated like any other roll here — no cooldown flags are written.
+    if (combatants.length > 0) {
         const updates = combatants.map(c => ({ _id: c.id, initiative: initValue }));
         await game.combat.updateEmbeddedDocuments("Combatant", updates);
     }

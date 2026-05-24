@@ -76,72 +76,36 @@ export class ReignCombat extends Combat {
   }
 
   /**
-   * ITEM-1: Whisper owning players when a slow weapon or slow spell becomes ready
-   * on the round we are about to enter.
+   * Whisper owning players when a prepared Slow weapon / spell becomes ready on
+   * the round we are about to enter.
    *
-   * Must be called before super.nextRound() so that this.round still refers to
-   * the outgoing round. The block condition in character-roller.js is:
-   *   game.combat.round <= cooldownUntil
-   * A cooldown stored as (firedRound + slowN) therefore expires the moment
-   * the round advances past it. When cooldownUntil === outgoingRound the weapon
-   * is blocked this round and free on the next — exactly when we want to notify.
-   *
-   * Weapons share a single combatant flag (flags.reign.slowCooldown) because
-   * only one slow weapon can be in cooldown at a time.
-   * Spells each carry their own flag (flags.reign.spellSlowCooldown_<itemId>)
-   * so that different slow spells on the same character do not clobber each other.
-   *
-   * Multiple ready items for the same actor are batched into one whisper to avoid
-   * notification spam.
+   * Called before super.nextRound(), so this.round is still the outgoing round
+   * and the round being entered is this.round + 1. We notify when a combatant's
+   * preparation (flags.reign.preparing) has readyRound === incoming round.
    *
    * @private
    */
   async _notifySlowReady() {
-    const outgoingRound = this.round;
+    const incomingRound = this.round + 1;
 
     await Promise.all(this.combatants.map(async combatant => {
       const actor = combatant.actor;
       if (!actor) return;
+
+      const preparing = combatant.getFlag("reign", "preparing");
+      if (!preparing || preparing.readyRound !== incomingRound) return;
 
       const whisperTargets = game.users
         .filter(u => actor.testUserPermission(u, "OWNER") && u.active)
         .map(u => u.id);
       if (whisperTargets.length === 0) return;
 
-      const lines = [];
-
-      // --- Weapon slow ---
-      const weaponCooldown = combatant.getFlag("reign", "slowCooldown") ?? -1;
-      if (weaponCooldown === outgoingRound) {
-        // The flag records the cooldown round but not which weapon was fired.
-        // Surface all equipped slow weapons; in practice there will be at most one.
-        const slowWeapons = actor.items.filter(
-          i => i.type === "weapon" && i.system.equipped && (i.system.qualities?.slow ?? 0) > 0
-        );
-        const label = slowWeapons.length > 0
-          ? slowWeapons.map(w => `<strong>${foundry.utils.escapeHTML(w.name)}</strong>`).join(" &amp; ")
-          : "<strong>Slow weapon</strong>";
-        lines.push(`${label} is readied and can fire this round.`);
-      }
-
-      // --- Spell slow (per-item flags) ---
-      const reignFlags = combatant.flags?.reign ?? {};
-      for (const [key, value] of Object.entries(reignFlags)) {
-        if (!key.startsWith("spellSlowCooldown_")) continue;
-        if (value !== outgoingRound) continue;
-        const itemId = key.slice("spellSlowCooldown_".length);
-        const spell = actor.items.get(itemId);
-        const spellLabel = spell
-          ? `<strong>${foundry.utils.escapeHTML(spell.name)}</strong>`
-          : "<strong>Slow spell</strong>";
-        lines.push(`${spellLabel} is ready to cast this round.`);
-      }
-
-      if (lines.length === 0) return;
+      const label = `<strong>${foundry.utils.escapeHTML(preparing.name)}</strong>`;
+      const verb = preparing.type === "spell" ? "cast" : "fire";
 
       await ChatMessage.create({
         content: `<div class="reign-chat-card">
-          <p><i class="fas fa-hourglass-end reign-text-info"></i> <strong>${foundry.utils.escapeHTML(actor.name)}</strong> — ${lines.join(" | ")}</p>
+          <p><i class="fas fa-hourglass-end reign-text-info"></i> <strong>${foundry.utils.escapeHTML(actor.name)}</strong> — ${label} is prepared and ready to ${verb} this round.</p>
         </div>`,
         whisper: whisperTargets,
         speaker: { alias: "⚔ Combat" }

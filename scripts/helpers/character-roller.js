@@ -89,6 +89,88 @@ export function calculateOREPool(rawTotal, edFaceInput, mdCountInput, calledShot
 }
 
 export class CharacterRoller extends BaseORERoller {
+
+  /**
+   * Prompt whether a Slow weapon is already loaded/prepared.
+   * @returns {Promise<"fire"|"prepare"|null>} null if cancelled.
+   */
+  static async _promptLoaded(weaponName, currentlyLoaded) {
+    const safe = foundry.utils.escapeHTML(weaponName);
+    const content = `
+      <div class="reign-prep-prompt">
+        <p>Is <strong>${safe}</strong> already loaded and ready to fire this round?</p>
+        <p class="reign-text-small reign-text-muted">If not, you will spend this round (and any further Slow rounds) preparing, firing when ready. Other actions taken while preparing are a Multiple Action.</p>
+      </div>`;
+    return reignDialog("Loaded?", content, null, {
+      width: 420,
+      buttons: [
+        { action: "fire",    label: "Loaded — Fire Now",          default: !!currentlyLoaded, callback: () => "fire" },
+        { action: "prepare", label: "Not Loaded — Begin Preparing", default: !currentlyLoaded,  callback: () => "prepare" },
+      ],
+    });
+  }
+
+  /**
+   * Estimate the base dice pool of a weapon/spell for the "smaller of the two
+   * pools" comparison used by the preparation Multiple-Action rule. This is the
+   * pre-modifier pool (skill + governing attribute, or numeric pool string),
+   * which is the relevant quantity RAW compares.
+   */
+  static _estimateActionPool(actor, itemRef) {
+    const system = actor.system;
+    const poolRaw = (itemRef?.system?.pool || "").trim();
+    let skillVal = 0;
+    let attrKey = "coordination";
+    let base = 0;
+
+    if (itemRef?.type === "spell") {
+      const name = poolRaw.toLowerCase();
+      const mStatic = Object.keys(system.skills || {}).find(k => k.toLowerCase() === name);
+      const mCustom = Object.entries(system.customSkills || {}).find(([, c]) => (c?.customLabel || "").toLowerCase() === name);
+      if (mStatic) skillVal = parseInt(system.skills[mStatic].value) || 0;
+      else if (mCustom) skillVal = parseInt(mCustom[1].value) || 0;
+      else if (name === "sorcery" || name === "") skillVal = parseInt(system.esoterica?.sorcery) || 0;
+      else base = parseInt(poolRaw) || 0;
+      attrKey = itemRef.system.castingStat || "knowledge";
+    } else {
+      const sk = itemRef?.system?.skillKey || "";
+      if (sk && sk.startsWith("custom:") && system.customSkills?.[sk.slice(7)]) {
+        const c = system.customSkills[sk.slice(7)];
+        skillVal = parseInt(c.value) || 0;
+        attrKey = c.attribute || "coordination";
+      } else if (sk && !sk.startsWith("custom:") && system.skills?.[sk]) {
+        skillVal = parseInt(system.skills[sk].value) || 0;
+        attrKey = skillAttrMap[sk] || "coordination";
+      } else {
+        const name = poolRaw.toLowerCase();
+        const mStatic = Object.keys(system.skills || {}).find(k => k.toLowerCase() === name);
+        const mCustom = Object.entries(system.customSkills || {}).find(([, c]) => (c?.customLabel || "").toLowerCase() === name);
+        if (mStatic) { skillVal = parseInt(system.skills[mStatic].value) || 0; attrKey = skillAttrMap[mStatic] || "coordination"; }
+        else if (mCustom) { skillVal = parseInt(mCustom[1].value) || 0; attrKey = mCustom[1].attribute || "coordination"; }
+        else base = parseInt(poolRaw) || 0;
+      }
+    }
+
+    const attrVal = attrKey !== "none" ? (parseInt(system.attributes?.[attrKey]?.value) || 0) : 0;
+    return Math.max(0, base + skillVal + attrVal);
+  }
+
+  /** Post the "begins preparing" chat card for a Slow/casting-time action. */
+  static async _postPreparationCard(actor, itemRef, prepRounds, readyRound) {
+    const isSpell = itemRef.type === "spell";
+    const verb = isSpell ? "gathering power for" : "readying";
+    const releaseVerb = isSpell ? "cast" : "fire";
+    const safeActor = foundry.utils.escapeHTML(actor.name);
+    const safeItem = foundry.utils.escapeHTML(itemRef.name);
+    const html = `
+      <div class="reign-chat-card ${isSpell ? "reign-card-magic" : ""}">
+        <h3 class="${isSpell ? "reign-text-magic" : ""}"><i class="fas fa-hourglass-half"></i> Preparing — Slow ${prepRounds}</h3>
+        <p><strong>${safeActor}</strong> begins ${verb} <em>${safeItem}</em>.</p>
+        <p class="reign-text-small reign-text-muted">Requires ${prepRounds} round${prepRounds > 1 ? "s" : ""} of preparation; ready to ${releaseVerb} on <strong>Round ${readyRound}</strong>. Any other action taken while preparing is a Multiple Action (smaller pool, −1d), and a hit before this resolves can spoil it.</p>
+      </div>`;
+    await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: html });
+  }
+
   static async rollCharacter(actor, dataset, options = {}) {
     try {
         if (DEBUG_ROLLS) console.log("Reign Roller | Execution Started.", dataset);
@@ -120,38 +202,81 @@ export class CharacterRoller extends BaseORERoller {
         }
 
         let isCompletingCast = false;
+        // When the actor is mid-preparation and takes a *different* action this round,
+        // RAW treats it as a Multiple Action: smaller of the two pools, −1d. We capture
+        // the prepared action's pool here and apply the cap/penalty at roll time.
+        let prepSideAction = null;
 
         if (game.combat) {
             const combatant = game.combat.combatants.find(c => c.actorId === actor.id);
             if (combatant) {
-                if (type === "item" && itemRef?.type === "weapon" && itemRef.system.qualities?.slow > 0) {
-                    const cooldownUntil = combatant.getFlag("reign", "slowCooldown") || 0;
-                    if (game.combat.round <= cooldownUntil) return ui.notifications.warn(`${itemRef.name} is still being readied. Available on round ${cooldownUntil + 1}.`);
+                const round = game.combat.round;
+                const preparing = combatant.getFlag("reign", "preparing");
+
+                if (preparing) {
+                    const completingThis = (type === "item" && key === preparing.itemId);
+                    if (completingThis && round >= preparing.readyRound) {
+                        // The Slow action fires/casts this round. Roll normally below and
+                        // clear the preparation. A fired weapon becomes unloaded (spent),
+                        // so the next shot requires another full preparation.
+                        await combatant.unsetFlag("reign", "preparing");
+                        if (itemRef?.type === "weapon") {
+                            const loaded = foundry.utils.duplicate(combatant.getFlag("reign", "loaded") || {});
+                            loaded[itemRef.id] = false;
+                            await combatant.setFlag("reign", "loaded", loaded);
+                        }
+                        isCompletingCast = true;
+                    } else if (completingThis) {
+                        // Same item retriggered before it is ready — nothing to roll yet.
+                        return ui.notifications.info(`${preparing.name} is still being prepared and will be ready on Round ${preparing.readyRound}.`);
+                    } else {
+                        // A different action while preparing → Multiple Action this round.
+                        prepSideAction = { prepPool: preparing.prepPool || 0, name: preparing.name };
+                    }
                 }
 
-                const activeCast = combatant.getFlag("reign", "activeCast");
-                
-                if (activeCast) {
-                    if (game.combat.round < activeCast.round) {
-                        return ui.notifications.warn(`${actor.name} is concentrating on ${activeCast.name} and cannot take other actions until Round ${activeCast.round}.`);
-                    } else if (type === "item" && key === activeCast.itemId) {
-                        await combatant.unsetFlag("reign", "activeCast");
-                        isCompletingCast = true;
-                    } else {
-                        return ui.notifications.error(`You have ${activeCast.name} prepared. You must cast it before taking other actions!`);
+                // Begin a NEW preparation when initiating a Slow weapon/spell (or a spell
+                // with castingTime, which is now treated identically to Slow).
+                if (!isCompletingCast && !preparing && type === "item" && itemRef) {
+                    let prepRounds = 0;
+                    if (itemRef.type === "weapon") {
+                        prepRounds = parseInt(itemRef.system.qualities?.slow) || 0;
+                    } else if (itemRef.type === "spell") {
+                        prepRounds = Math.max(parseInt(itemRef.system.slow) || 0, parseInt(itemRef.system.castingTime) || 0);
                     }
-                } else if (!isCompletingCast && type === "item" && itemRef?.type === "spell" && itemRef.system.castingTime > 0) {
-                    const castCompleteRound = game.combat.round + itemRef.system.castingTime;
-                    await combatant.setFlag("reign", "activeCast", { itemId: itemRef.id, name: itemRef.name, round: castCompleteRound });
-                    
-                    let chatHtml = `
-                      <div class="reign-chat-card reign-card-magic">
-                        <h3 class="reign-text-magic"><i class="fas fa-magic"></i> Casting Started</h3>
-                        <p><strong>${actor.name}</strong> begins gathering power for <em>${itemRef.name}</em>.</p>
-                        <p class="reign-text-small reign-text-muted">The spell requires total concentration and will be ready to release on <strong>Round ${castCompleteRound}</strong>.</p>
-                      </div>`;
-                    await ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor}), content: chatHtml });
-                    return;
+
+                    if (prepRounds > 0) {
+                        // Weapons may already be loaded → fire this round. Spells always
+                        // prepare fresh (no pre-loading).
+                        let fireNow = false;
+                        if (itemRef.type === "weapon") {
+                            const loaded = !!(combatant.getFlag("reign", "loaded") || {})[itemRef.id];
+                            const choice = await this._promptLoaded(itemRef.name, loaded);
+                            if (choice === null) return;        // cancelled
+                            fireNow = (choice === "fire");
+                            if (fireNow) {
+                                const lf = foundry.utils.duplicate(combatant.getFlag("reign", "loaded") || {});
+                                lf[itemRef.id] = false;          // firing spends the load
+                                await combatant.setFlag("reign", "loaded", lf);
+                            }
+                        }
+
+                        if (!fireNow) {
+                            const prepPool = this._estimateActionPool(actor, itemRef);
+                            const readyRound = round + prepRounds;
+                            await combatant.setFlag("reign", "preparing", {
+                                itemId: itemRef.id,
+                                name: itemRef.name,
+                                type: itemRef.type,
+                                slowN: prepRounds,
+                                declaredRound: round,
+                                readyRound,
+                                prepPool,
+                            });
+                            await this._postPreparationCard(actor, itemRef, prepRounds, readyRound);
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -868,6 +993,19 @@ export class CharacterRoller extends BaseORERoller {
         }
 
         let finalRawTotal = baseValue + finalAttrVal + finalItemSkillValue + rollData.bonus + rollData.passionBonus + shoveBonus;
+
+        // RAW: acting while preparing a Slow action is a Multiple Action — use the
+        // smaller of the two pools and apply the standard −1d. We cap the pool to
+        // the prepared action's pool and ensure at least 2 simultaneous actions.
+        let prepCapApplied = false;
+        if (prepSideAction) {
+            if (prepSideAction.prepPool > 0 && finalRawTotal > prepSideAction.prepPool) {
+                finalRawTotal = prepSideAction.prepPool;
+                prepCapApplied = true;
+            }
+            rollData.multiActions = Math.max(rollData.multiActions || 1, 2);
+        }
+
         const poolMath = calculateOREPool(finalRawTotal, rollData.ed, rollData.md, rollData.calledShot, rollData.penalty, rollData.multiActions, ignoreMultiPenalty);
 
         if (poolMath.downgradedSpecialDice > 0) {
@@ -904,6 +1042,14 @@ export class CharacterRoller extends BaseORERoller {
             else poolBreakdown.push({ label: "Multiple Actions", value: `-${rollData.multiActions - 1}`, isPenalty: true });
         }
         
+        if (prepSideAction) {
+            poolBreakdown.push({
+                label: `Split action (preparing ${prepSideAction.name})`,
+                value: prepCapApplied ? `pool→${prepSideAction.prepPool}` : "split",
+                isPenalty: true,
+            });
+        }
+
         if (rollData.calledShot > 0 && poolMath.actualMd === 0) poolBreakdown.push({ label: "Called Shot", value: `-1`, isPenalty: true });
 
         // Package Advanced DataModel Catch-Basin Modifiers for the Chat Engine

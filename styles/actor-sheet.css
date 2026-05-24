@@ -661,7 +661,7 @@
 .reign .custom-skill-label {
   flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 5px;
   margin-right: 10px;
 }
@@ -669,14 +669,29 @@
 .reign .custom-skill-label input[type="text"] {
   flex: 1;
   border: none;
-  border-bottom: var(--reign-border-dashed);
+  border-bottom: 1px dashed transparent;
   background: transparent;
-  font-family: var(--reign-font-flavor);
-  font-size: 1em;
+  font-family: inherit;
+  font-size: 0.95em;
   font-weight: bold;
+  text-transform: uppercase;
   padding: 0 0 2px 0;
-  color: var(--reign-color-blood);
+  color: var(--reign-text-dark);
   max-width: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.reign .custom-skill-label input[type="text"]::placeholder {
+  color: var(--reign-text-muted);
+  text-transform: none;
+  font-weight: normal;
+  font-style: italic;
+}
+.reign .custom-skill-label input[type="text"]:hover {
+  border-bottom-color: var(--reign-text-muted);
+}
+.reign .custom-skill-label input[type="text"]:focus {
+  border-bottom-color: var(--reign-color-brass);
+  color: var(--reign-color-blood);
 }
 
 .reign .custom-add-container {
@@ -693,8 +708,23 @@
   border-radius: 0 0 4px 4px;
 }
 
-.reign .add-custom-skill { color: var(--reign-text-muted); cursor: pointer; transition: color 0.2s; }
-.reign .add-custom-skill:hover { color: var(--reign-color-blood); }
+.reign .add-custom-skill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border: 1px dashed var(--reign-color-brass);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--reign-text-muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.reign .add-custom-skill:hover {
+  color: var(--reign-color-blood);
+  border-color: var(--reign-color-blood);
+  background: var(--reign-bg-blood-subtle);
+}
 
 .reign .delete-custom-skill { color: var(--reign-text-muted); margin-right: 5px; font-size: 0.9em; cursor: pointer; transition: color 0.2s; }
 .reign .delete-custom-skill:hover { color: var(--reign-color-blood); }

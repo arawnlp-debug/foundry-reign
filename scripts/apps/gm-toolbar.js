@@ -17,7 +17,7 @@ import { XPAwardPanel }     from "./xp-award.js";
 import { openHazardRoller } from "../combat/hazards.js";
 import { WealthRoller } from "../helpers/wealth-roller.js";
 import { reignDialog } from "../helpers/dialog-util.js";
-import { skillAttrMap } from "../helpers/config.js";
+import { skillAttrMap, HIT_LOCATION_SHORT_LABELS } from "../helpers/config.js";
 
 const { renderTemplate } = foundry.applications.handlebars;
 
@@ -93,6 +93,34 @@ function _getTokenPoolHint() {
 }
 
 const HEALTH_LOCS = ["head", "torso", "armR", "armL", "legR", "legL"];
+
+/**
+ * Derive a combatant's slow-item preparation state for the GM toolbar badge.
+ *
+ * Reads flags.reign.preparing (written by character-roller.js), the same source
+ * used by ReignCombat._notifySlowReady and the combat dashboard, so the badge
+ * always matches actual readiness:
+ *   - "ready"     — preparation complete; the action can be released this round
+ *   - "preparing" — still preparing on a later round
+ *   - null        — not preparing a Slow/casting action
+ *
+ * @param {Combatant|null} combatant  The combatant to inspect.
+ * @param {Combat|null}    combat     The active combat (for the current round).
+ * @returns {{state: ("ready"|"preparing"), readyRound: number}|null}
+ */
+function _getSlowState(combatant, combat) {
+  if (!combatant || !combat) return null;
+  const currentRound = combat.round ?? 0;
+  const preparing = combatant.getFlag?.("reign", "preparing")
+    ?? combatant.flags?.reign?.preparing;
+  if (!preparing || !Number.isInteger(preparing.readyRound)) return null;
+
+  if (currentRound >= preparing.readyRound) {
+    return { state: "ready", readyRound: preparing.readyRound };
+  }
+  return { state: "preparing", readyRound: preparing.readyRound };
+}
+
 
 /** Build vitals data for PCs, GMCs, and threats.
  *  PCs (system.isGMC === false): always shown, assigned or not.
@@ -214,13 +242,28 @@ function _buildCharacterVital(actor, combat, isGMC = false) {
   const effMax  = actor.system.effectiveMax || {};
 
   let worstState = "healthy";
+  let worstLoc = null;
+  let worstLocStats = null;
   for (const loc of HEALTH_LOCS) {
     const killing = parseInt(health[loc]?.killing) || 0;
     const shock   = parseInt(health[loc]?.shock)   || 0;
     const max     = parseInt(effMax[loc])           || 5;
-    if (killing >= max) { worstState = "critical"; break; }
-    if (killing > 0 && worstState !== "critical") worstState = "wounded";
-    if (shock > 0 && worstState === "healthy") worstState = "shocked";
+    if (killing >= max) {
+      worstState = "critical";
+      worstLoc = loc;
+      worstLocStats = { killing, shock, max };
+      break;
+    }
+    if (killing > 0 && worstState !== "critical") {
+      worstState = "wounded";
+      worstLoc = loc;
+      worstLocStats = { killing, shock, max };
+    }
+    if (shock > 0 && worstState === "healthy") {
+      worstState = "shocked";
+      worstLoc = loc;
+      worstLocStats = { killing, shock, max };
+    }
   }
 
   const statuses = Array.from(actor.statuses || []);
@@ -232,20 +275,43 @@ function _buildCharacterVital(actor, combat, isGMC = false) {
   let declared = null;
   let initiative = null;
   let phase = null;
+  let combatant = null;
   if (combat) {
     phase = combat.getFlag("reign", "phase") || "declaration";
-    const combatant = combat.combatants.find(c => c.actorId === actor.id);
+    combatant = combat.combatants.find(c => c.actorId === actor.id) || null;
     if (combatant) {
       declared = !!combatant.getFlag("reign", "declared");
       initiative = combatant.initiative;
     }
   }
 
+  const slow = _getSlowState(combatant, combat);
+
+  // Tooltip composition — name + role badge / worst-location summary / conditions
+  const tooltipLines = [];
+  const roleBadge = isGMC ? " (GMC)" : " (PC)";
+  tooltipLines.push(`${actor.name}${roleBadge}`);
+  if (worstLoc && worstLocStats) {
+    const locLabel = HIT_LOCATION_SHORT_LABELS[worstLoc] || worstLoc;
+    tooltipLines.push(`Worst: ${locLabel} (${worstLocStats.shock} Shock, ${worstLocStats.killing} Killing / ${worstLocStats.max})`);
+  }
+  if (conditions.length > 0) {
+    tooltipLines.push(`Conditions: ${conditions.join(", ")}`);
+  }
+  if (slow) {
+    tooltipLines.push(slow.state === "ready"
+      ? "Slow: prepared — ready to release this round"
+      : `Slow: preparing (ready R${slow.readyRound})`);
+  }
+  const tooltip = tooltipLines.join("\n");
+
   return {
     id: actor.id, name: actor.name,
     img: actor.img || "icons/svg/mystery-man.svg",
-    worstState, conditions,
+    worstState, conditions, tooltip,
     hasConditions: conditions.length > 0,
+    slowState: slow?.state || null,
+    slowReadyRound: slow?.readyRound || null,
     declared, inCombat: declared !== null,
     initiative, hasInitiative: initiative !== null && initiative !== undefined,
     isResolvePhase: phase !== "declaration" && phase !== null,
@@ -258,6 +324,8 @@ function _buildThreatVital(actor, combat) {
   const sys = actor.system;
   const isCreature = !!sys.creatureMode;
   let worstState = "healthy";
+  let worstLabel = null;
+  let worstStats = null;
 
   if (isCreature) {
     // Creature: scan custom locations like character health
@@ -265,9 +333,22 @@ function _buildThreatVital(actor, combat) {
       const killing = loc.killing || 0;
       const shock   = loc.shock || 0;
       const max     = loc.woundBoxes || 5;
-      if (killing >= max) { worstState = "critical"; break; }
-      if (killing > 0 && worstState !== "critical") worstState = "wounded";
-      if (shock > 0 && worstState === "healthy") worstState = "shocked";
+      if (killing >= max) {
+        worstState = "critical";
+        worstLabel = loc.name || "Location";
+        worstStats = { killing, shock, max };
+        break;
+      }
+      if (killing > 0 && worstState !== "critical") {
+        worstState = "wounded";
+        worstLabel = loc.name || "Location";
+        worstStats = { killing, shock, max };
+      }
+      if (shock > 0 && worstState === "healthy") {
+        worstState = "shocked";
+        worstLabel = loc.name || "Location";
+        worstStats = { killing, shock, max };
+      }
     }
   } else {
     // Mob: health state from magnitude ratio
@@ -281,25 +362,52 @@ function _buildThreatVital(actor, combat) {
     // Check morale
     const morale = parseInt(sys.morale?.value) || 0;
     if (morale <= 0 && mag > 0) worstState = "critical";
+
+    if (worstState !== "healthy") {
+      worstLabel = "Magnitude";
+      worstStats = { value: mag, max: magMax };
+    }
   }
 
   let declared = null;
   let initiative = null;
   let phase = null;
+  let combatant = null;
   if (combat) {
     phase = combat.getFlag("reign", "phase") || "declaration";
-    const combatant = combat.combatants.find(c => c.actorId === actor.id);
+    combatant = combat.combatants.find(c => c.actorId === actor.id) || null;
     if (combatant) {
       declared = !!combatant.getFlag("reign", "declared");
       initiative = combatant.initiative;
     }
   }
 
+  const slow = _getSlowState(combatant, combat);
+
+  // Tooltip composition — name + threat badge / worst summary
+  const tooltipLines = [];
+  tooltipLines.push(`${actor.name} (Threat)`);
+  if (worstLabel && worstStats) {
+    if (isCreature) {
+      tooltipLines.push(`Worst: ${worstLabel} (${worstStats.shock} Shock, ${worstStats.killing} Killing / ${worstStats.max})`);
+    } else {
+      tooltipLines.push(`${worstLabel}: ${worstStats.value} / ${worstStats.max}`);
+    }
+  }
+  if (slow) {
+    tooltipLines.push(slow.state === "ready"
+      ? "Slow: prepared — ready to release this round"
+      : `Slow: preparing (ready R${slow.readyRound})`);
+  }
+  const tooltip = tooltipLines.join("\n");
+
   return {
     id: actor.id, name: actor.name,
     img: actor.img || "icons/svg/mystery-man.svg",
-    worstState, conditions: [],
+    worstState, conditions: [], tooltip,
     hasConditions: false,
+    slowState: slow?.state || null,
+    slowReadyRound: slow?.readyRound || null,
     declared, inCombat: declared !== null,
     initiative, hasInitiative: initiative !== null && initiative !== undefined,
     isResolvePhase: phase !== "declaration" && phase !== null,

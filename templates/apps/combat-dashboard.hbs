@@ -2,7 +2,7 @@
 {{!-- Reign ORE Combat Dashboard — Phase 1 Template --}}
 
 <div class="cd-root">
-{{#if hasCombat}}
+{{#if isStarted}}
 
 {{!-- ════════════════════════════════════════════════════════
      COLLAPSED BAR
@@ -92,6 +92,17 @@
 
         {{#if hasAim}}
             <span class="cd-badge cd-badge-aim" title="Aimed last round">+{{aimBonus}}d Aim</span>
+        {{/if}}
+        {{#if isPreparing}}
+            {{#if prepStatus.isReady}}
+                <span class="cd-badge cd-badge-ready" title="{{prepStatus.name}} is ready to release this round">
+                    ✦ {{prepStatus.name}} — Ready
+                </span>
+            {{else}}
+                <span class="cd-badge cd-badge-slow" title="Preparing {{prepStatus.name}} — ready Round {{prepStatus.readyRound}}">
+                    ⏳ Preparing {{prepStatus.name}} (R{{prepStatus.readyRound}})
+                </span>
+            {{/if}}
         {{/if}}
         {{#if hasConditions}}
             <span class="cd-badge cd-badge-condition" title="{{#each conditions}}{{this}} {{/each}}">
@@ -268,14 +279,44 @@
                     <span class="cd-chip cd-chip-simultaneous">⚡ Simultaneous with {{simultaneousWith}}</span>
                     {{/if}}
 
-                    {{!-- Phase 4: Resolve Panel (spotlit attack with target) --}}
+                    {{!-- Phase 6: In-dashboard target picker (spotlit attack/heal, GM) --}}
+                    {{#if isSpotlight}}{{#if isAttack}}{{#if @root.isGM}}
+                    {{#if targetRoster}}
+                    <div class="cd-target-roster">
+                        <div class="cd-target-roster-lbl">Target</div>
+                        <div class="cd-target-chips">
+                            {{#each targetRoster}}
+                            <button class="cd-target-chip {{#if isTargeted}}cd-target-active{{/if}} {{#unless hasToken}}cd-target-disabled{{/unless}} {{#if isThreat}}cd-target-threat{{/if}}"
+                                    data-action="setTarget" data-token-id="{{tokenId}}" {{#unless hasToken}}disabled{{/unless}}
+                                    title="{{#if hasToken}}{{name}}{{else}}{{name}} — no token on this scene{{/if}}">
+                                <img src="{{img}}" alt="{{name}}" />
+                                <span class="cd-target-chip-name">{{name}}</span>
+                            </button>
+                            {{/each}}
+                        </div>
+                        <div class="cd-target-hint">Click to target · Shift-click for multiple</div>
+                    </div>
+                    {{/if}}
+                    {{/if}}{{/if}}{{/if}}
+
+                    {{!-- Phase 4: Resolve Panel (spotlit attack/heal with target) --}}
                     {{#if damagePreview}}
                     <div class="cd-resolve-panel">
                         <div class="cd-resolve-target">
-                            <span class="cd-resolve-target-label">Target:</span>
+                            <span class="cd-resolve-target-label">{{#if damagePreview.isHeal}}Healing:{{else}}Target:{{/if}}</span>
                             <strong>{{damagePreview.targetName}}</strong>
                         </div>
                         <div class="cd-resolve-breakdown">
+                            {{#if damagePreview.isHeal}}
+                            <div class="cd-resolve-row cd-resolve-net cd-resolve-heal">
+                                <span>Recovers:</span>
+                                <span class="cd-resolve-heal-value">up to {{damagePreview.healAmount}} → {{damagePreview.locLabel}}</span>
+                            </div>
+                            <div class="cd-resolve-row cd-resolve-state">
+                                <span>Note:</span>
+                                <span>Killing healed before Shock</span>
+                            </div>
+                            {{else}}
                             <div class="cd-resolve-row">
                                 <span>Damage:</span>
                                 <span>{{damagePreview.grossShock}}S + {{damagePreview.grossKilling}}K</span>
@@ -307,17 +348,62 @@
                             <div class="cd-resolve-lethal">☠ LETHAL — location destroyed</div>
                             {{/if}}
                             {{/unless}}
+                            {{/if}}
                         </div>
                         {{#if @root.isGM}}
-                        <button class="cd-resolve-btn" data-action="resolveSet" title="Apply damage and advance to next set">
-                            ⚡ Resolve — Apply Damage
-                        </button>
+                        <div class="cd-resolve-btns">
+                            <button class="cd-resolve-btn {{#if damagePreview.isHeal}}cd-resolve-heal-btn{{/if}}" data-action="resolveSet"
+                                    title="{{#if damagePreview.isHeal}}Apply healing and advance to next set{{else}}Apply damage and advance to next set{{/if}}">
+                                {{#if damagePreview.isHeal}}✚ Heal — Apply{{else}}⚡ Resolve — Apply Damage{{/if}}
+                            </button>
+                            {{#if hasSpellEffects}}
+                            <button class="cd-resolve-btn cd-resolve-spell-btn" data-action="applySpellEffects"
+                                    title="Transfer this spell's Active Effects to the targeted token">
+                                ✦ Apply Spell Effects
+                            </button>
+                            {{/if}}
+                        </div>
+                        {{#if isSpell}}
+                        <div class="cd-spell-flags">
+                            {{#if spellDodgeable}}<span class="cd-spell-flag">Dodgeable</span>{{/if}}
+                            {{#if spellParriable}}<span class="cd-spell-flag">Parriable</span>{{/if}}
+                            {{#if spellArmorBlocks}}<span class="cd-spell-flag">Armor Blocks</span>{{/if}}
+                        </div>
+                        {{/if}}
+
+                        {{!-- Phase 6: Apply condition to current target(s) (GM convenience) --}}
+                        {{#if @root.conditionList}}
+                        <div class="cd-condition-tools">
+                            <div class="cd-condition-tools-lbl">Apply condition to target</div>
+                            <div class="cd-condition-btns">
+                                {{#each @root.conditionList}}
+                                <button class="cd-cond-btn" data-action="toggleCondition" data-status-id="{{id}}" title="{{label}}">
+                                    <img src="{{img}}" alt="{{label}}" />
+                                </button>
+                                {{/each}}
+                            </div>
+                        </div>
+                        {{/if}}
                         {{/if}}
                     </div>
                     {{else if isSpotlight}}
                         {{#if isAttack}}
                         <div class="cd-resolve-no-target">
-                            <span class="cd-resolve-hint">🎯 Target a token to see damage preview</span>
+                            <span class="cd-resolve-hint">🎯 Choose a target above to preview the result</span>
+                        </div>
+                        {{else if hasSpellEffects}}
+                        {{!-- Spell with effects only (no damage) — show effects button without damage preview --}}
+                        <div class="cd-resolve-panel cd-resolve-spell-only">
+                            {{#if @root.isGM}}
+                            <button class="cd-resolve-btn cd-resolve-spell-btn" data-action="applySpellEffects"
+                                    title="Transfer this spell's Active Effects to the targeted token">
+                                ✦ Apply Spell Effects
+                            </button>
+                            <button class="cd-resolve-btn cd-resolve-advance" data-action="advanceSpotlight"
+                                    title="Mark this set as resolved and advance">
+                                → Advance Spotlight
+                            </button>
+                            {{/if}}
                         </div>
                         {{/if}}
                     {{/if}}
@@ -385,6 +471,39 @@
 </div>
 
 {{/if}}{{!-- /collapsed --}}
+
+{{else if isPreStart}}
+{{!-- ════════════════════════════════════════════════════════
+     PRE-START — encounter assembled, not yet started
+════════════════════════════════════════════════════════ --}}
+<div class="cd-prestart">
+    <div class="cd-prestart-head">
+        <span class="cd-prestart-title">Encounter Assembled</span>
+        <span class="cd-prestart-sub">
+            {{preStart.totalCount}} {{#if (eq preStart.totalCount 1)}}combatant{{else}}combatants{{/if}} ready
+        </span>
+    </div>
+
+    <div class="cd-prestart-roster">
+        {{#each preStart.combatants}}
+        <div class="cd-prestart-row" data-actor-id="{{actorId}}" data-combatant-id="{{id}}">
+            <img class="cd-portrait-sm" src="{{img}}" alt="{{name}}" data-action="panToToken" title="Pan to {{name}}" />
+            <span class="cd-prestart-name">{{name}}</span>
+            {{#if isThreat}}<span class="cd-badge cd-badge-slow">Threat</span>{{/if}}
+        </div>
+        {{else}}
+        <div class="cd-empty-hint">No combatants added yet.</div>
+        {{/each}}
+    </div>
+
+    {{#if isGM}}
+    <button class="cd-resolve-btn cd-start-combat-btn" data-action="startCombat" title="Begin Round 1">
+        ⚔ Start Combat
+    </button>
+    {{else}}
+    <div class="cd-prestart-wait">Waiting for the GM to start combat…</div>
+    {{/if}}
+</div>
 
 {{else}}
 {{!-- No active combat --}}

@@ -282,7 +282,7 @@
 
   /* ─── Text — Dark ────────────────────────────────────────────────── */
   --reign-text-dark: #e0e0e0;
-  --reign-text-muted: #999999;
+  --reign-text-muted: #b0b0b0;      /* WCAG AAA (7.04:1 vs --reign-bg-parchment) */
   --reign-text-light: #ffffff;
 
   /* ─── Borders — Dark ─────────────────────────────────────────────── */

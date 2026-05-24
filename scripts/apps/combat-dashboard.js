@@ -16,7 +16,8 @@ import { parseORE, getHitLocation, getHitLocationLabel, parseDamageFormula, comp
 import { HIT_LOCATIONS, HIT_LOCATION_LABELS } from "../helpers/config.js";
 import { ScrollPreserveMixin } from "../helpers/scroll-mixin.js";
 import { getAllRollData, getSpotlight, advanceSpotlight, validateGobble, requestGobble, resolveCurrentSet, requestSpoil } from "../combat/combat-flags.js";
-import { applyDamageToTarget } from "../combat/damage.js";
+import { applyDamageToTarget, applyHealingToTarget } from "../combat/damage.js";
+import { applyItemEffectsToTargets } from "../helpers/chat.js";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -68,7 +69,7 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     classes: ["reign", "combat-dashboard", "app-v2"],
     tag: "div",
     window: {
-      title: "⚔ Combat Dashboard",
+      title: "Combat Dashboard",
       icon: "fas fa-swords",
       resizable: true,
       minimizable: true,
@@ -88,6 +89,10 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
       declareToggle:     CombatDashboard.prototype._onDeclareToggle,
       openDeclareDialog: CombatDashboard.prototype._onOpenDeclareDialog,
       nextRound:         CombatDashboard.prototype._onNextRound,
+      applySpellEffects: CombatDashboard.prototype._onApplySpellEffects,
+      startCombat:       CombatDashboard.prototype._onStartCombat,
+      setTarget:         CombatDashboard.prototype._onSetTarget,
+      toggleCondition:   CombatDashboard.prototype._onToggleCondition,
     }
   };
 
@@ -116,26 +121,30 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
   //  HOOKS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  _hookIds = [];
+  _hookEntries = [];
 
   _registerHooks() {
     const refresh = foundry.utils.debounce(() => {
       if (this.rendered) this.render(false);
     }, 100);
 
-    this._hookIds.push(Hooks.on("updateCombat", refresh));
-    this._hookIds.push(Hooks.on("updateCombatant", refresh));
-    this._hookIds.push(Hooks.on("createChatMessage", refresh));
-    this._hookIds.push(Hooks.on("deleteCombat", () => this.close()));
-    this._hookIds.push(Hooks.on("targetToken", refresh));
-    this._hookIds.push(Hooks.on("updateActor", (actor) => {
+    const on = (name, fn) => {
+      this._hookEntries.push({ name, id: Hooks.on(name, fn) });
+    };
+
+    on("updateCombat", refresh);
+    on("updateCombatant", refresh);
+    on("createChatMessage", refresh);
+    on("deleteCombat", () => this.close());
+    on("targetToken", refresh);
+    on("updateActor", (actor) => {
       if (actor.type === "character" || actor.type === "threat") refresh();
-    }));
+    });
   }
 
   _unregisterHooks() {
-    for (const id of this._hookIds) Hooks.off(id);
-    this._hookIds = [];
+    for (const { name, id } of this._hookEntries) Hooks.off(name, id);
+    this._hookEntries = [];
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -147,11 +156,32 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     const combat = game.combat;
 
     context.isGM = game.user.isGM;
-    context.hasCombat = !!combat?.started;
+    context.hasCombat = !!combat;                       // a Combat document exists
+    context.isStarted = !!combat?.started;              // combat has begun
+    context.isPreStart = !!combat && !combat.started;   // assembled but not started
     context.collapsed = !!game.user.getFlag("reign", "dashboardCollapsed");
 
+    // No combat document at all — nothing to show.
     if (!context.hasCombat) {
       context.phase = null;
+      return context;
+    }
+
+    // GM-only condition palette (the nine Reign statuses registered in CONFIG).
+    // Used by the in-dashboard "apply condition to target" toolbar.
+    if (context.isGM) {
+      context.conditionList = (CONFIG.statusEffects || [])
+        .filter(e => e?.id)
+        .map(e => ({
+          id: e.id,
+          img: e.img || e.icon || "icons/svg/aura.svg",
+          label: game.i18n.has(e.name) ? game.i18n.localize(e.name) : e.name,
+        }));
+    }
+
+    // Pre-start: combat assembled in the tracker but not yet started.
+    if (context.isPreStart) {
+      context.preStart = this._preparePreStartData(combat);
       return context;
     }
 
@@ -169,13 +199,40 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     return context;
   }
 
+  // ─── Pre-Start Phase ───────────────────────────────────────────────────────
+
+  /**
+   * Lightweight roster for the pre-start view. Combat exists in the tracker but
+   * has not begun, so there is no initiative or declaration data yet — we only
+   * list who is in the encounter and surface the GM's "Start Combat" control.
+   */
+  _preparePreStartData(combat) {
+    const combatants = [];
+    const sorted = combat.turns?.length ? combat.turns : combat.combatants.contents;
+
+    for (const c of sorted) {
+      const actor = c.actor;
+      if (!actor) continue;
+      combatants.push({
+        id: c.id,
+        actorId: actor.id,
+        name: c.name || actor.name,
+        img: actor.img || "icons/svg/mystery-man.svg",
+        isPC: !!actor.hasPlayerOwner,
+        isThreat: actor.type === "threat",
+      });
+    }
+
+    return { combatants, totalCount: combatants.length };
+  }
+
   // ─── Declaration Phase ─────────────────────────────────────────────────────
 
   _prepareDeclarationData(combat) {
     const combatants = [];
-    const sorted = combat.combatants.contents.sort((a, b) =>
-      combat._sortCombatants ? combat._sortCombatants(a, b) : 0
-    );
+    // combat.turns is pre-sorted by the ReignCombat._sortCombatants override.
+    // Using it avoids calling a private method and ensures forward compatibility.
+    const sorted = combat.turns?.length ? combat.turns : combat.combatants.contents;
 
     for (const c of sorted) {
       const actor = c.actor;
@@ -199,6 +256,21 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
       // Aim state from previous round
       const aimBonus = actor.getFlag("reign", "aimBonus") || 0;
 
+      // Slow / casting preparation indicator (RAW: prepare N rounds, then roll).
+      const currentRound = combat.round || 1;
+      const preparing = c.getFlag("reign", "preparing");
+      let prepStatus = null;
+      if (preparing) {
+        prepStatus = {
+          name: preparing.name,
+          type: preparing.type,
+          readyRound: preparing.readyRound,
+          isReady: currentRound >= preparing.readyRound,
+          roundsLeft: Math.max(0, preparing.readyRound - currentRound),
+        };
+      }
+      const isPreparing = !!prepStatus;
+
       combatants.push({
         id: c.id,
         actorId: actor.id,
@@ -216,6 +288,9 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
         hasConditions: conditions.length > 0,
         aimBonus,
         hasAim: aimBonus > 0,
+        // Slow / casting preparation
+        prepStatus,
+        isPreparing,
         // Permission: can this user declare for this combatant?
         isOwner: c.isOwner,
         canDeclare: game.user.isGM || c.isOwner,
@@ -369,6 +444,12 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
         dmgPreview,
         qualities,
         hasQualities: qualities.length > 0,
+        // Spell effects
+        hasSpellEffects: isSpell && !!rollData?.itemData?.hasEffects,
+        spellUuid: rollData?.itemData?.uuid || null,
+        spellDodgeable: isSpell ? !!rollData?.itemData?.system?.dodgeable : false,
+        spellParriable: isSpell ? !!rollData?.itemData?.system?.parriable : false,
+        spellArmorBlocks: isSpell ? !!rollData?.itemData?.system?.armorBlocks : false,
         // Conditions
         conditions,
         hasConditions: conditions.length > 0,
@@ -510,7 +591,7 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
       }
     }
 
-    // ─── Phase 4: Damage preview for spotlit attack set ────────────────
+    // ─── Phase 4: Damage / heal preview for spotlit attack set ─────────
     let damagePreview = null;
     if (spotlightEntry && spotlightEntry.isAttack && game.user.isGM) {
       const targets = Array.from(game.user.targets);
@@ -518,15 +599,27 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
         const targetToken = targets[0];
         const targetActor = targetToken.actor;
         if (targetActor) {
-          const dmgFormula = spotlightEntry.dmgPreview ? undefined : null;
           const rollData = rollCache.get(spotlightEntry.actorId);
           const formula = rollData?.itemData?.system?.damageFormula || "Width Shock";
           const ap = rollData?.itemData?.system?.qualities?.ap || 0;
           const parsed = parseDamageFormula(formula, spotlightEntry.width);
           const locKey = getHitLocation(spotlightEntry.height);
+          const isHeal = parsed.healing > 0;
 
-          // Character target: location-based AR and health
-          if (targetActor.type === "character") {
+          if (isHeal) {
+            // Healing set: damage math (AR/Shock/Killing) does not apply. We show
+            // how much can be recovered. Actual application clamps to current
+            // damage in applyHealingToTarget.
+            damagePreview = {
+              targetName: targetActor.name,
+              targetImg: targetActor.img,
+              formulaLabel: formula,
+              locLabel: getHitLocationLabel(locKey),
+              healAmount: parsed.healing,
+              isHeal: true,
+            };
+          } else if (targetActor.type === "character") {
+            // Character target: location-based AR and health
             const locHealth = targetActor.system.health?.[locKey] || {};
             const locMax = targetActor.system.effectiveMax?.[locKey] || 10;
             const locAR = targetActor.system.armor?.[locKey] || 0;
@@ -581,6 +674,13 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     if (spotlightEntry) {
       spotlightEntry.damagePreview = damagePreview;
       spotlightEntry.hasTarget = !!damagePreview;
+      // In-dashboard target picker: surfaced on spotlit attack/heal sets for the
+      // GM so a target can be chosen without returning to the canvas. Driving the
+      // real Foundry target ring keeps game.user.targets (used by every apply
+      // function) as the single source of truth.
+      if (spotlightEntry.isAttack && game.user.isGM) {
+        spotlightEntry.targetRoster = this._buildTargetRoster(combat);
+      }
     }
 
     // ─── Phase 4: Spoil eligibility ──────────────────────────────────────
@@ -649,7 +749,12 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
   async _onToggleCollapse(event, target) {
     const current = !!game.user.getFlag("reign", "dashboardCollapsed");
     await game.user.setFlag("reign", "dashboardCollapsed", !current);
-    this.render(false);
+    await this.render(false);
+    // Re-flow the window frame to fit the new content. Without this, a frame
+    // that was previously tall (resolution view, or manually resized) keeps its
+    // pixel height when collapsed, leaving a large empty parchment area below
+    // the collapsed bar. Forcing height back to "auto" shrink-wraps the frame.
+    this.setPosition({ height: "auto" });
   }
 
   /** GM: Advance the spotlight to the next set in resolution order. */
@@ -684,6 +789,81 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     requestGobble(defCombatantId, atkCombatantId, atkSetIndex);
   }
 
+  /** GM: Start the active combat encounter from the pre-start view. */
+  async _onStartCombat(event, target) {
+    if (!game.user.isGM) return;
+    const combat = game.combat;
+    if (!combat) return ui.notifications.warn("No encounter to start.");
+    if (combat.started) return;
+    await combat.startCombat();
+  }
+
+  /**
+   * GM: Toggle a target from the in-dashboard target picker. Drives the real
+   * Foundry target ring so the canvas and game.user.targets stay in sync.
+   * Click selects a single target; Shift-click adds/removes for multi-target.
+   */
+  _onSetTarget(event, target) {
+    if (!game.user.isGM) return;
+    const tokenId = target.dataset.tokenId;
+    if (!tokenId) return;
+
+    const token = canvas?.tokens?.get(tokenId);
+    if (!token) return ui.notifications.warn("That combatant has no token on the current scene.");
+
+    const isTargeted = game.user.targets.has(token);
+    token.setTarget(!isTargeted, { user: game.user, releaseOthers: !event.shiftKey });
+  }
+
+  /**
+   * GM: Toggle a condition on every currently targeted token. This is a manual
+   * GM convenience (RAW-neutral) — it mirrors the token HUD without leaving the
+   * dashboard. The registered updateActor hook refreshes the view.
+   */
+  async _onToggleCondition(event, target) {
+    if (!game.user.isGM) return;
+    const statusId = target.dataset.statusId;
+    if (!statusId) return;
+
+    const targets = Array.from(game.user.targets);
+    if (targets.length === 0) {
+      return ui.notifications.warn("Target a token before applying a condition.");
+    }
+
+    for (const t of targets) {
+      const actor = t.actor;
+      if (!actor) continue;
+      await actor.toggleStatusEffect(statusId);
+    }
+  }
+
+  /**
+   * Build the in-dashboard target roster: every combatant that has a token on
+   * the active scene, flagged with its current targeted state. Combatants with
+   * no token on this scene are returned disabled (same limit as canvas).
+   */
+  _buildTargetRoster(combat) {
+    const userTargets = game.user.targets;
+    const roster = [];
+
+    for (const c of combat.combatants) {
+      const actor = c.actor;
+      if (!actor) continue;
+      const token = canvas?.tokens?.placeables.find(t => t.actor?.id === actor.id);
+      roster.push({
+        actorId: actor.id,
+        tokenId: token?.id || null,
+        hasToken: !!token,
+        name: c.name || actor.name,
+        img: actor.img || "icons/svg/mystery-man.svg",
+        isThreat: actor.type === "threat",
+        isTargeted: token ? userTargets.has(token) : false,
+      });
+    }
+
+    return roster;
+  }
+
   /** GM: Resolve the currently spotlit attack set — apply damage and advance. */
   async _onResolveSet(event, target) {
     if (!game.user.isGM) return;
@@ -704,7 +884,7 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     // Check GM has a target selected
     const targets = Array.from(game.user.targets);
     if (targets.length === 0) {
-      return ui.notifications.warn("Target a token on the canvas before resolving damage.");
+      return ui.notifications.warn("Target a token before resolving this set.");
     }
 
     // Extract damage parameters from the combat flag data
@@ -717,8 +897,15 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     const isMassive = !!(advancedMods.isMassive);
     const attackerActor = game.actors.get(atkPayload.actorId) || null;
 
-    // Apply damage (uses game.user.targets internally)
-    await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice, attackerActor, advancedMods);
+    // Healing formulas (e.g. "Width Healing") parse to healing, not Shock/Killing.
+    // applyDamageToTarget would apply zero, so route to the healing path instead.
+    const parsedFormula = parseDamageFormula(dmgFormula, width);
+    if (parsedFormula.healing > 0) {
+      await applyHealingToTarget(width, height, dmgFormula);
+    } else {
+      // Apply damage (uses game.user.targets internally)
+      await applyDamageToTarget(width, height, dmgFormula, ap, isMassive, areaDice, attackerActor, advancedMods);
+    }
 
     // Mark resolved and advance spotlight
     const next = await resolveCurrentSet(combat);
@@ -797,6 +984,31 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
     await combat.nextRound();
   }
 
+  /** GM or caster: Apply spell Active Effects to targeted tokens. */
+  async _onApplySpellEffects(event, target) {
+    if (!game.user.isGM) return;
+    const combat = game.combat;
+    if (!combat?.started) return;
+
+    const spotlight = getSpotlight(combat);
+    if (!spotlight) return;
+
+    const pendingRolls = combat.getFlag("reign", "pendingRolls") || {};
+    const payload = pendingRolls[spotlight.combatantId];
+    const itemUuid = payload?.itemData?.uuid;
+
+    if (!itemUuid) {
+      return ui.notifications.warn("No spell UUID found — cannot apply effects.");
+    }
+
+    const targets = Array.from(game.user.targets);
+    if (targets.length === 0) {
+      return ui.notifications.warn("Target a token on the canvas before applying spell effects.");
+    }
+
+    await applyItemEffectsToTargets(itemUuid);
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   //  ROUND SUMMARY
   // ═══════════════════════════════════════════════════════════════════════════
@@ -844,7 +1056,7 @@ export class CombatDashboard extends ScrollPreserveMixin(HandlebarsApplicationMi
    * Called from hooks in reign.mjs.
    */
   static show(instance) {
-    if (!game.combat?.started) return;
+    if (!game.combat) return;
     if (instance._userDismissed) return;
     if (!instance.rendered) {
       instance.render(true);
